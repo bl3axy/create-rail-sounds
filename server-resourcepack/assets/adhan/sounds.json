@@ -1,4 +1,0 @@
-{
-  "adhan": {"sounds":[{"name":"adhan:adhan","stream":true}]},
-  "fajr":  {"sounds":[{"name":"adhan:fajr","stream":true}]}
-}
