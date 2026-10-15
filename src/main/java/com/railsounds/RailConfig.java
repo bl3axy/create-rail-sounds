@@ -26,8 +26,11 @@ public class RailConfig {
         public int clackHearingRange = 32;
 
         // ---- brakes ----
-        /** deceleration (blocks/tick^2) that counts as braking. Create default accel is ~0.0075 */
-        public double brakeDecelThreshold = 0.002;
+        /** squeal when slowing faster than this fraction of the train's own braking rate.
+         *  Uses Create's acceleration (also respects Steam 'n' Rails realism + powered trains) */
+        public double brakeDecelFraction = 0.5;
+        /** never count as braking below this deceleration (blocks/tick^2), stops jitter squeals */
+        public double brakeDecelMin = 0.0005;
         /** don't squeal when crawling slower than this */
         public double brakeMinSpeed = 0.04;
         /** length of your brake_squeal.ogg in ticks (20 ticks = 1 sec). replays every this many ticks while braking */
@@ -54,6 +57,12 @@ public class RailConfig {
         public int bellHearingRange = 48;
         /** keep ringing this many ticks after the last car clears */
         public int bellTailTicks = 40;
+        /** a STOPPED train only rings a crossing if a car is this close (so a train parked at a nearby station doesn't ring forever) */
+        public int stoppedTrainBellDistance = 6;
+
+        // ---- misc ----
+        /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */
+        public boolean ignoreHandcars = true;
     }
 
     public static void load() {

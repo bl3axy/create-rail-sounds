@@ -59,6 +59,11 @@ public class SoundPlayer {
         PENDING.add(new Pending(server.getTickCount() + delayTicks, level, pos, sound, vol, pitch, range));
     }
 
+    /** drop queued sounds when the server stops (singleplayer world switch) */
+    public static void clear() {
+        PENDING.clear();
+    }
+
     public static void tickScheduled(MinecraftServer server) {
         if (PENDING.isEmpty()) return;
         long now = server.getTickCount();

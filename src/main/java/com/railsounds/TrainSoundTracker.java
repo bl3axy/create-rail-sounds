@@ -26,6 +26,7 @@ public class TrainSoundTracker {
         int stoppedTicks = 1000;
         int brakeTimer;        // ticks until the squeal can replay
         boolean braking;
+        boolean backwards;
         double[] clackDist = new double[0]; // distance travelled since last joint, per carriage
     }
 
@@ -42,6 +43,7 @@ public class TrainSoundTracker {
 
         for (Train train : new ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (train == null || train.invalid || train.carriages == null || train.carriages.isEmpty()) continue;
+            if (c.ignoreHandcars && Compat.isHandcar(train)) continue;
             seen.add(train.id);
             State s = STATES.get(train.id);
             if (s == null) {
@@ -56,9 +58,11 @@ public class TrainSoundTracker {
             double decel = s.lastSpeed - speed;
             s.smoothDecel = s.smoothDecel * 0.7 + decel * 0.3;
 
-            // carriages in the order the train is moving: leading car first
+            // carriages in the order the train is moving: leading car first.
+            // remember the direction so the stop ripple is right even on the tick speed hits 0
+            if (train.speed != 0) s.backwards = train.speed < 0;
             List<Carriage> cars = new ArrayList<>(train.carriages);
-            if (train.speed < 0) java.util.Collections.reverse(cars);
+            if (s.backwards) java.util.Collections.reverse(cars);
 
             // ---------- pulling away: slack runs out car by car ----------
             if (s.lastSpeed < STOPPED && speed >= STOPPED && s.stoppedTicks >= c.minStoppedTicksForStart) {
@@ -79,10 +83,14 @@ public class TrainSoundTracker {
             }
 
             // ---------- brakes: louder the harder it's slowing ----------
-            boolean brakingNow = speed > c.brakeMinSpeed && s.smoothDecel > c.brakeDecelThreshold;
+            // train.acceleration() is Create's braking rate for THIS train (S&R realism / fuel adjust it)
+            double accel = Math.max(1e-5, train.acceleration());
+            double threshold = Math.max(c.brakeDecelMin, accel * c.brakeDecelFraction);
+            boolean brakingNow = speed > c.brakeMinSpeed && s.smoothDecel > threshold;
             if (brakingNow) {
-                if (!s.braking || s.brakeTimer <= 0) {
-                    float hardness = (float) Math.min(1.5, s.smoothDecel / (c.brakeDecelThreshold * 3));
+                // replay when the clip is done; a fresh brake application can restart it once it's half over
+                if (s.brakeTimer <= 0 || (!s.braking && s.brakeTimer < c.brakeClipTicks / 2)) {
+                    float hardness = (float) Math.min(1.5, s.smoothDecel / accel);
                     float vol = c.brakeVolume * (0.4f + 0.6f * hardness);
                     // squeal gets a bit higher pitched as the train gets slower, like real brake shoes
                     float pitch = (float) Math.max(0.8, Math.min(1.4, 1.3 - speed * 0.6));

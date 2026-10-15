@@ -24,6 +24,11 @@ public class RailSounds implements ModInitializer {
         Crossings.load();
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> TrainSoundTracker.reset());
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            SoundPlayer.clear();
+            Crossings.onServerStop();
+            TrainSoundTracker.reset();
+        });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             try {
                 TrainSoundTracker.tick(server);

@@ -5,7 +5,7 @@ Server-side mod that makes Create trains sound real, driven by the train's actua
 | Event | What triggers it |
 |---|---|
 | Rail joint clack-clack | every `clackSpacing` blocks per car, 2nd hit when the rear bogey crosses the joint; volume/pitch follow speed |
-| Brake squeal | train decelerating harder than `brakeDecelThreshold`; louder the harder it brakes, pitch rises as it slows |
+| Brake squeal | train slowing faster than half its own braking rate (`brakeDecelFraction`; follows Steam 'n' Rails realism); louder the harder it brakes, pitch rises as it slows |
 | Coupler slack | pulling away: clunks ripple front→back car by car. Stopping: slack bunches back→front |
 | Air release | each car hisses right after the train stops |
 | Crossing bell | rings while any car is inside a crossing's radius, plus a short tail after it clears |
@@ -25,3 +25,8 @@ Tune everything in `config/railsounds.json` (made on first run).
 ## Building
 GitHub Actions builds on every push; grab the jar from the run's artifacts.
 Create Fly (CC0) is in `libs/` only to compile against; it isn't bundled.
+
+## Compatibility notes
+- Steam 'n' Rails: handcars are skipped (`ignoreHandcars`); S&R bogeys still use Create's wheel sound so the custom rumble applies to them too.
+- A stopped train only rings a crossing if it's parked right on it (`stoppedTrainBellDistance`).
+- Crossing signal blocks that were left on by a crash/restart are switched off when their chunk loads.

@@ -39,6 +39,7 @@ public class Crossings {
         transient boolean active;
         transient int bellTimer;
         transient int tail;
+        transient boolean signalChecked;
 
         BlockPos signalPos() {
             return signalX == null ? null : new BlockPos(signalX, signalY, signalZ);
@@ -46,6 +47,15 @@ public class Crossings {
     }
 
     public static List<Crossing> LIST = new ArrayList<>();
+    /** server stopping: next start re-checks signals, and ringing state starts fresh */
+    public static void onServerStop() {
+        for (Crossing c : LIST) {
+            c.signalChecked = false;
+            c.active = false;
+            c.tail = 0;
+            c.bellTimer = 0;
+        }
+    }
 
     public static void load() {
         try {
@@ -79,13 +89,19 @@ public class Crossings {
 
         // gather every loaded car position once
         List<TrainSoundTracker.Located> cars = new ArrayList<>();
-        for (Train t : Create.RAILWAYS.trains.values()) {
+        List<Boolean> moving = new ArrayList<>();
+        for (Train t : new ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (t == null || t.invalid || t.carriages == null) continue;
+            boolean isMoving = Math.abs(t.speed) > 0.003;
             for (Carriage car : t.carriages) {
                 TrainSoundTracker.Located l = TrainSoundTracker.locate(car);
-                if (l != null) cars.add(l);
+                if (l != null) {
+                    cars.add(l);
+                    moving.add(isMoving);
+                }
             }
         }
+        double stop2 = (double) cfg.stoppedTrainBellDistance * cfg.stoppedTrainBellDistance;
 
         for (Crossing x : LIST) {
             ServerLevel level = levelFor(server, x.dimension);
@@ -94,12 +110,27 @@ public class Crossings {
             double r2 = (double) x.radius * x.radius;
 
             boolean trainNear = false;
-            for (TrainSoundTracker.Located l : cars) {
+            for (int i = 0; i < cars.size(); i++) {
+                TrainSoundTracker.Located l = cars.get(i);
                 if (l.level() != level) continue;
                 double dx = l.pos().x - x.x, dz = l.pos().z - x.z, dy = l.pos().y - x.y;
-                if (dx * dx + dz * dz <= r2 && Math.abs(dy) < 16) {
+                double d2 = dx * dx + dz * dz;
+                // parked trains only count if they're actually sitting on the crossing
+                double limit = moving.get(i) ? r2 : Math.min(r2, stop2);
+                if (d2 <= limit && Math.abs(dy) < 16) {
                     trainNear = true;
                     break;
+                }
+            }
+
+            // after a restart a signal could be stuck "on" from before: switch it off once its chunk is loaded
+            if (!x.signalChecked) {
+                BlockPos sp = x.signalPos();
+                if (sp == null) {
+                    x.signalChecked = true;
+                } else if (level.isLoaded(sp)) {
+                    if (!x.active) setSignal(level, x, false);
+                    x.signalChecked = true;
                 }
             }
 
