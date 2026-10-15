@@ -43,7 +43,13 @@ public class TrainSoundTracker {
         for (Train train : new ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (train == null || train.invalid || train.carriages == null || train.carriages.isEmpty()) continue;
             seen.add(train.id);
-            State s = STATES.computeIfAbsent(train.id, k -> new State());
+            State s = STATES.get(train.id);
+            if (s == null) {
+                // first time we see this train (server start / new train): no fake "start" clunk
+                s = new State();
+                s.lastSpeed = Math.abs(train.speed);
+                STATES.put(train.id, s);
+            }
             if (s.clackDist.length != train.carriages.size()) s.clackDist = new double[train.carriages.size()];
 
             double speed = train.derailed ? 0 : Math.abs(train.speed);
