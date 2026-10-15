@@ -35,7 +35,7 @@ public class RailConfig {
         public double brakeMinSpeed = 0.04;
         /** length of your brake_squeal.ogg in ticks (20 ticks = 1 sec). replays every this many ticks while braking */
         public int brakeClipTicks = 100;
-        public float brakeVolume = 1.2f;
+        public float brakeVolume = 0.45f;
         public int brakeHearingRange = 64;
 
         // ---- starting / stopping ----
