@@ -50,15 +50,17 @@ public class RailConfig {
         public int couplerHearingRange = 48;
 
         // ---- crossings ----
-        public int defaultCrossingRadius = 40;
+        /** warning distance. 64 blocks ~ 2.3s warning at Create top speed, more for slower trains */
+        public int defaultCrossingRadius = 64;
         /** length of your crossing_bell.ogg in ticks; replays every this many ticks while active */
         public int bellClipTicks = 48;
         public float bellVolume = 1.0f;
         public int bellHearingRange = 48;
         /** keep ringing this many ticks after the last car clears */
         public int bellTailTicks = 40;
-        /** a STOPPED train only rings a crossing if a car is this close (so a train parked at a nearby station doesn't ring forever) */
-        public int stoppedTrainBellDistance = 6;
+        /** a car this close to the crossing counts as ON it (rings even if stopped).
+         *  Otherwise the bell only rings for trains heading TOWARD the crossing inside its radius */
+        public int onCrossingDistance = 6;
 
         // ---- misc ----
         /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */

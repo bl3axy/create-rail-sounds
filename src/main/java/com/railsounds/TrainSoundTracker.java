@@ -66,12 +66,12 @@ public class TrainSoundTracker {
 
             // ---------- pulling away: slack runs out car by car ----------
             if (s.lastSpeed < STOPPED && speed >= STOPPED && s.stoppedTicks >= c.minStoppedTicksForStart) {
-                ripple(server, cars, c.couplerRippleTicksStart, c.couplerVolume, 0.95f, true);
+                ripple(server, cars, s.backwards, c.couplerRippleTicksStart, c.couplerVolume, 0.95f);
             }
 
             // ---------- coming to a stop: slack bunches, then the air dumps ----------
             if (s.lastSpeed >= STOPPED && speed < STOPPED) {
-                ripple(server, cars, c.couplerRippleTicksStop, c.couplerVolume * 0.7f, 1.05f, false);
+                ripple(server, cars, s.backwards, c.couplerRippleTicksStop, c.couplerVolume * 0.7f, 1.05f);
                 int delay = cars.size() * c.couplerRippleTicksStop + 10;
                 for (Carriage car : cars) {
                     Located l = locate(car);
@@ -119,12 +119,14 @@ public class TrainSoundTracker {
                     if (l == null) continue;
                     float vol = (float) Math.min(1.0, 0.35 + speed * 0.9) * c.clackVolume;
                     float pitch = (float) Math.min(1.25, 0.85 + speed * 0.35);
-                    SoundPlayer.play(l.level, l.pos, SoundPlayer.CLACK, vol, pitch + rnd(0.05f), c.clackHearingRange);
+                    // the joint is under the front wheels right now; the rear wheels hit the same spot later
+                    Vec3 joint = wheels(car, l, s.backwards, true);
+                    SoundPlayer.play(l.level, joint, SoundPlayer.CLACK, vol, pitch + rnd(0.05f), c.clackHearingRange);
                     // second bogey hits the same joint a moment later
                     if (car.isOnTwoBogeys()) {
                         int gap = (int) Math.round(car.bogeySpacing / speed);
                         if (gap >= 1 && gap <= 40)
-                            SoundPlayer.playLater(server, gap, l.level, l.pos, SoundPlayer.CLACK,
+                            SoundPlayer.playLater(server, gap, l.level, joint, SoundPlayer.CLACK,
                                 vol * 0.9f, pitch + rnd(0.05f), c.clackHearingRange);
                     }
                 }
@@ -136,20 +138,44 @@ public class TrainSoundTracker {
         STATES.keySet().retainAll(seen);
     }
 
-    private static void ripple(MinecraftServer server, List<Carriage> cars, int gap, float vol, float pitch, boolean frontToBack) {
+    /**
+     * Couplers clunk one after another, from the front of the train to the back (the slack runs out
+     * when pulling away, and runs in when stopping - both travel front to back on a real train).
+     * Each clunk plays at the coupling between two cars, so a 3-car train makes 2 clunks.
+     */
+    private static void ripple(MinecraftServer server, List<Carriage> cars, boolean backwards, int gap, float vol, float pitch) {
         RailConfig.Values c = RailConfig.V;
-        for (int i = 0; i < cars.size(); i++) {
-            Carriage car = cars.get(frontToBack ? i : cars.size() - 1 - i);
-            Located l = locate(car);
-            if (l == null) continue;
-            // first and last car only clunk if there's a neighbour to clunk against
-            if (cars.size() == 1) {
-                SoundPlayer.playLater(server, 0, l.level, l.pos, SoundPlayer.COUPLER, vol * 0.6f, pitch, c.couplerHearingRange);
-                return;
-            }
-            SoundPlayer.playLater(server, i * gap, l.level, l.pos, SoundPlayer.COUPLER,
+        if (cars.size() == 1) {
+            // lone loco: one soft clunk of its own draft gear
+            Located l = locate(cars.get(0));
+            if (l != null) SoundPlayer.playLater(server, 0, l.level, l.pos, SoundPlayer.COUPLER, vol * 0.6f, pitch, c.couplerHearingRange);
+            return;
+        }
+        for (int i = 0; i < cars.size() - 1; i++) {
+            Located a = locate(cars.get(i));
+            Located b = locate(cars.get(i + 1));
+            if (a == null || b == null || a.level != b.level) continue;
+            // rear wheels of the front car + front wheels of the next car = where the coupling is
+            Vec3 pa = wheels(cars.get(i), a, backwards, false);
+            Vec3 pb = wheels(cars.get(i + 1), b, backwards, true);
+            Vec3 joint = pa.add(pb).scale(0.5);
+            SoundPlayer.playLater(server, i * gap, a.level, joint, SoundPlayer.COUPLER,
                 vol, pitch + rnd(0.1f), c.couplerHearingRange);
         }
+    }
+
+    /** position of a car's front (or rear) wheels in the direction of travel; falls back to the car centre */
+    static Vec3 wheels(Carriage car, Located l, boolean backwards, boolean front) {
+        try {
+            Carriage.DimensionalCarriageEntity d = car.getDimensionalIfPresent(l.level.dimension());
+            if (d != null) {
+                boolean leading = front != backwards; // moving backwards swaps which bogey is "in front"
+                Vec3 v = leading ? d.leadingAnchor() : d.trailingAnchor();
+                if (v != null) return v;
+            }
+        } catch (Throwable ignored) {
+        }
+        return l.pos;
     }
 
     record Located(ServerLevel level, Vec3 pos) {}

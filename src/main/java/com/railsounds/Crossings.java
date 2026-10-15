@@ -18,6 +18,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 /**
@@ -49,6 +51,7 @@ public class Crossings {
     public static List<Crossing> LIST = new ArrayList<>();
     /** server stopping: next start re-checks signals, and ringing state starts fresh */
     public static void onServerStop() {
+        lastDist = new HashMap<>();
         for (Crossing c : LIST) {
             c.signalChecked = false;
             c.active = false;
@@ -87,21 +90,23 @@ public class Crossings {
         if (LIST.isEmpty() || Create.RAILWAYS == null) return;
         RailConfig.Values cfg = RailConfig.V;
 
-        // gather every loaded car position once
-        List<TrainSoundTracker.Located> cars = new ArrayList<>();
-        List<Boolean> moving = new ArrayList<>();
+        // every loaded car: its centre plus both wheel sets, so long cars are caught properly
+        List<CarPoints> cars = new ArrayList<>();
         for (Train t : new ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (t == null || t.invalid || t.carriages == null) continue;
             boolean isMoving = Math.abs(t.speed) > 0.003;
             for (Carriage car : t.carriages) {
                 TrainSoundTracker.Located l = TrainSoundTracker.locate(car);
-                if (l != null) {
-                    cars.add(l);
-                    moving.add(isMoving);
-                }
+                if (l == null) continue;
+                List<Vec3> pts = new ArrayList<>();
+                pts.add(l.pos());
+                pts.add(TrainSoundTracker.wheels(car, l, false, true));
+                pts.add(TrainSoundTracker.wheels(car, l, false, false));
+                cars.add(new CarPoints(car.id, l.level(), pts, isMoving));
             }
         }
-        double stop2 = (double) cfg.stoppedTrainBellDistance * cfg.stoppedTrainBellDistance;
+        double on2 = (double) cfg.onCrossingDistance * cfg.onCrossingDistance;
+        Map<String, Double> nowDist = new HashMap<>();
 
         for (Crossing x : LIST) {
             ServerLevel level = levelFor(server, x.dimension);
@@ -109,20 +114,28 @@ public class Crossings {
             Vec3 center = new Vec3(x.x, x.y, x.z);
             double r2 = (double) x.radius * x.radius;
 
+            // rings while a train is heading toward the crossing inside the radius, or any car is on it.
+            // once the last car clears and the train is moving away, it stops (after a short tail).
             boolean trainNear = false;
-            for (int i = 0; i < cars.size(); i++) {
-                TrainSoundTracker.Located l = cars.get(i);
-                if (l.level() != level) continue;
-                double dx = l.pos().x - x.x, dz = l.pos().z - x.z, dy = l.pos().y - x.y;
-                double d2 = dx * dx + dz * dz;
-                // parked trains only count if they're actually sitting on the crossing
-                double limit = moving.get(i) ? r2 : Math.min(r2, stop2);
-                if (d2 <= limit && Math.abs(dy) < 16) {
+            for (CarPoints cp : cars) {
+                if (cp.level != level) continue;
+                double best = Double.MAX_VALUE;
+                for (Vec3 p : cp.points) {
+                    if (Math.abs(p.y - x.y) >= 16) continue;
+                    double dx = p.x - x.x, dz = p.z - x.z;
+                    best = Math.min(best, dx * dx + dz * dz);
+                }
+                if (best == Double.MAX_VALUE) continue;
+                String key = x.name + "#" + cp.id;
+                Double before = lastDist.get(key);
+                if (best <= r2 * 1.5) nowDist.put(key, best);
+
+                boolean onIt = best <= on2;
+                boolean approaching = cp.moving && best <= r2 && before != null && best < before - 1e-4;
+                if (onIt || approaching) {
                     trainNear = true;
-                    break;
                 }
             }
-
             // after a restart a signal could be stuck "on" from before: switch it off once its chunk is loaded
             if (!x.signalChecked) {
                 BlockPos sp = x.signalPos();
@@ -155,7 +168,13 @@ public class Crossings {
                 x.bellTimer--;
             }
         }
+        lastDist = nowDist;
     }
+
+    private record CarPoints(int id, ServerLevel level, List<Vec3> points, boolean moving) {}
+
+    /** each car's distance to each crossing last tick, to tell approaching from leaving */
+    private static Map<String, Double> lastDist = new HashMap<>();
 
     private static void setSignal(ServerLevel level, Crossing x, boolean on) {
         BlockPos p = x.signalPos();

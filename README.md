@@ -6,14 +6,14 @@ Server-side mod that makes Create trains sound real, driven by the train's actua
 |---|---|
 | Rail joint clack-clack | every `clackSpacing` blocks per car, 2nd hit when the rear bogey crosses the joint; volume/pitch follow speed |
 | Brake squeal | train slowing faster than half its own braking rate (`brakeDecelFraction`; follows Steam 'n' Rails realism); louder the harder it brakes, pitch rises as it slows |
-| Coupler slack | pulling away: clunks ripple front→back car by car. Stopping: slack bunches back→front |
+| Coupler slack | clunks at each coupling, rippling front→back when pulling away and when stopping |
 | Air release | each car hisses right after the train stops |
-| Crossing bell | rings while any car is inside a crossing's radius, plus a short tail after it clears |
+| Crossing bell | rings while a train is heading toward the crossing (inside its radius) or any car is on it; stops ~2s after the last car clears |
 
 Players don't need the mod: sounds come from the server resource pack (`server-resourcepack/`).
 
 ## Commands (op)
-- `/railsounds crossing add <name> [radius]` — crossing where you stand (default radius 40)
+- `/railsounds crossing add <name> [radius]` — crossing where you stand (default radius 64)
 - `/railsounds crossing remove <name>` / `list`
 - `/railsounds crossing signal <name> <x y z>` — a redstone block appears there while the bell rings (lamps/gates). Keep that spot empty.
 - `/railsounds test <sound>` — play one of the sounds where you stand
@@ -28,5 +28,5 @@ Create Fly (CC0) is in `libs/` only to compile against; it isn't bundled.
 
 ## Compatibility notes
 - Steam 'n' Rails: handcars are skipped (`ignoreHandcars`); S&R bogeys still use Create's wheel sound so the custom rumble applies to them too.
-- A stopped train only rings a crossing if it's parked right on it (`stoppedTrainBellDistance`).
+- Trains moving away from a crossing don't ring it; a stopped train only rings if it's parked on it (`onCrossingDistance`).
 - Crossing signal blocks that were left on by a crash/restart are switched off when their chunk loads.
