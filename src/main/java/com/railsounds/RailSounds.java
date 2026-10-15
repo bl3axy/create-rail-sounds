@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 public class RailSounds implements ModInitializer {
     public static final String MOD_ID = "railsounds";
     public static final Logger LOG = LoggerFactory.getLogger("RailSounds");
+    private static long lastErrorLog;
 
     @Override
     public void onInitialize() {
@@ -35,8 +36,12 @@ public class RailSounds implements ModInitializer {
                 Crossings.tick(server);
                 SoundPlayer.tickScheduled(server);
             } catch (Throwable t) {
-                // never crash the server over a sound
-                LOG.error("RailSounds tick failed", t);
+                // never crash the server over a sound, and don't flood the log 20x a second either
+                long now = System.currentTimeMillis();
+                if (now - lastErrorLog > 60_000) {
+                    lastErrorLog = now;
+                    LOG.error("RailSounds tick failed (further errors hidden for 60s)", t);
+                }
             }
         });
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) -> RailCommands.register(dispatcher));
