@@ -1,0 +1,5 @@
+{
+  "train":  {"replace": true, "subtitle": "create.subtitle.train", "sounds": [{"name": "create:train", "attenuation_distance": 128, "stream": true}]},
+  "train2": {"replace": true, "sounds": [{"name": "create:train2", "attenuation_distance": 128, "stream": true}]},
+  "train3": {"replace": true, "subtitle": "create.subtitle.train3", "sounds": [{"name": "create:train3", "attenuation_distance": 16, "stream": true}]}
+}

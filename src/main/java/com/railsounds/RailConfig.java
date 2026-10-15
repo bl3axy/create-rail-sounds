@@ -31,7 +31,7 @@ public class RailConfig {
         /** don't squeal when crawling slower than this */
         public double brakeMinSpeed = 0.04;
         /** length of your brake_squeal.ogg in ticks (20 ticks = 1 sec). replays every this many ticks while braking */
-        public int brakeClipTicks = 40;
+        public int brakeClipTicks = 100;
         public float brakeVolume = 1.2f;
         public int brakeHearingRange = 64;
 
@@ -49,7 +49,7 @@ public class RailConfig {
         // ---- crossings ----
         public int defaultCrossingRadius = 40;
         /** length of your crossing_bell.ogg in ticks; replays every this many ticks while active */
-        public int bellClipTicks = 20;
+        public int bellClipTicks = 48;
         public float bellVolume = 1.0f;
         public int bellHearingRange = 48;
         /** keep ringing this many ticks after the last car clears */
