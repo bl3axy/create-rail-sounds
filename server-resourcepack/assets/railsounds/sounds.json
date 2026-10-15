@@ -1,0 +1,7 @@
+{
+  "clack":         {"subtitle":"Rail joint clack", "sounds":[{"name":"railsounds:clack"}]},
+  "brake_squeal":  {"subtitle":"Train brakes squeal", "sounds":[{"name":"railsounds:brake_squeal"}]},
+  "coupler_clunk": {"subtitle":"Couplers clunk", "sounds":[{"name":"railsounds:coupler_clunk"}]},
+  "air_release":   {"subtitle":"Air brakes release", "sounds":[{"name":"railsounds:air_release"}]},
+  "crossing_bell": {"subtitle":"Crossing bell rings", "sounds":[{"name":"railsounds:crossing_bell"}]}
+}
