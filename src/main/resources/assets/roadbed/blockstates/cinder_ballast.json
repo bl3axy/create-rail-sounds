@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "roadbed:block/cinder_ballast"
+    }
+  }
+}

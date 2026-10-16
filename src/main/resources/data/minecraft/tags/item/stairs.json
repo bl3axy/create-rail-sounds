@@ -6,6 +6,9 @@
     "roadbed:sand_stairs",
     "roadbed:red_sand_stairs",
     "roadbed:packed_mud_stairs",
-    "roadbed:clay_stairs"
+    "roadbed:clay_stairs",
+    "roadbed:ballast_stairs",
+    "roadbed:weathered_ballast_stairs",
+    "roadbed:cinder_ballast_stairs"
   ]
 }

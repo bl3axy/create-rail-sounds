@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GC",
+    "CG"
+  ],
+  "key": {
+    "G": "minecraft:gravel",
+    "C": "minecraft:cobblestone"
+  },
+  "result": {
+    "id": "roadbed:ballast",
+    "count": 4
+  }
+}

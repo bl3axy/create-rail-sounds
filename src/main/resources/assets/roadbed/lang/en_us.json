@@ -12,5 +12,14 @@
   "block.roadbed.packed_mud_slab": "Packed Mud Slab",
   "block.roadbed.packed_mud_stairs": "Packed Mud Stairs",
   "block.roadbed.clay_slab": "Clay Slab",
-  "block.roadbed.clay_stairs": "Clay Stairs"
+  "block.roadbed.clay_stairs": "Clay Stairs",
+  "block.roadbed.ballast": "Ballast",
+  "block.roadbed.ballast_slab": "Ballast Slab",
+  "block.roadbed.ballast_stairs": "Ballast Stairs",
+  "block.roadbed.weathered_ballast": "Weathered Ballast",
+  "block.roadbed.weathered_ballast_slab": "Weathered Ballast Slab",
+  "block.roadbed.weathered_ballast_stairs": "Weathered Ballast Stairs",
+  "block.roadbed.cinder_ballast": "Cinder Ballast",
+  "block.roadbed.cinder_ballast_slab": "Cinder Ballast Slab",
+  "block.roadbed.cinder_ballast_stairs": "Cinder Ballast Stairs"
 }

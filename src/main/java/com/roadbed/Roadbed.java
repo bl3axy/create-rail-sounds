@@ -37,6 +37,11 @@ public class Roadbed implements ModInitializer {
         material("packed_mud", Blocks.PACKED_MUD);
         material("clay", Blocks.CLAY);
 
+        // custom-textured railroad ballast: full block + slab + stairs each
+        ballast("ballast");
+        ballast("weathered_ballast");
+        ballast("cinder_ballast");
+
         // show them in the Building Blocks creative tab
         ResourceKey<CreativeModeTab> building = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
             Identifier.fromNamespaceAndPath("minecraft", "building_blocks"));
@@ -54,6 +59,14 @@ public class Roadbed implements ModInitializer {
         BlockItemId stairsId = id(name + "_stairs");
         Block stairs = Blocks.register(stairsId, props -> new StairBlock(base.defaultBlockState(), props), Properties.ofFullCopy(base));
         ITEMS.add(Items.registerBlock(stairsId, stairs));
+    }
+
+    /** a brand-new full block (sounds/hardness like gravel, but it doesn't fall) plus its slab and stairs */
+    private static void ballast(String name) {
+        BlockItemId blockId = id(name);
+        Block block = Blocks.register(blockId, Block::new, Properties.ofFullCopy(Blocks.GRAVEL));
+        ITEMS.add(Items.registerBlock(blockId, block));
+        material(name, block);
     }
 
     private static BlockItemId id(String path) {

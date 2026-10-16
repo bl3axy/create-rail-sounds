@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "roadbed:block/cinder_ballast_slab"
+    },
+    "type=top": {
+      "model": "roadbed:block/cinder_ballast_slab_top"
+    },
+    "type=double": {
+      "model": "roadbed:block/cinder_ballast"
+    }
+  }
+}

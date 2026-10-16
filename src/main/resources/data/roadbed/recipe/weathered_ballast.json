@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "roadbed:ballast",
+    "roadbed:ballast",
+    "roadbed:ballast",
+    "roadbed:ballast",
+    "minecraft:coarse_dirt"
+  ],
+  "result": {
+    "id": "roadbed:weathered_ballast",
+    "count": 4
+  }
+}

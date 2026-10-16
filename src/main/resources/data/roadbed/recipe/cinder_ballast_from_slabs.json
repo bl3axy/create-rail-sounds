@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "#",
+    "#"
+  ],
+  "key": {
+    "#": "roadbed:cinder_ballast_slab"
+  },
+  "result": {
+    "id": "roadbed:cinder_ballast",
+    "count": 1
+  }
+}

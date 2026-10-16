@@ -6,6 +6,9 @@
     "roadbed:sand_slab",
     "roadbed:red_sand_slab",
     "roadbed:packed_mud_slab",
-    "roadbed:clay_slab"
+    "roadbed:clay_slab",
+    "roadbed:ballast_slab",
+    "roadbed:weathered_ballast_slab",
+    "roadbed:cinder_ballast_slab"
   ]
 }

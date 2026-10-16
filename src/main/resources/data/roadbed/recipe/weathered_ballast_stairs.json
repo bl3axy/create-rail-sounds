@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "#  ",
+    "## ",
+    "###"
+  ],
+  "key": {
+    "#": "roadbed:weathered_ballast"
+  },
+  "result": {
+    "id": "roadbed:weathered_ballast_stairs",
+    "count": 4
+  }
+}
