@@ -1,0 +1,16 @@
+{
+  "block.roadbed.gravel_slab": "Gravel Slab",
+  "block.roadbed.gravel_stairs": "Gravel Stairs",
+  "block.roadbed.coarse_dirt_slab": "Coarse Dirt Slab",
+  "block.roadbed.coarse_dirt_stairs": "Coarse Dirt Stairs",
+  "block.roadbed.dirt_slab": "Dirt Slab",
+  "block.roadbed.dirt_stairs": "Dirt Stairs",
+  "block.roadbed.sand_slab": "Sand Slab",
+  "block.roadbed.sand_stairs": "Sand Stairs",
+  "block.roadbed.red_sand_slab": "Red Sand Slab",
+  "block.roadbed.red_sand_stairs": "Red Sand Stairs",
+  "block.roadbed.packed_mud_slab": "Packed Mud Slab",
+  "block.roadbed.packed_mud_stairs": "Packed Mud Stairs",
+  "block.roadbed.clay_slab": "Clay Slab",
+  "block.roadbed.clay_stairs": "Clay Stairs"
+}

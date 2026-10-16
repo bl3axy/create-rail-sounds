@@ -1,0 +1,11 @@
+{
+  "values": [
+    "roadbed:gravel_slab",
+    "roadbed:coarse_dirt_slab",
+    "roadbed:dirt_slab",
+    "roadbed:sand_slab",
+    "roadbed:red_sand_slab",
+    "roadbed:packed_mud_slab",
+    "roadbed:clay_slab"
+  ]
+}

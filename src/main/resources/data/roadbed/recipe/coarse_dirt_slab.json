@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###"
+  ],
+  "key": {
+    "#": "minecraft:coarse_dirt"
+  },
+  "result": {
+    "id": "roadbed:coarse_dirt_slab",
+    "count": 6
+  }
+}

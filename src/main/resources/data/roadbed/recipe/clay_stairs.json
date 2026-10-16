@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "#  ",
+    "## ",
+    "###"
+  ],
+  "key": {
+    "#": "minecraft:clay"
+  },
+  "result": {
+    "id": "roadbed:clay_stairs",
+    "count": 4
+  }
+}

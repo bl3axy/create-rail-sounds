@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###"
+  ],
+  "key": {
+    "#": "minecraft:red_sand"
+  },
+  "result": {
+    "id": "roadbed:red_sand_slab",
+    "count": 6
+  }
+}
