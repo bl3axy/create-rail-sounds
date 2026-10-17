@@ -6,6 +6,7 @@
   "description": "Live train sounds for Create: rail clack, brake squeal, coupler slack, air release and crossing bells. Server-side; sounds come from the server resource pack.",
   "license": "MIT",
   "environment": "*",
+  "mixins": ["railsounds.mixins.json"],
   "entrypoints": { "main": ["com.railsounds.RailSounds"] },
   "depends": {
     "fabricloader": "*",
