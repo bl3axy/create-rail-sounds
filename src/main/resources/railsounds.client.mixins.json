@@ -1,0 +1,7 @@
+{
+  "required": false,
+  "package": "com.railsounds.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["RailwaysClientShimMixin"],
+  "injectors": { "defaultRequire": 0 }
+}
