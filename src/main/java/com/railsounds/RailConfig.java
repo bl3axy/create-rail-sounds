@@ -62,6 +62,11 @@ public class RailConfig {
          *  Otherwise the bell only rings for trains heading TOWARD the crossing inside its radius */
         public int onCrossingDistance = 6;
 
+        // ---- Steam 'n' Rails coupler ----
+        /** how close (blocks) a bogey has to be to a coupler marker to count as lined up.
+         *  S&R's own value is 0.8. Too big on short cars and it may grab the wrong joint. */
+        public double couplerAlignmentTolerance = 3.0;
+
         // ---- misc ----
         /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */
         public boolean ignoreHandcars = true;
