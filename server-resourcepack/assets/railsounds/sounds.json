@@ -63,5 +63,23 @@
         "stream": true
       }
     ]
+  },
+  "diesel_horn_end": {
+    "subtitle": "Diesel horn",
+    "sounds": [
+      {
+        "name": "railsounds:diesel_horn_end",
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "steam_whistle_end": {
+    "subtitle": "Steam whistle",
+    "sounds": [
+      {
+        "name": "railsounds:steam_whistle_end",
+        "attenuation_distance": 128
+      }
+    ]
   }
 }

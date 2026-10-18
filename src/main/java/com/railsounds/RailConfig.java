@@ -69,9 +69,9 @@ public class RailConfig {
 
         // ---- diesel horn / steam whistle (/diesel, /steam) ----
         /** length of your diesel_horn.ogg in ticks; replays every this many ticks while held */
-        public int hornClipTicks = 60;
+        public int hornClipTicks = 142;
         /** length of your steam_whistle.ogg in ticks */
-        public int whistleClipTicks = 60;
+        public int whistleClipTicks = 138;
         public float hornVolume = 1.0f;
         public int hornHearingRange = 128;
         /** cut the horn if no "still holding" signal arrives for this many ticks (stops it sticking) */

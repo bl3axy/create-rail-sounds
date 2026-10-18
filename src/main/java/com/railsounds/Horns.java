@@ -99,8 +99,13 @@ public class Horns {
     }
 
     private static void play(State s) {
+        playSound(s, s.sound);
+    }
+
+    private static void playSound(State s, String sound) {
+        if (s.entity == null || s.entity.isRemoved()) return;
         int range = RailConfig.V.hornHearingRange;
-        Holder<SoundEvent> h = Holder.direct(SoundEvent.createFixedRangeEvent(id(s.sound), range));
+        Holder<SoundEvent> h = Holder.direct(SoundEvent.createFixedRangeEvent(id(sound), range));
         double r2 = (double) range * range;
         long seed = ThreadLocalRandom.current().nextLong();
         for (ServerPlayer p : s.level.players()) {
@@ -119,5 +124,7 @@ public class Horns {
             if (s.entity != null && !s.entity.isRemoved() && p.distanceToSqr(s.entity) > r2) continue;
             p.connection.send(pkt);
         }
+        // short natural tail so letting go fades out instead of cutting dead
+        playSound(s, s.sound + "_end");
     }
 }
