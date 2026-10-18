@@ -62,11 +62,13 @@ public class Horns {
                 s.level = level;
                 s.entity = e;
                 HONKING.put(train.id, s);
+                RailSounds.LOG.info("[railsounds] {} on for train {} ({} players nearby)", s.sound, train.name.getString(), nearby(s));
                 play(s);
                 s.nextReplay = now + Math.max(5, clipTicks(s.sound));
             }
             s.lastKeepAlive = now;
         } else if (s != null) {
+            RailSounds.LOG.info("[railsounds] {} off for train {} (released)", s.sound, train.name.getString());
             stop(s);
             HONKING.remove(train.id);
         }
@@ -81,6 +83,7 @@ public class Horns {
             State s = it.next().getValue();
             boolean gone = s.entity == null || s.entity.isRemoved();
             if (gone || now - s.lastKeepAlive > RailConfig.V.hornReleaseTimeoutTicks) {
+                RailSounds.LOG.info("[railsounds] {} off ({})", s.sound, gone ? "train gone" : "no hold signal");
                 stop(s);
                 it.remove();
             } else if (now >= s.nextReplay) {
@@ -92,6 +95,13 @@ public class Horns {
 
     public static void reset() {
         HONKING.clear();
+    }
+
+    private static int nearby(State s) {
+        double r2 = (double) RailConfig.V.hornHearingRange * RailConfig.V.hornHearingRange;
+        int n = 0;
+        for (ServerPlayer p : s.level.players()) if (p.distanceToSqr(s.entity) <= r2) n++;
+        return n;
     }
 
     private static Identifier id(String sound) {

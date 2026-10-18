@@ -49,8 +49,7 @@
     "sounds": [
       {
         "name": "railsounds:diesel_horn",
-        "attenuation_distance": 128,
-        "stream": true
+        "attenuation_distance": 128
       }
     ]
   },
@@ -59,8 +58,7 @@
     "sounds": [
       {
         "name": "railsounds:steam_whistle",
-        "attenuation_distance": 128,
-        "stream": true
+        "attenuation_distance": 128
       }
     ]
   },
