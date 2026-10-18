@@ -1,0 +1,161 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "railways:track_biomesoplenty_dead",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_dead_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_dead_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_empyreal",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_empyreal_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_empyreal_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_fir",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_fir_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_fir_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_hellbark",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_hellbark_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_hellbark_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_jacaranda",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_jacaranda_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_jacaranda_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_magic",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_magic_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_magic_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_mahogany",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_mahogany_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_mahogany_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_maple",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_maple_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_maple_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_palm",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_palm_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_palm_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_pine",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_pine_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_pine_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_redwood",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_redwood_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_redwood_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_umbran",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_umbran_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_umbran_wide",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_willow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_willow_narrow",
+      "required": false
+    },
+    {
+      "id": "railways:track_biomesoplenty_willow_wide",
+      "required": false
+    }
+  ]
+}
