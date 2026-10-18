@@ -26,6 +26,48 @@ public class TypeCommands {
         d.register(Commands.literal("steam")
             .requires(s -> s.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(ctx -> mark(ctx, TrainTypes.STEAM)));
+        // /railsounds fixtrains - re-measure every coupling and clear stress derails
+        d.register(Commands.literal("railsounds")
+            .requires(s -> s.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+            .then(Commands.literal("fixtrains").executes(TypeCommands::fixTrains)));
+    }
+
+    private static int fixTrains(CommandContext<CommandSourceStack> ctx) {
+        if (com.zurrtum.create.Create.RAILWAYS == null) return 0;
+        int trains = 0, joints = 0, unstuck = 0, skipped = 0;
+        for (com.zurrtum.create.content.trains.entity.Train train : com.zurrtum.create.Create.RAILWAYS.trains.values()) {
+            boolean touched = false;
+            for (int i = 1; i < train.carriages.size() && i - 1 < train.carriageSpacing.size(); i++) {
+                try {
+                    var prev = train.carriages.get(i - 1).trailingBogey();
+                    var next = train.carriages.get(i).leadingBogey();
+                    Vec3 a = prev.getAnchorPosition(false), b = next.getAnchorPosition(false);
+                    if (a == null || b == null) { skipped++; continue; }
+                    double d2 = a.distanceToSqr(b);
+                    if (prev.isUpsideDown() != next.isUpsideDown()) d2 -= 4;
+                    int gap = (int) Math.round(Math.sqrt(Math.max(0, d2)));
+                    if (gap < 1 || gap > 64) { skipped++; continue; }
+                    if (train.carriageSpacing.get(i - 1) != gap) {
+                        train.carriageSpacing.set(i - 1, gap);
+                        joints++;
+                        touched = true;
+                    }
+                } catch (RuntimeException e) {
+                    skipped++;
+                }
+            }
+            if (train.derailed) {
+                train.derailed = false;
+                unstuck++;
+                touched = true;
+            }
+            if (touched) trains++;
+        }
+        int t = trains, j = joints, u = unstuck, s = skipped;
+        ctx.getSource().sendSuccess(() -> Component.literal("Fixed " + j + " coupling gap(s) and freed " + u
+            + " stuck train(s) across " + t + " train(s)." + (s > 0 ? " Skipped " + s + " joint(s) in unloaded areas - go near them and run it again." : "")
+            + " Rejoin so your game picks up the fixes."), true);
+        return 1;
     }
 
     private static int mark(CommandContext<CommandSourceStack> ctx, String type) {
