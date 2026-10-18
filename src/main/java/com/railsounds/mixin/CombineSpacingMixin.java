@@ -25,9 +25,13 @@ public abstract class CombineSpacingMixin {
                 return spacing;
             Carriage last = frontTrain.carriages.get(frontTrain.carriages.size() - 1);
             Carriage first = backTrain.carriages.get(0);
-            Vec3 a = last.getTrailingPoint().getPosition(frontTrain.graph);
-            Vec3 b = first.getLeadingPoint().getPosition(backTrain.graph);
-            int gap = (int) Math.round(a.distanceTo(b));
+            // same measurement Create uses when it enforces spacing: bogey centre to bogey centre
+            Vec3 a = last.trailingBogey().getAnchorPosition(false);
+            Vec3 b = first.leadingBogey().getAnchorPosition(false);
+            double d2 = a.distanceToSqr(b);
+            if (first.leadingBogey().isUpsideDown() != last.trailingBogey().isUpsideDown())
+                d2 -= 4;
+            int gap = (int) Math.round(Math.sqrt(Math.max(0, d2)));
             return gap >= 1 && gap <= 64 ? gap : spacing;
         } catch (RuntimeException e) {
             return spacing;
