@@ -2,6 +2,6 @@
   "required": true,
   "package": "com.railsounds.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": ["TrackTargetingBehaviourMixin", "SplitTrainNameMixin", "CouplerAlignmentMixin"],
+  "mixins": ["TrackTargetingBehaviourMixin", "SplitTrainNameMixin", "CouplerAlignmentMixin", "CombineSpacingMixin"],
   "injectors": { "defaultRequire": 1 }
 }
