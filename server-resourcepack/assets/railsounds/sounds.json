@@ -1,7 +1,67 @@
 {
-  "clack":         {"subtitle":"Rail joint clack",    "sounds":[{"name":"railsounds:clack",         "attenuation_distance":32}]},
-  "brake_squeal":  {"subtitle":"Train brakes squeal", "sounds":[{"name":"railsounds:brake_squeal",  "attenuation_distance":64}]},
-  "coupler_clunk": {"subtitle":"Couplers clunk",      "sounds":[{"name":"railsounds:coupler_clunk", "attenuation_distance":48}]},
-  "air_release":   {"subtitle":"Air brakes release",  "sounds":[{"name":"railsounds:air_release",   "attenuation_distance":48}]},
-  "crossing_bell": {"subtitle":"Crossing bell rings", "sounds":[{"name":"railsounds:crossing_bell", "attenuation_distance":48}]}
+  "clack": {
+    "subtitle": "Rail joint clack",
+    "sounds": [
+      {
+        "name": "railsounds:clack",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "brake_squeal": {
+    "subtitle": "Train brakes squeal",
+    "sounds": [
+      {
+        "name": "railsounds:brake_squeal",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "coupler_clunk": {
+    "subtitle": "Couplers clunk",
+    "sounds": [
+      {
+        "name": "railsounds:coupler_clunk",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "air_release": {
+    "subtitle": "Air brakes release",
+    "sounds": [
+      {
+        "name": "railsounds:air_release",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "crossing_bell": {
+    "subtitle": "Crossing bell rings",
+    "sounds": [
+      {
+        "name": "railsounds:crossing_bell",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "diesel_horn": {
+    "subtitle": "Diesel horn",
+    "sounds": [
+      {
+        "name": "railsounds:diesel_horn",
+        "attenuation_distance": 128,
+        "stream": true
+      }
+    ]
+  },
+  "steam_whistle": {
+    "subtitle": "Steam whistle",
+    "sounds": [
+      {
+        "name": "railsounds:steam_whistle",
+        "attenuation_distance": 128,
+        "stream": true
+      }
+    ]
+  }
 }

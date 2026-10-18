@@ -67,6 +67,16 @@ public class RailConfig {
          *  S&R's own value is 0.8. Too big on short cars and it may grab the wrong joint. */
         public double couplerAlignmentTolerance = 3.0;
 
+        // ---- diesel horn / steam whistle (/diesel, /steam) ----
+        /** length of your diesel_horn.ogg in ticks; replays every this many ticks while held */
+        public int hornClipTicks = 60;
+        /** length of your steam_whistle.ogg in ticks */
+        public int whistleClipTicks = 60;
+        public float hornVolume = 1.0f;
+        public int hornHearingRange = 128;
+        /** cut the horn if no "still holding" signal arrives for this many ticks (stops it sticking) */
+        public int hornReleaseTimeoutTicks = 12;
+
         // ---- misc ----
         /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */
         public boolean ignoreHandcars = true;

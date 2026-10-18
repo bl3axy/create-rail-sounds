@@ -24,17 +24,24 @@ public class RailSounds implements ModInitializer {
         RailConfig.load();
         Crossings.load();
 
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> TrainSoundTracker.reset());
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            TrainSoundTracker.reset();
+            TrainTypes.load(server);
+        });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             SoundPlayer.clear();
             Crossings.onServerStop();
             TrainSoundTracker.reset();
+            Horns.reset();
+            TrainTypes.unload();
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             try {
                 TrainSoundTracker.tick(server);
                 Crossings.tick(server);
                 SoundPlayer.tickScheduled(server);
+                Horns.tick(server);
+                if (server.getTickCount() % 1200 == 600) TrainTypes.cleanup();
             } catch (Throwable t) {
                 // never crash the server over a sound, and don't flood the log 20x a second either
                 long now = System.currentTimeMillis();
@@ -44,7 +51,10 @@ public class RailSounds implements ModInitializer {
                 }
             }
         });
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) -> RailCommands.register(dispatcher));
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) -> {
+            RailCommands.register(dispatcher);
+            TypeCommands.register(dispatcher);
+        });
         LOG.info("Create Rail Sounds loaded");
     }
 }
