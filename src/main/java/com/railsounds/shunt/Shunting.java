@@ -124,6 +124,10 @@ public final class Shunting {
         // way too fast: let Create crash them (unless the safety net is on: then always stop)
         if (closing > c.bufferMaxSpeed && !c.collisionAvoidance) return;
 
+        // a scheduled train making its final few centimetres to the platform: let it arrive
+        if (train.navigation.destination != null
+            && Math.abs(train.navigation.distanceToDestination) <= c.contactGap + 0.15) return;
+
         train.speed = 0; // buffers meet: stop right here
         if (!server) return;
 
@@ -163,6 +167,7 @@ public final class Shunting {
         Train a = contact.ours().train(), b = contact.theirs().train();
         String key = pair(a, b);
         if (!c.autoCouple || PENDING_SEPARATION.containsKey(key)) return;
+        if (!mayAutoCouple(a) || !mayAutoCouple(b)) return;
         boolean aCut = !hasControls(a), bCut = !hasControls(b);
         if (!aCut && !bCut) return; // two locomotives / two powered trains never grab each other on their own
         for (ServerPlayer p : drivers(a)) if (AUTO_OFF.contains(p.getUUID())) return;
@@ -182,6 +187,13 @@ public final class Shunting {
         }
         TrainEnds.End ea = contact.ours(), eb = contact.theirs();
         QUEUE.add(() -> couple(ea.train(), ea.front(), eb.train(), eb.front(), null, c.contactGap + 0.2));
+    }
+
+    /** a train running a route on its own (schedule, nobody driving) doesn't grab cars on the
+     *  way, that would wreck its route; yard rules do the coupling for those. A player Space-docking
+     *  counts as driving, so backing into cars at a platform still couples */
+    static boolean mayAutoCouple(Train t) {
+        return t.navigation.destination == null || !drivers(t).isEmpty();
     }
 
     /** cars without a loco coast further instead of stopping like they have brakes on */

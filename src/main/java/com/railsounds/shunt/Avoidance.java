@@ -42,9 +42,6 @@ final class Avoidance {
 
         double accel = Math.max(1e-4, train.acceleration());
         double look = Math.min(160, speed * speed / (2 * accel) + speed * 10 + 8);
-        // heading for a station: past the stop the route is unknown, so don't guess beyond it
-        if (train.navigation.destination != null)
-            look = Math.min(look, Math.abs(train.navigation.distanceToDestination) + 3);
 
         // body points of every other train that could be in reach
         List<BodyPoint> points = new ArrayList<>();
@@ -60,6 +57,14 @@ final class Avoidance {
         double bodyAhead = 0.5;
         if (ours != null) bodyAhead = Math.max(0, ours.overhang() - ours.anchor().distanceTo(start));
 
+        // heading for a station: Create stops our wheels at the marker. Anything past where our
+        // body will end up when stopped there can't be hit, and the route beyond is unknown anyway
+        double stopAt = Double.MAX_VALUE;
+        if (train.navigation.destination != null) {
+            stopAt = Math.abs(train.navigation.distanceToDestination);
+            look = Math.min(look, stopAt + bodyAhead + HIT);
+        }
+
         TravellingPoint scout = new TravellingPoint(lead.node1, lead.node2, lead.edge, lead.position, lead.upsideDown);
         TravellingPoint.ITrackSelector routed = train.navigation.destination != null ? train.navigation.controlSignalScout() : null;
         double sign = forward ? 1 : -1;
@@ -74,22 +79,32 @@ final class Avoidance {
             Vec3 pos = scout.getPosition(train.graph);
             Vec3 heading = pos.subtract(prev);
             prev = pos;
-            for (BodyPoint b : points) {
-                double dx = b.pos.x - pos.x, dz = b.pos.z - pos.z;
-                if (dx * dx + dz * dz > HIT * HIT || Math.abs(b.pos.y - pos.y) > 2.5) continue;
-                // found something on our track 'travelled' blocks ahead of our front wheels
-                double gap = travelled - bodyAhead - MARGIN;
-                Vec3 h = heading.lengthSqr() > 1e-6 ? heading.normalize() : Vec3.ZERO;
-                double away = Math.max(0, b.vel.dot(h)); // how fast it's getting out of our way
-                // parked cars end-on in front of us: roll up at coupling speed so they couple.
-                // anything else (a loco, or cars across our path at a junction): stop short
-                boolean coupleable = c.autoCouple && ours != null && !Shunting.hasControls(b.train)
-                    && TrainEnds.findContact(ours, look, List.of(b.train)) != null;
-                double floor = coupleable ? c.coupleMaxSpeed * 0.8 : 0;
-                double cap = Math.sqrt(2 * accel * Math.max(0, gap)) + away + floor;
-                if (speed > cap) train.speed = sign * cap;
-                return;
+            Vec3 h = heading.lengthSqr() > 1e-6 ? heading.normalize() : Vec3.ZERO;
+            // nearest thing on our track around this step
+            BodyPoint hit = null;
+            double at = Double.MAX_VALUE;
+            for (BodyPoint bp : points) {
+                double dx = bp.pos.x - pos.x, dz = bp.pos.z - pos.z;
+                if (dx * dx + dz * dz > HIT * HIT || Math.abs(bp.pos.y - pos.y) > 2.5) continue;
+                double a = travelled + bp.pos.subtract(pos).dot(h); // distance ahead of our front wheels
+                if (a < at) {
+                    at = a;
+                    hit = bp;
+                }
             }
+            if (hit == null) continue;
+            if (at - bodyAhead >= stopAt - 0.05) return; // beyond where we stop anyway
+            double gap = at - bodyAhead - MARGIN;
+            double away = Math.max(0, hit.vel.dot(h)); // how fast it's getting out of our way
+            // parked cars end-on in front of us: roll up at coupling speed so they couple.
+            // anything else (a loco, or cars across our path at a junction): stop short
+            boolean coupleable = c.autoCouple && ours != null && !Shunting.hasControls(hit.train)
+                && Shunting.mayAutoCouple(train)
+                && TrainEnds.findContact(ours, look, List.of(hit.train)) != null;
+            double floor = coupleable ? c.coupleMaxSpeed * 0.8 : 0;
+            double cap = Math.sqrt(2 * accel * Math.max(0, gap)) + away + floor;
+            if (speed > cap) train.speed = sign * cap;
+            return;
         }
     }
 
