@@ -79,6 +79,8 @@ public final class Shunting {
     private static final Map<String, Long> MSG_COOLDOWN = new HashMap<>();
     private static final List<Runnable> QUEUE = new ArrayList<>();
     private static long now;
+    /** single-cab trains currently allowed to Space-dock backwards (see ControlsDockMixin) */
+    public static final Set<UUID> BACK_DOCK = java.util.Collections.synchronizedSet(new HashSet<>());
 
     public static void reset() {
         CONTACT.clear();
@@ -86,6 +88,7 @@ public final class Shunting {
         PENDING_SEPARATION.clear();
         MSG_COOLDOWN.clear();
         QUEUE.clear();
+        BACK_DOCK.clear();
         TrainEnds.clearCache();
         YardRules.resetArrivals();
     }
@@ -109,6 +112,7 @@ public final class Shunting {
         TrainEnds.End ours = TrainEnds.end(train, train.speed > 0);
         if (ours == null) return;
         Iterable<Train> list = server ? trains() : new ArrayList<>(Create.RAILWAYS.sided(level).trains.values());
+        if (c.easeIntoCuts) easeIn(train, ours, list);
         TrainEnds.Contact contact = TrainEnds.findContact(ours, c.contactGap, list);
         if (contact == null) return;
         Train other = contact.theirs().train();
@@ -130,6 +134,26 @@ public final class Shunting {
             SoundPlayer.play(sl, at, SoundPlayer.COUPLER, vol, 0.85f + (float) Math.random() * 0.15f, c.couplerHearingRange);
         }
         considerAutoCouple(contact, closing);
+    }
+
+    /**
+     * Like an engineer easing up to a cut: cap the speed so the train can still slow to coupling
+     * speed by the time it reaches cars sitting ahead on the same line.
+     */
+    private static void easeIn(Train train, TrainEnds.End ours, Iterable<Train> list) {
+        RailConfig.Values c = RailConfig.V;
+        double speed = Math.abs(train.speed);
+        if (speed <= c.coupleMaxSpeed * 0.8) return;
+        double accel = Math.max(1e-4, train.acceleration());
+        double look = speed * speed / (2 * accel) + 6;
+        TrainEnds.Contact ahead = TrainEnds.findContact(ours, look, list);
+        if (ahead == null) return;
+        Train other = ahead.theirs().train();
+        if (hasControls(other)) return; // only parked cars, not other locos
+        if (Math.abs(other.speed) > c.coupleMaxSpeed) return;
+        double gap = Math.max(0, ahead.gap() - c.contactGap);
+        double cap = c.coupleMaxSpeed * 0.8 + Math.sqrt(2 * accel * gap);
+        if (speed > cap) train.speed = Math.signum(train.speed) * cap;
     }
 
     private static void considerAutoCouple(TrainEnds.Contact contact, double closing) {
@@ -188,6 +212,14 @@ public final class Shunting {
             }
         }
         if (now % 20 == 0) prune();
+        if (!BACK_DOCK.isEmpty()) {
+            synchronized (BACK_DOCK) {
+                BACK_DOCK.removeIf(id -> {
+                    Train t = Create.RAILWAYS.trains.get(id);
+                    return t == null || (t.navigation.destination == null && t.speed >= 0);
+                });
+            }
+        }
         YardRules.tick(server, now);
     }
 
@@ -456,6 +488,9 @@ public final class Shunting {
         }
         result.fuelTicks = fuel;
         result.speed = 0;
+        // coupled while heading somewhere (Space docking / a schedule): stop here, the schedule re-plans
+        if (result.navigation.destination != null) result.navigation.cancelNavigation();
+        else if (result.runtime != null) result.runtime.transitInterrupted();
         setName(level.getServer(), result, name, icon, color);
         if (type != null) TrainTypes.set(result, type);
         PENDING_SEPARATION.remove(pair(front, back));

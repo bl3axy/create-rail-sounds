@@ -28,6 +28,8 @@ No coupler blocks needed. Keys are rebindable under Controls > Train Shunting.
 - **Either end:** couple at the front or the back of your train, pushing or pulling. Cars that face *opposite ways* (front-to-front) can't be joined - Create stores each car's direction inside it.
 - **Names:** the train you're driving keeps its name (then a scheduled train, then the loco). Diesel/steam marks and schedules carry over too.
 - **Cut cars coast** (`cutCoastFactor`) and roll on after uncoupling at speed, so you can kick cars.
+- **Ease-in:** trains closing on parked cars slow down on their own so they arrive at coupling speed (`easeIntoCuts`).
+- **Back into stations:** reversing a single-cab loco, Space now finds the station behind you and backs onto the platform (`reverseIntoStations`). Create normally only allows that with controls at both ends.
 - **Yard rules** (stations do it automatically when a train stops there):
   - `/railsounds yard couple <station>`
   - `/railsounds yard uncouple <n|all> <station>` (drops cars off the end away from the loco)

@@ -112,6 +112,11 @@ public class RailConfig {
         public double cutCoastFactor = 0.25;
         /** fallback overhang past the end bogey when a car isn't loaded */
         public double defaultOverhang = 1.5;
+        /** Space finds stations behind you too when reversing a single-cab loco (Create only allows it
+         *  for trains with controls at both ends) */
+        public boolean reverseIntoStations = true;
+        /** trains slow down when closing on a cut of cars, so they arrive slow enough to couple */
+        public boolean easeIntoCuts = true;
         /** ticks a train waits at a yard station before its couple/uncouple rule runs */
         public int yardRuleDelayTicks = 20;
 
