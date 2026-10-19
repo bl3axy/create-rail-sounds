@@ -15,7 +15,11 @@ jobs:
           distribution: temurin
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
-      - run: chmod +x gradlew && ./gradlew build --stacktrace
+      - name: Build
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew build --stacktrace 2>&1 | tee build-log.txt
       - uses: actions/upload-artifact@v4
         with:
           name: justoutdoorstuffs
@@ -23,8 +27,9 @@ jobs:
             build/libs/*.jar
             
       - name: Publish to dist branch
+        if: always()
         run: |
-          mkdir dist && cp build/libs/*.jar dist/
+          mkdir dist && cp build-log.txt dist/ && (cp build/libs/*.jar dist/ || true)
           rm -f dist/*-sources.jar
           cd dist
           git init -q -b outdoor-dist
