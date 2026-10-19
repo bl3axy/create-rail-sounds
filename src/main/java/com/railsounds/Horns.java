@@ -103,7 +103,9 @@ public class Horns {
                 it.remove();
                 continue;
             }
-            // modded players who just came into range join in
+            // modded players who just came into range join in; every 5s re-send to everyone so a
+            // horn held longer than the hold clip restarts (clients ignore it while still playing)
+            if (now % 100 == 0) resendModded(s);
             if (now % 5 == 0) startModded(s);
             if (now >= s.nextReplay) {
                 playVanilla(s, s.sound);
@@ -145,6 +147,15 @@ public class Horns {
             ServerPlayNetworking.send(p, new HornPayload(s.entity.getId(), s.sound + "_hold",
                 RailConfig.V.hornVolume, true, 0));
             s.modded.add(p.getUUID());
+        }
+    }
+
+    private static void resendModded(State s) {
+        if (s.entity == null || s.entity.isRemoved()) return;
+        for (ServerPlayer p : s.level.players()) {
+            if (!s.modded.contains(p.getUUID())) continue;
+            ServerPlayNetworking.send(p, new HornPayload(s.entity.getId(), s.sound + "_hold",
+                RailConfig.V.hornVolume, true, 0));
         }
     }
 

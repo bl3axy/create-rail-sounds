@@ -23,7 +23,8 @@ public class RailSoundsClient implements ClientModInitializer {
     }
 
     private static void handle(Minecraft mc, HornPayload p) {
-        ACTIVE.values().removeIf(HornSound::isStopped);
+        // gone if we stopped it, or the clip ended / got culled by the sound engine on its own
+        ACTIVE.values().removeIf(h -> h.isStopped() || (h.ageMillis() > 1000 && !mc.getSoundManager().isActive(h)));
         HornSound current = ACTIVE.get(p.entityId());
         if (p.start()) {
             if (current != null && !current.isFading()) return; // already blowing

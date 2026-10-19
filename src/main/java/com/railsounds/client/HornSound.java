@@ -18,6 +18,11 @@ public class HornSound extends AbstractTickableSoundInstance {
     private final float baseVolume;
     private int fadeTotal;
     private int fadeLeft = -1;
+    private final long created = System.currentTimeMillis();
+
+    public long ageMillis() {
+        return System.currentTimeMillis() - created;
+    }
 
     public HornSound(String sound, Entity entity, float volume) {
         super(SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(RailSounds.MOD_ID, sound)),

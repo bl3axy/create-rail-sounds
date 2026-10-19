@@ -76,14 +76,19 @@ public final class YardRules {
         if (t != null && t.currentStation != null) AT_STATION.put(t.id, t.currentStation);
     }
 
+    private static boolean seeded;
+
     static void resetArrivals() {
         AT_STATION.clear();
         DUE.clear();
+        seeded = false;
     }
 
     static void tick(MinecraftServer server, long now) {
         if (!RailConfig.V.shuntingEnabled) return;
-        if (!rules.isEmpty() && now % 5 == 0) {
+        // always track who's sitting where, so a train that was already parked when the server
+        // started (or when a rule was added) doesn't fire the rule; only real arrivals do
+        if (now % 5 == 0) {
             java.util.Set<UUID> seen = new java.util.HashSet<>();
             for (Train t : Shunting.allTrains()) {
                 seen.add(t.id);
@@ -94,11 +99,13 @@ public final class YardRules {
                 }
                 if (st.equals(AT_STATION.get(t.id))) continue;
                 AT_STATION.put(t.id, st);
+                if (!seeded || rules.isEmpty()) continue;
                 GlobalStation gs = t.getCurrentStation();
                 if (gs != null && rules.containsKey(key(gs.name)))
                     DUE.add(new Due(t.id, st, now + Math.max(0, RailConfig.V.yardRuleDelayTicks)));
             }
             AT_STATION.keySet().retainAll(seen);
+            seeded = true;
         }
         if (DUE.isEmpty()) return;
         Iterator<Due> it = DUE.iterator();
