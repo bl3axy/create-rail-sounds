@@ -92,8 +92,9 @@ public class DepartureBoardSource extends DisplaySource {
         float total = flapDisplay.xSize * 32f - 4f - timeW - gap * 2;
         float platW = hasPlatform ? Math.min(platChars * 7f, total / 3) : 0;
         if (hasPlatform) total -= gap + platW;
-        int nameChars = (int) (nameCol / 100f * total / 7f);
-        int destChars = (int) ((total - nameChars * 7f) / 7f);
+        total = Math.max(0, total);
+        int nameChars = Math.max(0, (int) (nameCol / 100f * total / 7f));
+        int destChars = Math.max(0, (int) ((total - nameChars * 7f) / 7f));
 
         List<FlapDisplaySection> sections = new ArrayList<>();
         sections.add(new FlapDisplaySection(timeW, "instant", false, true));

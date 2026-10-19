@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /** Shared bits for the departure board and platform display: clock times and "via" stops. */
@@ -50,13 +49,23 @@ final class Departures {
         try {
             Train t = p.train;
             if (t == null || t.runtime == null || t.runtime.getSchedule() == null) return out;
-            Collection<TrainDeparturePrediction> all = t.runtime.submitPredictions();
-            boolean found = false;
-            for (TrainDeparturePrediction q : all) {
-                if (!found) {
-                    if (q.destination.equals(p.destination) && Math.abs(q.ticks - p.ticks) < 40) found = true;
-                    continue;
+            List<TrainDeparturePrediction> all = new ArrayList<>(t.runtime.submitPredictions());
+            // the board's numbers are from Create's last refresh, so match the visit to this
+            // station whose time is closest, not an exact tick count
+            int start = -1;
+            int best = Integer.MAX_VALUE;
+            for (int i = 0; i < all.size(); i++) {
+                TrainDeparturePrediction q = all.get(i);
+                if (!q.destination.equals(p.destination)) continue;
+                int d = Math.abs(q.ticks - p.ticks);
+                if (d < best) {
+                    best = d;
+                    start = i;
                 }
+            }
+            if (start < 0) return out;
+            for (int i = start + 1; i < all.size(); i++) {
+                TrainDeparturePrediction q = all.get(i);
                 if (q.destination.equals(p.destination)) break; // came back round
                 if (!out.contains(q.destination)) out.add(q.destination);
                 if (out.size() >= max) break;
