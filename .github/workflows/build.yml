@@ -20,6 +20,12 @@ jobs:
           chmod +x gradlew
           set -o pipefail
           ./gradlew build --stacktrace 2>&1 | tee build-log.txt
+      - name: Boot a test server
+        if: success()
+        run: |
+          mkdir -p run && echo "eula=true" > run/eula.txt
+          timeout 300 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true
+          cp run/logs/latest.log server-log.txt || cp server-run.txt server-log.txt
       - uses: actions/upload-artifact@v4
         with:
           name: justoutdoorstuffs
@@ -29,7 +35,7 @@ jobs:
       - name: Publish to dist branch
         if: always()
         run: |
-          mkdir dist && cp build-log.txt dist/ && (cp build/libs/*.jar dist/ || true)
+          mkdir dist && cp build-log.txt dist/ && (cp server-log.txt dist/ || true) && (cp build/libs/*.jar dist/ || true)
           rm -f dist/*-sources.jar
           cd dist
           git init -q -b outdoor-dist
