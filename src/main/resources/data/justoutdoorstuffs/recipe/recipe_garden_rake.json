@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "justoutdoorstuffs:blueprint_garden_stuffs",
+  "result": {
+    "id": "justoutdoorstuffs:garden_rake",
+    "count": 1
+  }
+}

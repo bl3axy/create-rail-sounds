@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "012",
+    "345",
+    "678"
+  ],
+  "key": {
+    "0": "minecraft:blue_dye",
+    "1": "minecraft:paper",
+    "2": "minecraft:white_dye",
+    "3": "minecraft:paper",
+    "4": "minecraft:flower_pot",
+    "5": "minecraft:paper",
+    "6": "minecraft:white_dye",
+    "7": "minecraft:paper",
+    "8": "minecraft:blue_dye"
+  },
+  "result": {
+    "id": "justoutdoorstuffs:blueprint_patio_stuffs",
+    "count": 1
+  },
+  "show_notification": true
+}

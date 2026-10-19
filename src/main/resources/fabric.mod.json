@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "justoutdoorstuffs",
+  "version": "${version}",
+  "name": "Just Outdoor Stuffs",
+  "description": "Just outdoor furniture and decoration. Unofficial port to 26.2 of the MIT-licensed original by ImJustSeiyin and ringpro.",
+  "authors": ["ImJustSeiyin", "ringpro"],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/just-outdoor-stuffs",
+    "sources": "https://github.com/ringprod/Just-Outdoor-Stuffs"
+  },
+  "license": "MIT",
+  "icon": "assets/justoutdoorstuffs/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.imjustseiyin.JustOutdoorStuffsMod"],
+    "client": ["com.imjustseiyin.JustOutdoorStuffsClientMod"]
+  },
+  "depends": {
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "minecraft": ">=26.2- <26.3-",
+    "java": ">=25"
+  }
+}

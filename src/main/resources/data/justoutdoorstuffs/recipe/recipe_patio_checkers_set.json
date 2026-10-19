@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "justoutdoorstuffs:blueprint_patio_stuffs",
+  "result": {
+    "id": "justoutdoorstuffs:patio_checkers_set",
+    "count": 1
+  }
+}
