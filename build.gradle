@@ -17,6 +17,8 @@ dependencies {
 processResources {
     inputs.property "version", project.version
     filesMatching("fabric.mod.json") { expand "version": project.version }
+    // ship the sounds inside the jar too, so clients with the mod don't need the server pack
+    from("server-resourcepack") { include "assets/**" }
 }
 
 tasks.withType(JavaCompile).configureEach { it.options.release = 25 }
