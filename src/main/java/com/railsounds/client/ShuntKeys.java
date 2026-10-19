@@ -46,7 +46,7 @@ public final class ShuntKeys {
     }
 
     private static void numbers(Minecraft mc) {
-        if (mc.player == null || mc.screen != null) {
+        if (mc.player == null || mc.gui.screen() != null) {
             uncoupleWasDown = false;
             return;
         }
