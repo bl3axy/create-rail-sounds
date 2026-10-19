@@ -63,7 +63,8 @@ public final class FacingHud {
         int color2 = WHITE;
         if (mine != null && looked != null && looked != mine) {
             Vec3 myFront = frontDir(mine);
-            if (myFront != null) {
+            // only judge trains that are actually on your line, not ones on a parallel track
+            if (myFront != null && inLine(mine, looked, myFront)) {
                 boolean same = myFront.x * front.x + myFront.z * front.z > 0;
                 line2 = same ? "✔ Same way - can couple" : "✘ Facing other way - can't couple";
                 color2 = same ? GREEN : RED;
@@ -118,6 +119,28 @@ public final class FacingHud {
             }
         }
         return best;
+    }
+
+    /** is any end of train b within 2 blocks sideways of the line through train a? */
+    private static boolean inLine(Train a, Train b, Vec3 dir) {
+        Vec3 pa = anchor(a, true);
+        if (pa == null) return false;
+        for (boolean f : new boolean[]{true, false}) {
+            Vec3 pb = anchor(b, f);
+            if (pb == null) continue;
+            double dx = pb.x - pa.x, dz = pb.z - pa.z;
+            double side = Math.abs(dx * dir.z - dz * dir.x);
+            if (side < 2.0 && Math.abs(pb.y - pa.y) < 3) return true;
+        }
+        return false;
+    }
+
+    private static Vec3 anchor(Train t, boolean front) {
+        if (t.carriages.isEmpty()) return null;
+        Carriage c = front ? t.carriages.get(0) : t.carriages.get(t.carriages.size() - 1);
+        Carriage.DimensionalCarriageEntity d = c.getDimensionalIfPresent(Minecraft.getInstance().level.dimension());
+        if (d == null || d.rotationAnchors == null) return null;
+        return front ? d.rotationAnchors.getFirst() : d.rotationAnchors.getSecond();
     }
 
     /** horizontal direction the train's front points (from its lead car's front to its last car's back) */
