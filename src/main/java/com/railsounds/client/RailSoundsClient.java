@@ -18,6 +18,7 @@ public class RailSoundsClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientPlayNetworking.registerGlobalReceiver(HornPayload.TYPE, (p, ctx) -> handle(ctx.client(), p));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ACTIVE.clear());
+        ShuntKeys.register();
     }
 
     private static void handle(Minecraft mc, HornPayload p) {

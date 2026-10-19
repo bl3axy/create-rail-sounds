@@ -1,0 +1,8 @@
+{
+  "key.category.railsounds.shunting": "Train Shunting",
+  "key.categories.railsounds.shunting": "Train Shunting",
+  "category.railsounds.shunting": "Train Shunting",
+  "key.railsounds.couple": "Couple",
+  "key.railsounds.uncouple": "Uncouple (hold + number, or tap)",
+  "key.railsounds.toggle_autocouple": "Toggle auto-couple"
+}

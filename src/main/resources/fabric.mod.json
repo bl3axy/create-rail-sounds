@@ -3,7 +3,7 @@
   "id": "railsounds",
   "version": "${version}",
   "name": "Create Rail Sounds",
-  "description": "Live train sounds for Create: rail clack, brake squeal, coupler slack, air release and crossing bells. Goes on the server; also install on clients for the Steam 'n' Rails coupler sync fix and smooth horn fade-outs. Sounds come from the server resource pack.",
+  "description": "Live train sounds and realistic shunting for Create: rail clack, brake squeal, coupler slack, air release, crossing bells, keybind coupling/uncoupling, buffers and yard rules. Goes on the server; also install on clients for the Steam 'n' Rails coupler sync fix, the shunting keys and smooth horn fade-outs. Sounds come from the server resource pack.",
   "license": "MIT",
   "environment": "*",
   "mixins": ["railsounds.mixins.json", { "config": "railsounds.client.mixins.json", "environment": "client" }],

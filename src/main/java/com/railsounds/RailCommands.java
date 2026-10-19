@@ -23,6 +23,10 @@ import net.minecraft.world.phys.Vec3;
  * /railsounds test <sound>                   - play a sound where you stand
  * /railsounds debug                          - speed/braking of every train
  * /railsounds reload                         - re-read config/railsounds.json
+ * /railsounds yard couple <station>          - trains stopping there couple to the cut they touch
+ * /railsounds yard uncouple <n|all> <station> - trains stopping there drop n cars (away from the loco)
+ * /railsounds yard clear <station>
+ * /railsounds yard list
  */
 public class RailCommands {
 
@@ -67,12 +71,66 @@ public class RailCommands {
                 for (Train t : Create.RAILWAYS.trains.values()) ok(ctx, TrainSoundTracker.describe(t));
                 return 1;
             }))
+            .then(Commands.literal("yard")
+                .then(Commands.literal("couple")
+                    .then(Commands.argument("station", StringArgumentType.greedyString())
+                        .suggests(RailCommands::stations)
+                        .executes(ctx -> yard(ctx, "couple", 0))))
+                .then(Commands.literal("uncouple")
+                    .then(Commands.literal("all")
+                        .then(Commands.argument("station", StringArgumentType.greedyString())
+                            .suggests(RailCommands::stations)
+                            .executes(ctx -> yard(ctx, "uncouple", 0))))
+                    .then(Commands.argument("cars", IntegerArgumentType.integer(1, 64))
+                        .then(Commands.argument("station", StringArgumentType.greedyString())
+                            .suggests(RailCommands::stations)
+                            .executes(ctx -> yard(ctx, "uncouple", IntegerArgumentType.getInteger(ctx, "cars"))))))
+                .then(Commands.literal("clear")
+                    .then(Commands.argument("station", StringArgumentType.greedyString())
+                        .suggests(RailCommands::stations)
+                        .executes(ctx -> {
+                            String st = StringArgumentType.getString(ctx, "station");
+                            if (com.railsounds.shunt.YardRules.remove(st)) ok(ctx, "Cleared the yard rule for " + st + ".");
+                            else ctx.getSource().sendFailure(Component.literal("No yard rule for " + st + "."));
+                            return 1;
+                        })))
+                .then(Commands.literal("list").executes(ctx -> {
+                    var all = com.railsounds.shunt.YardRules.all();
+                    if (all.isEmpty()) ok(ctx, "No yard rules.");
+                    all.forEach((st, r) -> ok(ctx, st + ": " + r.mode + ("uncouple".equals(r.mode)
+                        ? " " + (r.count <= 0 ? "all" : String.valueOf(r.count)) : "")));
+                    return 1;
+                })))
             .then(Commands.literal("reload").executes(ctx -> {
                 RailConfig.load();
                 Crossings.load();
                 ok(ctx, "Reloaded railsounds config + crossings.");
                 return 1;
             })));
+    }
+
+    private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> stations(
+            CommandContext<CommandSourceStack> ctx, com.mojang.brigadier.suggestion.SuggestionsBuilder b) {
+        java.util.Set<String> names = new java.util.TreeSet<>();
+        try {
+            for (var graph : Create.RAILWAYS.trackNetworks.values())
+                for (var st : graph.getPoints(com.zurrtum.create.content.trains.graph.EdgePointType.STATION))
+                    names.add(st.name);
+        } catch (RuntimeException ignored) {
+        }
+        String typed = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
+        for (String n : names) if (n.toLowerCase(java.util.Locale.ROOT).startsWith(typed)) b.suggest(n);
+        return b.buildFuture();
+    }
+
+    private static int yard(CommandContext<CommandSourceStack> ctx, String mode, int count) {
+        String st = StringArgumentType.getString(ctx, "station");
+        com.railsounds.shunt.YardRules.set(st, mode, count);
+        ok(ctx, "couple".equals(mode)
+            ? "Trains stopping at " + st + " will couple to the cut they're touching."
+            : "Trains stopping at " + st + " will drop " + (count <= 0 ? "every car without controls" : count + " car(s)")
+                + " off the end away from the loco.");
+        return 1;
     }
 
     private static int add(CommandContext<CommandSourceStack> ctx, int radius) {

@@ -5,6 +5,9 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import com.railsounds.shunt.Shunting;
+import com.railsounds.shunt.YardRules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +28,20 @@ public class RailSounds implements ModInitializer {
         RailConfig.load();
         Crossings.load();
         PayloadTypeRegistry.clientboundPlay().register(HornPayload.TYPE, HornPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(ShuntPayload.TYPE, ShuntPayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(ShuntPayload.TYPE, (p, ctx) -> {
+            try {
+                Shunting.onKey(ctx.player(), p.action(), p.number());
+            } catch (RuntimeException e) {
+                LOG.error("[railsounds] shunting key failed", e);
+            }
+        });
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             TrainSoundTracker.reset();
             TrainTypes.load(server);
+            Shunting.reset();
+            YardRules.load(server);
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             SoundPlayer.clear();
@@ -36,8 +49,15 @@ public class RailSounds implements ModInitializer {
             TrainSoundTracker.reset();
             Horns.reset();
             TrainTypes.unload();
+            Shunting.reset();
+            YardRules.unload();
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
+            try {
+                Shunting.tick(server);
+            } catch (Throwable t) {
+                LOG.error("[railsounds] shunting tick failed", t);
+            }
             try {
                 TrainSoundTracker.tick(server);
                 Crossings.tick(server);

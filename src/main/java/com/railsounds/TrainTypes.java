@@ -68,6 +68,12 @@ public class TrainTypes {
         save();
     }
 
+    public static void set(Train train, String type) {
+        if (train == null || type == null) return;
+        data.trains.put(train.id.toString(), type);
+        save();
+    }
+
     public static void onSplit(Train original, Train newTrain) {
         String type = get(original);
         if (type != null && newTrain != null && newTrain != original) {

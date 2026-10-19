@@ -88,6 +88,33 @@ public class RailConfig {
         public int hornFadeTicks = 14;
         public int whistleFadeTicks = 20;
 
+        // ---- shunting (keybind coupling, buffers, yard rules) ----
+        /** master switch for everything below */
+        public boolean shuntingEnabled = true;
+        /** couple automatically when a loco/cars touch a cut of cars slowly (like knuckle couplers).
+         *  Two powered trains never auto-couple; use the couple key or a yard rule for that */
+        public boolean autoCouple = true;
+        /** fastest closing speed (blocks/tick) that still couples. 0.15 = 3 blocks/sec */
+        public double coupleMaxSpeed = 0.15;
+        /** at or below this closing speed trains stop against each other (buffers) instead of crashing.
+         *  Above it Create's normal crash happens. 0.5 = 10 blocks/sec */
+        public double bufferMaxSpeed = 0.5;
+        /** can't pull the cut lever faster than this (blocks/tick). -1 = any speed */
+        public double uncoupleMaxSpeed = 0.15;
+        /** ends this close (blocks) count as touching */
+        public double contactGap = 0.35;
+        /** the couple key / a yard rule can reach a cut this far away and draw it in */
+        public double couplerReach = 1.5;
+        /** how far (blocks) you can be from a coupling when working it on foot */
+        public double onFootReach = 5.0;
+        /** cars with no controls roll this much further than Create's default before stopping.
+         *  1 = Create's normal braking, 0.25 = coast 4x as far */
+        public double cutCoastFactor = 0.25;
+        /** fallback overhang past the end bogey when a car isn't loaded */
+        public double defaultOverhang = 1.5;
+        /** ticks a train waits at a yard station before its couple/uncouple rule runs */
+        public int yardRuleDelayTicks = 20;
+
         // ---- misc ----
         /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */
         public boolean ignoreHandcars = true;

@@ -13,6 +13,26 @@ Server-side mod that makes Create trains sound real, driven by the train's actua
 Players don't need the mod: sounds come from the server resource pack (`server-resourcepack/`).
 With the mod on their client too, diesel horns / steam whistles play a long seamless hold and fade out from the moment you let go (`hornFadeTicks`, `whistleFadeTicks`). Without it they fall back to replay + short tail.
 
+## Shunting (needs Steam 'n' Rails; mod on server + clients)
+No coupler blocks needed. Keys are rebindable under Controls > Train Shunting.
+
+| Key | Does |
+|---|---|
+| **G** | couple to the cut your train is touching / within `couplerReach` (on foot: the joint you look at) |
+| **U + 1-9** | uncouple at coupling N counted from the car you're riding (number keys don't switch hotbar while U is held) |
+| **U** (tap, on foot) | uncouple the coupling you're looking at |
+| **H** | toggle auto-couple for trains you drive |
+
+- **Buffers:** a train touching another slower than `bufferMaxSpeed` (10 b/s) stops against it instead of crashing. Faster = Create's normal crash.
+- **Auto-couple:** easing into a cut of cars (no controls) at or under `coupleMaxSpeed` (3 b/s) couples it. Two powered trains never auto-couple.
+- **Either end:** couple at the front or the back of your train, pushing or pulling. Cars that face *opposite ways* (front-to-front) can't be joined - Create stores each car's direction inside it.
+- **Names:** the train you're driving keeps its name (then a scheduled train, then the loco). Diesel/steam marks and schedules carry over too.
+- **Cut cars coast** (`cutCoastFactor`) and roll on after uncoupling at speed, so you can kick cars.
+- **Yard rules** (stations do it automatically when a train stops there):
+  - `/railsounds yard couple <station>`
+  - `/railsounds yard uncouple <n|all> <station>` (drops cars off the end away from the loco)
+  - `/railsounds yard clear <station>` / `list`
+
 ## Commands (op)
 - `/railsounds crossing add <name> [radius]` — crossing where you stand (default radius 64)
 - `/railsounds crossing remove <name>` / `list`

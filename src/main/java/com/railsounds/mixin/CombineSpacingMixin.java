@@ -20,6 +20,8 @@ public abstract class CombineSpacingMixin {
         method = "combineTrains(Lcom/zurrtum/create/content/trains/entity/Train;Lcom/zurrtum/create/content/trains/entity/Train;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/Level;I)Lcom/zurrtum/create/content/trains/entity/Train;",
         at = @At("HEAD"), argsOnly = true, require = 0)
     private static int railsounds$actualGap(int spacing, Train frontTrain, Train backTrain, Vec3 dropPos, Level level) {
+        if (com.railsounds.shunt.Shunting.explicitSpacing)
+            return spacing; // our own keybind/yard coupling already picked the spacing
         try {
             if (frontTrain.carriages.isEmpty() || backTrain.carriages.isEmpty())
                 return spacing;
@@ -35,6 +37,29 @@ public abstract class CombineSpacingMixin {
             return gap >= 1 && gap <= 64 ? gap : spacing;
         } catch (RuntimeException e) {
             return spacing;
+        }
+    }
+
+    /** S&R's coupler block keeps the front train's name; keep the loco's / driven train's instead */
+    @org.spongepowered.asm.mixin.injection.Inject(
+        method = "combineTrains(Lcom/zurrtum/create/content/trains/entity/Train;Lcom/zurrtum/create/content/trains/entity/Train;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/Level;I)Lcom/zurrtum/create/content/trains/entity/Train;",
+        at = @At("HEAD"), require = 0)
+    private static void railsounds$beforeCombine(Train frontTrain, Train backTrain, Vec3 dropPos, Level level, int spacing,
+                                                 org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Train> cir) {
+        try {
+            com.railsounds.shunt.Shunting.beforeExternalCombine(frontTrain, backTrain);
+        } catch (RuntimeException ignored) {
+        }
+    }
+
+    @org.spongepowered.asm.mixin.injection.Inject(
+        method = "combineTrains(Lcom/zurrtum/create/content/trains/entity/Train;Lcom/zurrtum/create/content/trains/entity/Train;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/Level;I)Lcom/zurrtum/create/content/trains/entity/Train;",
+        at = @At("RETURN"), require = 0)
+    private static void railsounds$afterCombine(Train frontTrain, Train backTrain, Vec3 dropPos, Level level, int spacing,
+                                                org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Train> cir) {
+        try {
+            com.railsounds.shunt.Shunting.afterExternalCombine(cir.getReturnValue());
+        } catch (RuntimeException ignored) {
         }
     }
 }
