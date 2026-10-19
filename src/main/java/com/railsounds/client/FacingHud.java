@@ -38,7 +38,7 @@ public final class FacingHud {
 
     private static void render(GuiGraphicsExtractor g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.options.hideGui) return;
+        if (mc.player == null || mc.level == null) return;
         try {
             draw(mc, g);
         } catch (RuntimeException ignored) {
