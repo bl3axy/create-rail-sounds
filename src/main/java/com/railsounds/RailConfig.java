@@ -115,6 +115,10 @@ public class RailConfig {
         /** Space finds stations behind you too when reversing a single-cab loco (Create only allows it
          *  for trains with controls at both ends) */
         public boolean reverseIntoStations = true;
+        /** safety net: trains look along the track they're about to take and brake for any other
+         *  train in the way (ahead, round curves, across junctions), so they stop instead of
+         *  crashing. Keep your signals: two trains meeting head-on just both stop and wait */
+        public boolean collisionAvoidance = true;
         /** trains slow down when closing on a cut of cars, so they arrive slow enough to couple */
         public boolean easeIntoCuts = true;
         /** ticks a train waits at a yard station before its couple/uncouple rule runs */

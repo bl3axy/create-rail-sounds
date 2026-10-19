@@ -112,7 +112,8 @@ public final class Shunting {
         TrainEnds.End ours = TrainEnds.end(train, train.speed > 0);
         if (ours == null) return;
         Iterable<Train> list = server ? trains() : new ArrayList<>(Create.RAILWAYS.sided(level).trains.values());
-        if (c.easeIntoCuts) easeIn(train, ours, list);
+        if (server && c.collisionAvoidance) Avoidance.limit(train, list);
+        else if (c.easeIntoCuts) easeIn(train, ours, list);
         TrainEnds.Contact contact = TrainEnds.findContact(ours, c.contactGap, list);
         if (contact == null) return;
         Train other = contact.theirs().train();
@@ -120,7 +121,8 @@ public final class Shunting {
         double toward = contact.theirs().front() ? other.speed : -other.speed;
         double closing = Math.abs(train.speed) + toward;
         if (closing <= 1e-4) return;             // they're pulling away faster than we follow
-        if (closing > c.bufferMaxSpeed) return;  // way too fast: let Create crash them
+        // way too fast: let Create crash them (unless the safety net is on: then always stop)
+        if (closing > c.bufferMaxSpeed && !c.collisionAvoidance) return;
 
         train.speed = 0; // buffers meet: stop right here
         if (!server) return;
