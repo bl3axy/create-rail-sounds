@@ -36,6 +36,10 @@ No coupler blocks needed. Keys are rebindable under Controls > Train Shunting.
   - `/railsounds yard uncouple <n|all> <station>` (drops cars off the end away from the loco)
   - `/railsounds yard clear <station>` / `list`
 
+## Station displays (Display Link on a Train Station)
+- **Departure Board**: one train per row: departure clock time (in-game), train, destination, platform. The next train gets a "via" row listing its next stops. Filter with `*` for platforms like Create's (e.g. `Spruce Town *`).
+- **Platform Display (next train)**: the next train in detail (time, countdown, destination, via stops) plus the one after. Works on boards, signs, lecterns, nixie tubes.
+
 ## Commands (op)
 - `/railsounds crossing add <name> [radius]` — crossing where you stand (default radius 64)
 - `/railsounds crossing remove <name>` / `list`

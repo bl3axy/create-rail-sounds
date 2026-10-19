@@ -4,5 +4,7 @@
   "category.railsounds.shunting": "Train Shunting",
   "key.railsounds.couple": "Couple",
   "key.railsounds.uncouple": "Uncouple (hold + 1-9, or tap on foot)",
-  "key.railsounds.toggle_autocouple": "Toggle auto-couple"
+  "key.railsounds.toggle_autocouple": "Toggle auto-couple",
+  "railsounds.display_source.departure_board": "Departure Board",
+  "railsounds.display_source.platform_display": "Platform Display (next train)"
 }
