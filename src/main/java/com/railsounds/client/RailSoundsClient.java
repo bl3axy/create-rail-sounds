@@ -18,6 +18,8 @@ public class RailSoundsClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientPlayNetworking.registerGlobalReceiver(HornPayload.TYPE, (p, ctx) -> handle(ctx.client(), p));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ACTIVE.clear());
+        ClientPlayNetworking.registerGlobalReceiver(com.railsounds.AutoCouplePayload.TYPE, (p, ctx) -> FacingHud.autoCoupleOn = p.on());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> FacingHud.autoCoupleOn = true);
         ShuntKeys.register();
         FacingHud.register();
     }

@@ -26,6 +26,8 @@ public final class FacingHud {
     private FacingHud() {}
 
     private static final double RANGE = 24;
+    /** mirrored from the server (AutoCouplePayload) */
+    public static volatile boolean autoCoupleOn = true;
     private static final int BG = 0x90000000;
     private static final int WHITE = 0xFFFFFFFF;
     private static final int GRAY = 0xFFAAAAAA;
@@ -73,8 +75,13 @@ public final class FacingHud {
 
         int x = 6, y = 6, arrowBox = 18;
         int textX = x + arrowBox + 4;
-        int w = Math.max(Math.max(font.width("Front"), font.width(label)), line2 == null ? 0 : font.width(line2)) + arrowBox + 10;
-        int h = line2 == null ? arrowBox + 4 : arrowBox + 16;
+        // while you're on a train: which coupling mode you're in (J toggles it)
+        String line3 = mine != null ? (autoCoupleOn ? "Auto-couple: ON" : "Auto-couple: OFF (press C)") : null;
+        int color3 = autoCoupleOn ? GREEN : GRAY;
+        int extra = (line2 != null ? 1 : 0) + (line3 != null ? 1 : 0);
+        int w = Math.max(Math.max(font.width("Front"), font.width(label)) + arrowBox + 10,
+            Math.max(line2 == null ? 0 : font.width(line2), line3 == null ? 0 : font.width(line3)) + 6);
+        int h = arrowBox + 4 + extra * 11;
         g.fill(x - 3, y - 3, x - 3 + w, y - 3 + h, BG);
 
         // arrow pointing where the train's front is, relative to where you're looking
@@ -91,7 +98,12 @@ public final class FacingHud {
 
         g.text(font, Component.literal("Front"), textX, y + 1, 0xFFFFD24A, true);
         g.text(font, Component.literal(label), textX, y + 10, GRAY, true);
-        if (line2 != null) g.text(font, Component.literal(line2), x, y + arrowBox + 3, color2, true);
+        int ly = y + arrowBox + 3;
+        if (line2 != null) {
+            g.text(font, Component.literal(line2), x, ly, color2, true);
+            ly += 11;
+        }
+        if (line3 != null) g.text(font, Component.literal(line3), x, ly, color3, true);
     }
 
     private static Train trainOf(CarriageContraptionEntity e) {

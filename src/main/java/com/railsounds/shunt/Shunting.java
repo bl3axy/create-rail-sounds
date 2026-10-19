@@ -294,6 +294,7 @@ public final class Shunting {
                 boolean off = !AUTO_OFF.remove(player.getUUID());
                 if (off) AUTO_OFF.add(player.getUUID());
                 bar(player, off ? "Auto-couple OFF for trains you drive (use the couple key)" : "Auto-couple ON");
+                sendAutoState(player);
             }
             case HINT -> {
                 if (mine == null || mine.carriages.size() < 2) return;
@@ -695,6 +696,16 @@ public final class Shunting {
         if (icon != null) t.icon = icon;
         t.mapColorIndex = color;
         server.getPlayerList().broadcastAll(new TrainEditReturnPacket(t.id, name.getString(), t.icon.id(), color));
+    }
+
+    /** tell this player's client whether auto-couple is on for them (for the train box) */
+    public static void sendAutoState(ServerPlayer p) {
+        try {
+            if (p == null || !net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(p, com.railsounds.AutoCouplePayload.TYPE)) return;
+            boolean on = RailConfig.V.shuntingEnabled && RailConfig.V.autoCouple && !AUTO_OFF.contains(p.getUUID());
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p, new com.railsounds.AutoCouplePayload(on));
+        } catch (RuntimeException ignored) {
+        }
     }
 
     static void bar(ServerPlayer p, String msg) {
