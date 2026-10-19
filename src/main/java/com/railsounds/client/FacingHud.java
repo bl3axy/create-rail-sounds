@@ -72,8 +72,8 @@ public final class FacingHud {
 
         int x = 6, y = 6, arrowBox = 18;
         int textX = x + arrowBox + 4;
-        int w = Math.max(font.width("Front ▸ " + label), line2 == null ? 0 : font.width(line2)) + arrowBox + 10;
-        int h = line2 == null ? arrowBox + 4 : arrowBox + 14;
+        int w = Math.max(Math.max(font.width("Front"), font.width(label)), line2 == null ? 0 : font.width(line2)) + arrowBox + 10;
+        int h = line2 == null ? arrowBox + 4 : arrowBox + 16;
         g.fill(x - 3, y - 3, x - 3 + w, y - 3 + h, BG);
 
         // arrow pointing where the train's front is, relative to where you're looking

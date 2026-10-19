@@ -547,7 +547,12 @@ public final class Shunting {
         boolean locoIsCut = !drivers(cut).isEmpty()
             || (drivers(train).isEmpty() && hasControls(cut) && !hasControls(train));
         if (locoIsCut) {
-            if (scheduled) swapSchedule(train, cut);
+            if (scheduled) {
+                swapSchedule(train, cut);
+                // the cars can't drive themselves: drop any trip they were on, the loco re-plans it
+                if (train.navigation.destination != null) train.navigation.cancelNavigation();
+                if (cut.runtime != null) cut.runtime.transitInterrupted();
+            }
             cut.currentStation = station;
             train.currentStation = null;
             GlobalStation gs = cut.getCurrentStation();
