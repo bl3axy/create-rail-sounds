@@ -18,10 +18,10 @@ No coupler blocks needed. Keys are rebindable under Controls > Train Shunting.
 
 | Key | Does |
 |---|---|
-| **G** | couple to the cut your train is touching / within `couplerReach` (on foot: the joint you look at) |
-| **U + 1-9** | uncouple at coupling N counted from the car you're riding (number keys don't switch hotbar while U is held) |
-| **U** (tap, on foot) | uncouple the coupling you're looking at |
-| **H** | toggle auto-couple for trains you drive |
+| **C** | couple to the cut your train is touching / within `couplerReach` (on foot: the joint you look at) |
+| **Z + 1-9** | uncouple at coupling N counted from the car you're riding (number keys don't switch hotbar while Z is held) |
+| **Z** (tap, on foot) | uncouple the coupling you're looking at |
+| **J** | toggle auto-couple for trains you drive |
 
 - **Buffers:** a train touching another slower than `bufferMaxSpeed` (10 b/s) stops against it instead of crashing. Faster = Create's normal crash.
 - **Auto-couple:** easing into a cut of cars (no controls) at or under `coupleMaxSpeed` (3 b/s) couples it. Two powered trains never auto-couple.

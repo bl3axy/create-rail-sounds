@@ -13,12 +13,13 @@ import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Shunting keys (all rebindable under Controls):
- *   G          couple to the cut your train is touching (or the coupling you look at, on foot)
- *   U + 1..9   uncouple at that coupling, counted from the car you're in
- *   U (tap)    on foot: uncouple the coupling you're looking at (in a train it shows the hint)
- *   H          toggle auto-couple for trains you drive
- * While U is held the number keys don't change your hotbar slot.
+ * Shunting keys (all rebindable under Controls > Train Shunting). Defaults picked to be free in
+ * vanilla 26.2 and every mod in the pack (G = vanilla Quick Actions, U = JEI Show Uses, so not those):
+ *   C          couple to the cut your train is touching (or the coupling you look at, on foot)
+ *   Z + 1..9   uncouple at that coupling, counted from the car you're in
+ *   Z (tap)    on foot: uncouple the coupling you're looking at (in a train it shows the hint)
+ *   J          toggle auto-couple for trains you drive
+ * While Z is held the number keys don't change your hotbar slot.
  */
 public final class ShuntKeys {
     private ShuntKeys() {}
@@ -28,9 +29,9 @@ public final class ShuntKeys {
 
     public static void register() {
         KeyMapping.Category cat = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(RailSounds.MOD_ID, "shunting"));
-        couple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.couple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, cat));
-        uncouple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.uncouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_U, cat));
-        toggleAuto = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.toggle_autocouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, cat));
+        couple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.couple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, cat));
+        uncouple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.uncouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
+        toggleAuto = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.toggle_autocouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, cat));
 
         // START of the tick: grab number presses before vanilla turns them into hotbar switches
         ClientTickEvents.START_CLIENT_TICK.register(ShuntKeys::numbers);
@@ -50,10 +51,14 @@ public final class ShuntKeys {
             uncoupleWasDown = false;
             return;
         }
+        // a press+release inside one tick never shows as isDown, so count clicks too
+        boolean clicked = false;
+        while (uncouple.consumeClick()) clicked = true;
         boolean down = uncouple.isDown();
-        if (down && !uncoupleWasDown) {
+        boolean onFoot = mc.player.getVehicle() == null;
+        if ((down || clicked) && !uncoupleWasDown) {
             numberUsed = false;
-            if (mc.player.getVehicle() != null) send(Shunting.HINT, 0);
+            if (!onFoot) send(Shunting.HINT, 0);
         }
         if (down) {
             KeyMapping[] slots = mc.options.keyHotbarSlots;
@@ -63,14 +68,11 @@ public final class ShuntKeys {
                     send(Shunting.UNCOUPLE, i + 1);
                 }
             }
-        } else if (uncoupleWasDown && !numberUsed && mc.player.getVehicle() == null) {
+        } else if ((uncoupleWasDown || clicked) && !numberUsed && onFoot) {
             // tapped on its own while on foot: the coupling under the crosshair
             send(Shunting.UNCOUPLE_LOOK, 0);
         }
         uncoupleWasDown = down;
-        while (uncouple.consumeClick()) {
-            // presses are handled through isDown above; just drain the counter
-        }
     }
 
     private static void others(Minecraft mc) {

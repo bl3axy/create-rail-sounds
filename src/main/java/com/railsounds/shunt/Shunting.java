@@ -259,7 +259,7 @@ public final class Shunting {
                     bar(player, "No couplings on that side of your car");
                     return;
                 }
-                bar(player, "Uncouple: hold key + 1-" + Math.min(9, max) + " (couplings counted from your car), tap alone for the one you look at");
+                bar(player, "Uncouple: keep holding + press 1-" + Math.min(9, max) + " (couplings counted from your car)");
             }
             default -> {
             }

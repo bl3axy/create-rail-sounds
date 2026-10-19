@@ -3,6 +3,6 @@
   "key.categories.railsounds.shunting": "Train Shunting",
   "category.railsounds.shunting": "Train Shunting",
   "key.railsounds.couple": "Couple",
-  "key.railsounds.uncouple": "Uncouple (hold + number, or tap)",
+  "key.railsounds.uncouple": "Uncouple (hold + 1-9, or tap on foot)",
   "key.railsounds.toggle_autocouple": "Toggle auto-couple"
 }
