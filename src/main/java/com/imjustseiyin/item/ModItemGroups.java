@@ -2,7 +2,7 @@ package com.imjustseiyin.item;
 
 import com.imjustseiyin.JustOutdoorStuffsMod;
 import com.imjustseiyin.block.ModBlocks;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ public class ModItemGroups {
     public static void registerItemGroups() {
         JUSTOUTDOORSTUFF_GROUP = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB,
             Identifier.fromNamespaceAndPath(JustOutdoorStuffsMod.MOD_ID, "justoutdoorstuff"),
-            FabricItemGroup.builder()
+            FabricCreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.justoutdoorstuffs.just_outdoor_stuffs"))
                 .icon(() -> new ItemStack(ModBlocks.GARDEN_WATERING_CAN))
                 .displayItems((params, entries) -> {
