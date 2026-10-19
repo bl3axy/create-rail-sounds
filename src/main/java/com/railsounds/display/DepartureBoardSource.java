@@ -26,6 +26,14 @@ public class DepartureBoardSource extends DisplaySource {
 
     @Override
     public List<MutableComponent> provideText(DisplayLinkContext context, DisplayTargetStats stats) {
+        try {
+            return text(context, stats);
+        } catch (RuntimeException e) {
+            return List.of(Component.literal("--"));
+        }
+    }
+
+    private List<MutableComponent> text(DisplayLinkContext context, DisplayTargetStats stats) {
         // plain-text targets (signs, lecterns, nixies): one line per train
         String filter = context.sourceConfig().getStringOr("Filter", "");
         List<MutableComponent> out = new ArrayList<>();
@@ -39,6 +47,14 @@ public class DepartureBoardSource extends DisplaySource {
 
     @Override
     public List<List<MutableComponent>> provideFlapDisplayText(DisplayLinkContext context, DisplayTargetStats stats) {
+        try {
+            return flap(context, stats);
+        } catch (RuntimeException e) {
+            return List.of();
+        }
+    }
+
+    private List<List<MutableComponent>> flap(DisplayLinkContext context, DisplayTargetStats stats) {
         CompoundTag conf = context.sourceConfig();
         String filter = conf.getStringOr("Filter", "");
         boolean hasPlatform = filter.contains("*");
@@ -60,8 +76,8 @@ public class DepartureBoardSource extends DisplaySource {
                 if (!stops.isEmpty()) {
                     List<MutableComponent> v = new ArrayList<>();
                     v.add(WHITESPACE);
-                    v.add(Component.literal("via"));
-                    v.add(Component.literal(String.join(", ", stops)));
+                    v.add(WHITESPACE);
+                    v.add(Component.literal("via " + String.join(", ", stops)));
                     if (hasPlatform) v.add(WHITESPACE);
                     list.add(v);
                 }

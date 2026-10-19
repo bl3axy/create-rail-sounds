@@ -25,6 +25,14 @@ public class PlatformDisplaySource extends DisplaySource {
 
     @Override
     public List<MutableComponent> provideText(DisplayLinkContext context, DisplayTargetStats stats) {
+        try {
+            return text(context, stats);
+        } catch (RuntimeException e) {
+            return List.of(Component.literal("--"));
+        }
+    }
+
+    private List<MutableComponent> text(DisplayLinkContext context, DisplayTargetStats stats) {
         CompoundTag conf = context.sourceConfig();
         String filter = conf.getStringOr("Filter", "");
         int width = Math.max(8, stats.maxColumns());
