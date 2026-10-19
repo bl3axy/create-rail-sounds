@@ -79,5 +79,23 @@
         "attenuation_distance": 128
       }
     ]
+  },
+  "diesel_horn_hold": {
+    "subtitle": "Diesel horn",
+    "sounds": [
+      {
+        "name": "railsounds:diesel_horn_hold",
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "steam_whistle_hold": {
+    "subtitle": "Steam whistle",
+    "sounds": [
+      {
+        "name": "railsounds:steam_whistle_hold",
+        "attenuation_distance": 128
+      }
+    ]
   }
 }

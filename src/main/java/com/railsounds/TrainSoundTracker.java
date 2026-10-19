@@ -26,6 +26,8 @@ public class TrainSoundTracker {
         int stoppedTicks = 1000;
         int brakeTimer;        // ticks until the squeal can replay
         boolean braking;
+        boolean squealed;      // already squealed for this stop
+        int squealAge = 100000; // ticks since the last squeal started
         boolean backwards;
         double[] clackDist = new double[0]; // distance travelled since last joint, per carriage
     }
@@ -80,16 +82,27 @@ public class TrainSoundTracker {
                     delay += 4;
                 }
                 s.braking = false;
+                if (c.brakeCutOnStop && s.squealAge < c.brakeClipTicks) {
+                    Located l = locate(cars.get(0));
+                    if (l != null) SoundPlayer.stop(l.level, l.pos, SoundPlayer.BRAKE, c.brakeHearingRange + 32);
+                }
+                s.squealed = false;
             }
 
             // ---------- brakes: louder the harder it's slowing ----------
             // train.acceleration() is Create's braking rate for THIS train (S&R realism / fuel adjust it)
             double accel = Math.max(1e-5, train.acceleration());
             double threshold = Math.max(c.brakeDecelMin, accel * c.brakeDecelFraction);
-            boolean brakingNow = speed > c.brakeMinSpeed && s.smoothDecel > threshold;
+            // only the last part of a real stop: slow already, and slowing hard enough to be stopped soon.
+            // easing off for a curve or a speed limit doesn't count.
+            boolean nearStop = !c.brakeOnlyNearStop
+                || (speed < c.brakeStopSpeed && speed / Math.max(1e-6, s.smoothDecel) < c.brakeMaxTicksToStop);
+            boolean brakingNow = speed > c.brakeMinSpeed && s.smoothDecel > threshold && nearStop;
+            // back up to speed or pulling away again: the next stop gets a fresh squeal
+            if (speed >= c.brakeStopSpeed * 1.25 || s.smoothDecel < -threshold) s.squealed = false;
             if (brakingNow) {
-                // replay when the clip is done; a fresh brake application can restart it once it's half over
-                if (s.brakeTimer <= 0 || (!s.braking && s.brakeTimer < c.brakeClipTicks / 2)) {
+                // once per stop; only replays if the brakes are still on after the whole clip has played
+                if (!s.squealed || s.brakeTimer <= 0) {
                     float hardness = (float) Math.min(1.5, s.smoothDecel / accel);
                     float vol = c.brakeVolume * (0.4f + 0.6f * hardness);
                     // squeal gets a bit higher pitched as the train gets slower, like real brake shoes
@@ -101,11 +114,14 @@ public class TrainSoundTracker {
                             vol, pitch + rnd(0.08f), c.brakeHearingRange);
                     }
                     s.brakeTimer = c.brakeClipTicks;
+                    s.squealed = true;
+                    s.squealAge = 0;
                 }
                 s.braking = true;
             } else {
                 s.braking = false;
             }
+            s.squealAge++;
             if (s.brakeTimer > 0) s.brakeTimer--;
 
             // ---------- rail joints: clack-clack per bogey, speed sets the rhythm ----------

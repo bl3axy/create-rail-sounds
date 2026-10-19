@@ -5,12 +5,13 @@ Server-side mod that makes Create trains sound real, driven by the train's actua
 | Event | What triggers it |
 |---|---|
 | Rail joint clack-clack | every `clackSpacing` blocks per car, 2nd hit when the rear bogey crosses the joint; volume/pitch follow speed |
-| Brake squeal | train slowing faster than half its own braking rate (`brakeDecelFraction`; follows Steam 'n' Rails realism); louder the harder it brakes, pitch rises as it slows |
+| Brake squeal | only in the last part of a real stop: under `brakeStopSpeed` and slowing hard enough to stop within `brakeMaxTicksToStop`; once per stop, cut off when the train stops (`brakeCutOnStop`). Louder the harder it brakes, pitch rises as it slows |
 | Coupler slack | clunks at each coupling, rippling front→back when pulling away and when stopping |
 | Air release | each car hisses right after the train stops |
 | Crossing bell | rings while a train is heading toward the crossing (inside its radius) or any car is on it; stops ~2s after the last car clears |
 
 Players don't need the mod: sounds come from the server resource pack (`server-resourcepack/`).
+With the mod on their client too, diesel horns / steam whistles play a long seamless hold and fade out from the moment you let go (`hornFadeTicks`, `whistleFadeTicks`). Without it they fall back to replay + short tail.
 
 ## Commands (op)
 - `/railsounds crossing add <name> [radius]` — crossing where you stand (default radius 64)

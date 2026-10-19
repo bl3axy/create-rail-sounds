@@ -2,6 +2,7 @@ package com.railsounds;
 
 import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.network.protocol.game.ClientboundStopSoundPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -43,6 +44,18 @@ public class SoundPlayer {
             p.connection.send(new ClientboundSoundPacket(h, SoundSource.NEUTRAL,
                 pos.x, pos.y, pos.z, volume, pitch, seed));
         }
+    }
+
+    /** stop a sound for players near a spot (vanilla can only stop by name, so it's every copy of it they hear) */
+    public static void stop(ServerLevel level, Vec3 pos, String sound, int range) {
+        ClientboundStopSoundPacket pkt = new ClientboundStopSoundPacket(
+            Identifier.fromNamespaceAndPath(RailSounds.MOD_ID, sound), SoundSource.NEUTRAL);
+        double r2 = (double) range * range;
+        for (ServerPlayer p : level.players()) {
+            if (p.position().distanceToSqr(pos) <= r2) p.connection.send(pkt);
+        }
+        // anything of this sound still queued for this spot shouldn't start after the cut
+        PENDING.removeIf(q -> q.level == level && q.sound.equals(sound) && q.pos.distanceToSqr(pos) < 64 * 64);
     }
 
     // ---------- delayed sounds (coupler ripple, second bogey clack) ----------

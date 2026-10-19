@@ -36,6 +36,14 @@ public class RailConfig {
         /** length of your brake_squeal.ogg in ticks (20 ticks = 1 sec). replays every this many ticks while braking */
         public int brakeClipTicks = 100;
         public float brakeVolume = 0.45f;
+        /** only squeal in the last part of a real stop (not when easing off for curves / speed limits) */
+        public boolean brakeOnlyNearStop = true;
+        /** "near stop" = slower than this (blocks/tick; 0.3 = 6 blocks/sec)... */
+        public double brakeStopSpeed = 0.3;
+        /** ...and slowing hard enough to be stopped within this many ticks (20 ticks = 1 sec) */
+        public int brakeMaxTicksToStop = 100;
+        /** cut the squeal off when the train actually stops instead of letting the clip run on */
+        public boolean brakeCutOnStop = true;
         public int brakeHearingRange = 64;
 
         // ---- starting / stopping ----
@@ -76,6 +84,9 @@ public class RailConfig {
         public int hornHearingRange = 128;
         /** cut the horn if no "still holding" signal arrives for this many ticks (stops it sticking) */
         public int hornReleaseTimeoutTicks = 12;
+        /** how long the horn fades out after you let go (only for players with the mod on their client) */
+        public int hornFadeTicks = 14;
+        public int whistleFadeTicks = 20;
 
         // ---- misc ----
         /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */
