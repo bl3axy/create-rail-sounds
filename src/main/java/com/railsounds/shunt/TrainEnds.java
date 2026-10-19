@@ -34,7 +34,8 @@ public final class TrainEnds {
     }
 
     /** {front overhang from the leading bogey, rear overhang from the trailing bogey} */
-    private static final Map<Carriage, double[]> OVERHANG = new WeakHashMap<>();
+    // client and server threads both use this in singleplayer
+    private static final Map<Carriage, double[]> OVERHANG = java.util.Collections.synchronizedMap(new WeakHashMap<>());
 
     public static void clearCache() {
         OVERHANG.clear();
