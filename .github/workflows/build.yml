@@ -21,6 +21,14 @@ jobs:
         run: |
           mkdir -p run && echo "eula=true" > run/eula.txt
           printf "online-mode=false\nlevel-type=minecraft\\:flat\nenable-rcon=true\nrcon.port=25575\nrcon.password=railsounds\nspawn-protection=0\n" > run/server.properties
+          # Plant an OLD config and an OLD links file before the first boot so the real Gson
+          # loader and the real migrate() run against them.
+          mkdir -p run/config run/world
+          printf '%s' '{"clackVolume":0.8,"brakeVolume":0.9,"couplerVolume":1.0,"idleVolume":0.35,"engineSounds":false,"uncoupleMaxSpeed":0.15,"cutCoastFactor":0.25}' > run/config/railsounds.json
+          printf '%s' '{"minecraft:overworld|5,-59,5":{"0":{"switchId":"11111111-2222-3333-4444-555555555555","x":7,"y":-59,"z":5,"label":"Coal"}}}' > run/world/railsounds_towers.json
+          echo "--- planted old-format config ---"
+          cat run/config/railsounds.json
+
           set +e
           # phase A: place, tick, power, run commands, break - and leave a few blocks standing
           (timeout 600 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true) &
@@ -30,6 +38,9 @@ jobs:
           wait $GRADLE_PID 2>/dev/null || true
           cp run/logs/latest.log server-log.txt 2>/dev/null || cp server-run.txt server-log.txt
 
+          echo "--- config after the server loaded and migrated the old one ---"
+          cat run/config/railsounds.json
+          python3 tools/check_config_migration.py run/config/railsounds.json || exit 1
           echo "--- state files written by phase A ---"
           ls -la run/config/railsounds-crossings.json run/world/railsounds_*.json 2>&1 || true
           echo "--- crossings file contents ---"
