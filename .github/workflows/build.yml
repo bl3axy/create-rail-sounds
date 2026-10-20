@@ -20,14 +20,26 @@ jobs:
         run: |
           mkdir -p run && echo "eula=true" > run/eula.txt
           printf "online-mode=false\nlevel-type=minecraft\\:flat\nenable-rcon=true\nrcon.port=25575\nrcon.password=railsounds\nspawn-protection=0\n" > run/server.properties
+          set +e
+          # phase A: place, tick, power, run commands, break - and leave a few blocks standing
           (timeout 600 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true) &
           GRADLE_PID=$!
-          set +e
-          python3 tools/ingame_test.py 127.0.0.1 25575 railsounds 2>&1 | tee ingame-test.txt
+          python3 tools/ingame_test.py 127.0.0.1 25575 railsounds a 2>&1 | tee ingame-test.txt
           TEST_RC=${PIPESTATUS[0]}
-          set -e
           wait $GRADLE_PID 2>/dev/null || true
           cp run/logs/latest.log server-log.txt 2>/dev/null || cp server-run.txt server-log.txt
+
+          # phase B: boot the SAME world again and check the leftovers came back and still tick
+          (timeout 600 ./gradlew runServer --args="nogui" > server-run2.txt 2>&1 || true) &
+          GRADLE_PID2=$!
+          python3 tools/ingame_test.py 127.0.0.1 25575 railsounds b 2>&1 | tee -a ingame-test.txt
+          TEST_RC2=${PIPESTATUS[0]}
+          wait $GRADLE_PID2 2>/dev/null || true
+          cp run/logs/latest.log server-log2.txt 2>/dev/null || cp server-run2.txt server-log2.txt
+          cat server-log2.txt >> server-log.txt
+          set -e
+          [ "$TEST_RC" = "0" ] || TEST_RC=$TEST_RC
+          [ "$TEST_RC2" = "0" ] || TEST_RC=$TEST_RC2
           echo "--- in-game test exit: $TEST_RC"
           echo "--- unexpected errors in the server log:"
           # Steam 'n' Rails is not installed on the test server, so its mixin targets are
@@ -40,6 +52,15 @@ jobs:
           EXPECTED=$(ls src/main/resources/assets/railsounds/blockstates/*.json | wc -l)
           PRESENT=$(grep -c "RSTEST_PRESENT" server-log.txt || true)
           echo "blocks still present after ticking: $PRESENT / $EXPECTED"
+          for MARK in "RSTEST_SURVIVED car_retarder" "RSTEST_SURVIVED crossing_signal" \
+                      "RSTEST_SURVIVED cargo_sensor" "RSTEST_SURVIVED searchlight_signal" \
+                      "RSTEST_TICKING retarder" "RSTEST_UNPOWERED retarder"; do
+            if ! grep -q "$MARK" server-log.txt; then
+              echo "restart check failed: $MARK never reported"
+              exit 1
+            fi
+          done
+          echo "restart checks: blocks survived, crossing persisted, ticks still running"
           if [ "$PRESENT" != "$EXPECTED" ]; then
             echo "some blocks vanished or changed state while ticking"
             grep -oE "RSTEST_PRESENT [a-z_]+" server-log.txt | sort > /tmp/present.txt || true
@@ -52,7 +73,7 @@ jobs:
         if: failure()
         run: |
           mkdir logout
-          cp build.log server-log.txt unexpected.txt ingame-test.txt server-run.txt logout/ 2>/dev/null || true
+          cp build.log server-log.txt server-log2.txt unexpected.txt ingame-test.txt server-run.txt server-run2.txt logout/ 2>/dev/null || true
           cd logout
           git init -q -b buildlog
           git config user.name "github-actions"
