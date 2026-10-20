@@ -67,7 +67,7 @@ public class CarCounterBlock extends FacingRailBlock {
             Train t = StationSensors.dockedTrain(station);
             msg = t == null
                 ? Component.literal("Car Counter: no train at " + station.name).withStyle(ChatFormatting.GRAY)
-                : Component.literal("Car Counter: " + t.name.getString() + " - " + t.carriages.size() + " car"
+                : Component.literal("Car Counter: " + com.railsounds.RailSounds.nameOf(t) + " - " + t.carriages.size() + " car"
                     + (t.carriages.size() == 1 ? "" : "s")).withStyle(ChatFormatting.GOLD);
         }
         player.sendOverlayMessage(msg);

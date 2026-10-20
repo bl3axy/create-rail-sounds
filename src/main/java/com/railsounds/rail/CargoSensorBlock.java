@@ -103,7 +103,7 @@ public class CargoSensorBlock extends FacingRailBlock {
         if (t == null) return head.copy().append(Component.literal("  - no train").withStyle(ChatFormatting.GRAY));
         double fill = StationSensors.fill(t, state.getValue(FLUIDS));
         String f = fill < 0 ? "no " + kind + " storage" : Math.round(fill * 100) + "% full";
-        return head.copy().append(Component.literal("  - " + t.name.getString() + ": " + f).withStyle(ChatFormatting.WHITE));
+        return head.copy().append(Component.literal("  - " + com.railsounds.RailSounds.nameOf(t) + ": " + f).withStyle(ChatFormatting.WHITE));
     }
 
     @Override

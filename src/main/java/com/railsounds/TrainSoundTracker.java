@@ -208,7 +208,7 @@ public class TrainSoundTracker {
     static String describe(Train t) {
         State s = STATES.get(t.id);
         double bps = Math.abs(t.speed) * 20;
-        return String.format("%s: %.1f b/s, decel %.4f%s", t.name == null ? "train" : t.name.getString(), bps,
+        return String.format("%s: %.1f b/s, decel %.4f%s", RailSounds.nameOf(t), bps,
             s == null ? 0 : s.smoothDecel, s != null && s.braking ? " BRAKING" : "");
     }
 

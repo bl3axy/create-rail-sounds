@@ -142,7 +142,7 @@ public class DefectDetectorBlock extends FacingRailBlock {
 
     private static void report(ServerLevel level, BlockPos pos, Pass p) {
         int mph = (int) Math.round(p.maxSpeed * MPH);
-        String name = p.name == null ? "Train" : p.name.getString();
+        String name = p.name == null || p.name.getString().isBlank() ? "Train" : p.name.getString();
         Component msg = Component.literal("[Detector MP " + milepost(pos) + "] ").withStyle(ChatFormatting.DARK_AQUA)
             .append(Component.literal(name + ": ").withStyle(ChatFormatting.WHITE))
             .append(p.defect

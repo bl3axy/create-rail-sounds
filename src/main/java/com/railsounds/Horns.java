@@ -76,14 +76,14 @@ public class Horns {
                 s.level = level;
                 s.entity = e;
                 HONKING.put(train.id, s);
-                RailSounds.LOG.info("[railsounds] {} on for train {} ({} players nearby)", s.sound, train.name.getString(), nearby(s));
+                RailSounds.LOG.info("[railsounds] {} on for train {} ({} players nearby)", s.sound, RailSounds.nameOf(train), nearby(s));
                 startModded(s);
                 playVanilla(s, s.sound);
                 s.nextReplay = now + Math.max(5, clipTicks(s.sound));
             }
             s.lastKeepAlive = now;
         } else if (s != null) {
-            RailSounds.LOG.info("[railsounds] {} off for train {} (released)", s.sound, train.name.getString());
+            RailSounds.LOG.info("[railsounds] {} off for train {} (released)", s.sound, RailSounds.nameOf(train));
             release(s);
             HONKING.remove(train.id);
         }

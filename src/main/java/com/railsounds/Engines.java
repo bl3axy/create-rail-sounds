@@ -82,7 +82,7 @@ public final class Engines {
         set(train, nowRunning);
         String type = TrainTypes.get(train);
         String what = TrainTypes.STEAM.equals(type) ? "Fire" : "Engine";
-        bar(player, what + (nowRunning ? " started" : " shut down") + " - " + train.name.getString(),
+        bar(player, what + (nowRunning ? " started" : " shut down") + " - " + RailSounds.nameOf(train),
             nowRunning ? ChatFormatting.GREEN : ChatFormatting.GRAY);
         if (nowRunning) playStart(train);
     }
@@ -127,7 +127,8 @@ public final class Engines {
         }
         if (Create.RAILWAYS == null || Create.RAILWAYS.trains == null) return;
 
-        for (Train train : Create.RAILWAYS.trains.values()) {
+        // copy first, same as the other per-tick loops: Create can drop a train mid-tick
+        for (Train train : new java.util.ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (train == null || train.invalid || train.derailed) continue;
             if (!isRunning(train)) {
                 IDLE_TIMER.remove(train.id);

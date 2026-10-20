@@ -20,6 +20,17 @@ import org.slf4j.LoggerFactory;
  */
 public class RailSounds implements ModInitializer {
     public static final String MOD_ID = "railsounds";
+
+    /**
+     * A train's name for display. Create always sets one, but Trains can also be built by
+     * other mods (Steam 'n' Rails splits and combines them), so don't assume.
+     */
+    public static String nameOf(com.zurrtum.create.content.trains.entity.Train train) {
+        if (train == null || train.name == null) return "Train";
+        String n = train.name.getString();
+        return n.isBlank() ? "Train" : n;
+    }
+
     public static final Logger LOG = LoggerFactory.getLogger("RailSounds");
     private static long lastErrorLog;
 

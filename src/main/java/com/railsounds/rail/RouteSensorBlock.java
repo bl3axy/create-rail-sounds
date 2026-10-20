@@ -82,7 +82,7 @@ public class RouteSensorBlock extends FacingRailBlock {
     static boolean matches(Train t, String filter) {
         if (filter == null || filter.isBlank()) return true;
         String f = filter.toLowerCase(Locale.ROOT);
-        if (t.name != null && t.name.getString().toLowerCase(Locale.ROOT).contains(f)) return true;
+        if (com.railsounds.RailSounds.nameOf(t).toLowerCase(Locale.ROOT).contains(f)) return true;
         try {
             GlobalStation dest = t.navigation.destination;
             return dest != null && dest.name != null && dest.name.toLowerCase(Locale.ROOT).contains(f);

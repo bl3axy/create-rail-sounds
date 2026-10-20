@@ -45,7 +45,7 @@ public class PlatformDisplaySource extends DisplaySource {
         TrainDeparturePrediction p = next.get(0);
         String time = Departures.clock(context.level(), p.ticks);
         String in = Departures.countdown(p.ticks);
-        String head = time + "  " + p.train.name.getString();
+        String head = time + "  " + com.railsounds.RailSounds.nameOf(p.train);
         String tail = time.equals("now") || in.equals("~") ? "" : "  (" + in + ")";
         lines.add(Component.literal(Departures.trim(head + (head.length() + tail.length() <= width ? tail : ""), width)));
         lines.add(Component.literal(Departures.trim("to " + p.scheduleTitle.getString(), width)));
@@ -54,7 +54,7 @@ public class PlatformDisplaySource extends DisplaySource {
         if (next.size() > 1) {
             TrainDeparturePrediction q = next.get(1);
             lines.add(Component.literal(Departures.trim("then " + Departures.clock(context.level(), q.ticks) + "  "
-                + q.train.name.getString() + " to " + q.scheduleTitle.getString(), width)));
+                + com.railsounds.RailSounds.nameOf(q.train) + " to " + q.scheduleTitle.getString(), width)));
         }
         int rows = Math.max(1, stats.maxRows());
         return lines.size() > rows ? new ArrayList<>(lines.subList(0, rows)) : lines;

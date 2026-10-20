@@ -164,7 +164,7 @@ public final class YardRules {
             if (ct != null && (best == null || ct.gap() < best.gap())) best = ct;
         }
         if (best == null) {
-            RailSounds.LOG.info("[railsounds] {} found nothing to couple to", t.name.getString());
+            RailSounds.LOG.info("[railsounds] {} found nothing to couple to", com.railsounds.RailSounds.nameOf(t));
             return false;
         }
         Train other = best.theirs().train();

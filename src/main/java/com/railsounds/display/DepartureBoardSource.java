@@ -39,7 +39,7 @@ public class DepartureBoardSource extends DisplaySource {
         List<MutableComponent> out = new ArrayList<>();
         for (TrainDeparturePrediction p : Departures.upcoming(filter, Math.max(1, stats.maxRows()))) {
             String plat = Departures.platform(filter, p.destination);
-            out.add(Component.literal(Departures.clock(context.level(), p.ticks) + " " + p.train.name.getString()
+            out.add(Component.literal(Departures.clock(context.level(), p.ticks) + " " + com.railsounds.RailSounds.nameOf(p.train)
                 + " - " + p.scheduleTitle.getString() + (plat.isEmpty() ? "" : " [" + plat + "]")));
         }
         return out.isEmpty() ? List.of(Component.literal("No departures")) : out;

@@ -162,7 +162,7 @@ public final class SwitchCompat {
         if (graph == null || Create.RAILWAYS == null) return false;
         Vec3 at = Vec3.atCenterOf(single.blockEntityPos);
         double r2 = 10 * 10;
-        for (Train t : Create.RAILWAYS.trains.values()) {
+        for (Train t : new ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (t.graph != graph) continue;
             for (Carriage c : t.carriages) {
                 for (CarriageBogey b : new CarriageBogey[]{c.bogeys.getFirst(), c.bogeys.getSecond()}) {
