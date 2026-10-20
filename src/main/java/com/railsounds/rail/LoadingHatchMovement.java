@@ -1,5 +1,6 @@
 package com.railsounds.rail;
 
+import com.railsounds.RailSounds;
 import com.zurrtum.create.api.behaviour.movement.MovementBehaviour;
 import com.zurrtum.create.content.contraptions.behaviour.MovementContext;
 import com.zurrtum.create.content.trains.entity.Carriage;
@@ -31,6 +32,22 @@ public class LoadingHatchMovement extends MovementBehaviour {
 
     @Override
     public void tick(MovementContext context) {
+        // this runs inside Create's actor loop on the train entity: anything thrown here would
+        // take the whole train tick (and a modded container above us is not our code)
+        try {
+            load(context);
+        } catch (Throwable t) {
+            long now = System.currentTimeMillis();
+            if (now - lastErrorLog > 60_000) {
+                lastErrorLog = now;
+                RailSounds.LOG.error("[railsounds] loading hatch failed (further errors hidden for 60s)", t);
+            }
+        }
+    }
+
+    private static long lastErrorLog;
+
+    private static void load(MovementContext context) {
         if (context.world == null || context.world.isClientSide() || context.position == null) return;
         if (!isStopped(context)) return;
 
