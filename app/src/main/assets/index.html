@@ -192,13 +192,19 @@ details ul { padding-left: 18px; }
   function addEdge(s, a, b) {
     if (a === b || !s.nodes[a] || !s.nodes[b]) return null;
     const ex = findEdge(s, a, b); if (ex) return ex;
-    const k = nid(s, 'e'); s.edges[k] = { a, b }; return k;
+    const k = nid(s, 'e'); s.edges[k] = { a, b }; bump(s); return k;
   }
+  /** edges touching node n (cached; the cache is rebuilt whenever the set of edges changes) */
   function edgesAt(s, n) {
-    const out = [];
-    for (const k in s.edges) { const E = s.edges[k]; if (E.a === n || E.b === n) out.push(k); }
-    return out;
+    if (!s._adj || s._adjRev !== (s.rev || 0) || s._adjEdges !== s.edges) {
+      const adj = {};
+      for (const k in s.edges) { const E = s.edges[k]; (adj[E.a] = adj[E.a] || []).push(k); if (E.b !== E.a) (adj[E.b] = adj[E.b] || []).push(k); }
+      Object.defineProperty(s, '_adj', { value: adj, writable: true, configurable: true, enumerable: false });
+      s._adjRev = s.rev || 0; Object.defineProperty(s, '_adjEdges', { value: s.edges, writable: true, configurable: true, enumerable: false });
+    }
+    return (s._adj[n] || []).slice();
   }
+  const bump = s => { s.rev = (s.rev || 0) + 1; };
   function pointAt(s, e, d) {
     const E = s.edges[e], A = s.nodes[E.a], B = s.nodes[E.b];
     const L = Math.hypot(B.x - A.x, B.z - A.z) || 1;
@@ -234,7 +240,7 @@ details ul { padding-left: 18px; }
     for (const k in s.stations) if (s.stations[k].e === e) delete s.stations[k];
     for (const k in s.signals) if (s.signals[k].e === e) delete s.signals[k];
     for (const k in s.consists) if (s.consists[k].path.some(p => p.e === e)) delete s.consists[k];
-    delete s.edges[e];
+    delete s.edges[e]; bump(s);
   }
 
   /** cut edge e at distance d with a new node; stations, signals and trains on it move over */
@@ -244,7 +250,7 @@ details ul { padding-left: 18px; }
     if (d < 0.5 || d > L - 0.5) return d < L / 2 ? E.a : E.b;
     const P = pointAt(s, e, d), n = addNode(s, Math.round(P.x * 100) / 100, Math.round(P.z * 100) / 100);
     const e1 = nid(s, 'e'), e2 = nid(s, 'e');
-    s.edges[e1] = { a: E.a, b: n }; s.edges[e2] = { a: n, b: E.b };
+    s.edges[e1] = { a: E.a, b: n }; s.edges[e2] = { a: n, b: E.b }; bump(s);
     const L1 = edgeLen(s, e1), L2 = edgeLen(s, e2), k1 = L1 / d, k2 = L2 / (L - d);
     const map = x => (x <= d ? { e: e1, d: x * k1 } : { e: e2, d: (x - d) * k2 });
     for (const k in s.stations) { const t = s.stations[k]; if (t.e === e) { const m = map(t.d); t.e = m.e; t.d = m.d; } }
@@ -270,7 +276,7 @@ details ul { padding-left: 18px; }
         c.run.route = r;
       }
     }
-    delete s.edges[e];
+    delete s.edges[e]; bump(s);
     return n;
   }
   /** move a node (only when no train sits on its track); stations/signals keep their place proportionally */
@@ -311,6 +317,8 @@ details ul { padding-left: 18px; }
     return null;
   }
   function addSignal(s, e, d) {
+    const L = edgeLen(s, e), m = Math.min(0.5, L / 2);
+    d = Math.max(m, Math.min(L - m, d));     // a signal must sit inside a track piece to split it
     const k = nid(s, 'g');
     // heads: 'both' | 'fwd' (trains going a->b) | 'back' (b->a); type / typeB: 'normal' | 'chain' for each side
     s.signals[k] = { e, d, heads: 'both', type: 'normal', typeB: 'normal' };
@@ -318,6 +326,14 @@ details ul { padding-left: 18px; }
   }
   /** the kind of signal a train travelling `dir` sees here */
   const sigType = (g, dir) => (dir > 0 ? g.type : (g.typeB || g.type)) || 'normal';
+  /** signals on one edge (index rebuilt by indexSignals at the start of each step / frame) */
+  function indexSignals(s) {
+    const idx = {};
+    for (const k in s.signals) (idx[s.signals[k].e] = idx[s.signals[k].e] || []).push(k);
+    Object.defineProperty(s, '_sigIdx', { value: idx, writable: true, configurable: true, enumerable: false });
+    return idx;
+  }
+  const signalsOn = (s, e) => ((s._sigIdx || indexSignals(s))[e] || []).filter(k => s.signals[k] && s.signals[k].e === e);
   /** does this signal show a light to trains travelling (e, dir)? */
   function signalFaces(sig, dir) {
     return sig.heads === 'both' || (sig.heads === 'fwd' && dir > 0) || (sig.heads === 'back' && dir < 0);
@@ -519,7 +535,7 @@ details ul { padding-left: 18px; }
     if (!ctx) return { pen: 0, weight };
     let pen = 0;
     const lo = Math.min(from, to), hi = Math.max(from, to);
-    for (const gk in s.signals) {
+    for (const gk of signalsOn(s, e)) {
       const g = s.signals[gk];
       if (g.e !== e || !signalFaces(g, dir) || g.d < lo - 1e-6 || g.d > hi + 1e-6) continue;
       const b = blockAt(ctx.blocks, e, g.d + dir * 0.01), o = ctx.occ[b];
@@ -698,29 +714,31 @@ details ul { padding-left: 18px; }
     const lead = leadOf(c, c.run.forward);
     const path = [{ e: lead.e, dir: lead.dir, d0: lead.d, d1: lead.d }];
     const chooser = routeChooser(c.run.route);
-    const STEP = 0.5;
-    let travelled = 0, prevP = pointAt(s, lead.e, lead.d), obstacle = null;
+    let travelled = 0, prevP = pointAt(s, lead.e, lead.d), obstacle = null, stepLen = 0.5;
     while (travelled < look) {
-      const got = extendHead(s, path, STEP, chooser);
+      const got = extendHead(s, path, Math.min(stepLen, look - travelled + 0.01), chooser);
       if (got < 1e-6) break;
       travelled += got;
-      if (obstacle) continue;
+      if (obstacle) { stepLen = 8; continue; }
       const h = path[path.length - 1], p = pointAt(s, h.e, h.d1);
       const hx = p.x - prevP.x, hz = p.z - prevP.z, hl = Math.hypot(hx, hz) || 1;
       prevP = p;
-      let at = Infinity, who = null;
+      let at = Infinity, who = null, nearest = Infinity;
       for (const b of pts) {
-        const dx = b.p.x - p.x, dz = b.p.z - p.z;
-        if (dx * dx + dz * dz > HIT * HIT) continue;
+        const dx = b.p.x - p.x, dz = b.p.z - p.z, d2 = dx * dx + dz * dz;
+        if (d2 < nearest) nearest = d2;
+        if (d2 > HIT * HIT) continue;
         const a = travelled + (dx * hx + dz * hz) / hl;
         if (a < at) { at = a; who = b.cid; }
       }
       if (who) obstacle = { dist: Math.max(0, at), cid: who };
+      // nothing can be within reach before we've moved (distance to nearest body - HIT): skip ahead
+      stepLen = Math.max(0.5, Math.min(8, Math.sqrt(nearest) - HIT));
     }
     // first signal along the scouted track that shows a light to us (at or ahead of our front)
     let signal = null, cum = 0;
     for (const sg of path) {
-      for (const gk in s.signals) {
+      for (const gk of signalsOn(s, sg.e)) {
         const g = s.signals[gk];
         if (g.e !== sg.e || !signalFaces(g, sg.dir)) continue;
         const ahead = (g.d - sg.d0) * sg.dir;
@@ -762,7 +780,7 @@ details ul { padding-left: 18px; }
       for (let i = n0 - 1; i < path.length; i++) {
         const h = path[i], a = (i === n0 - 1 && h.e === e0) ? before : h.d0;
         let best = null;
-        for (const gk in s.signals) {
+        for (const gk of signalsOn(s, h.e)) {
           const g2 = s.signals[gk]; if (gk === from.id || g2.e !== h.e || !signalFaces(g2, h.dir)) continue;
           const ahead = (g2.d - a) * h.dir, span = (h.d1 - a) * h.dir;
           if (ahead > 1e-6 && ahead <= span + 1e-6 && (!best || ahead < best.ahead)) best = { ahead, id: gk, e: h.e, d: g2.d, dir: h.dir };
@@ -814,6 +832,7 @@ details ul { padding-left: 18px; }
 
   function planTrip(s, c, replan) {
     const entry = c.schedule[c.run.entry];
+    if (!entry) return false;
     const sid = stationByName(s, entry.station);
     if (!sid) { c.status = 'No station called "' + entry.station + '"'; return false; }
     const allow = allowedDirections(s, c, entry, sid);
@@ -822,7 +841,7 @@ details ul { padding-left: 18px; }
       // re-route mid-trip (Create does this while held at a chain signal): same direction only
       const r = findRoute(s, leadOf(c, c.run.forward), sid, ctx);
       if (r) {
-        c.run.route = r.route; c.run.remaining = r.dist;
+        c.run.route = r.route; c.run.remaining = r.dist; c.run.sid = sid; c.run.sig = planSig(s, sid);
         // drop reservations we made for the old route and haven't entered
         const cl = s._claims || {};
         for (const b in cl) if (cl[b] === c.id && !(c._entered && c._entered[b])) delete cl[b];
@@ -838,9 +857,10 @@ details ul { padding-left: 18px; }
     }
     cands.sort((a, b) => a.r.cost - b.r.cost);
     const pick = cands[0];
-    Object.assign(c.run, { route: pick.r.route, remaining: pick.r.dist, forward: pick.forward, sid, phase: 'move', waitTime: 0 });
+    Object.assign(c.run, { route: pick.r.route, remaining: pick.r.dist, forward: pick.forward, sid, phase: 'move', waitTime: 0, sig: planSig(s, sid) });
     c.status = (pick.forward ? 'To ' : 'Backing into ') + s.stations[sid].name;
-    logEvt(s, c.name + (pick.forward ? ' departs for ' : ' backs toward ') + s.stations[sid].name);
+    c.run.quiet = pick.r.dist < 0.05; // already there (e.g. a one-stop schedule): no depart/arrive messages
+    if (!c.run.quiet) logEvt(s, c.name + (pick.forward ? ' departs for ' : ' backs toward ') + s.stations[sid].name);
     return true;
   }
 
@@ -848,15 +868,23 @@ details ul { padding-left: 18px; }
     const st = s.stations[c.run.sid];
     c.v = 0; c.run.phase = 'cond'; c.run.cond = 0; c.run.timer = 0;
     c.status = 'At ' + st.name;
-    logEvt(s, c.name + ' arrived at ' + st.name);
+    if (!c.run.quiet) logEvt(s, c.name + ' arrived at ' + st.name);
     // station-wide yard rule (like /railsounds yard couple|uncouple)
     if (st.onArrive === 'couple') { const r = couple(s, c.id); if (r.ok) c = s.consists[r.keeper]; }
     else if (st.onArrive === 'uncouple') { const r = uncouple(s, c.id, st.count || 0); }
     return c;
   }
 
+  /** what a planned trip depends on: if the track or the target station changes, plan again */
+  function planSig(s, sid) {
+    const st = s.stations[sid];
+    return (s.rev || 0) + '|' + (st ? st.e + ':' + st.d.toFixed(2) + ':' + st.dir + ':' + st.approach : 'gone');
+  }
+
   function tickConditions(s, c, dt) {
-    const entry = c.schedule[c.run.entry], conds = entry.conds || [];
+    const entry = c.schedule[c.run.entry];
+    if (!entry || !s.stations[c.run.sid]) { c.run.entry = 0; c.run.phase = 'plan'; c.run.retry = 0.5; return c; }
+    const conds = entry.conds || [];
     while (c.run.cond < conds.length) {
       const k = conds[c.run.cond];
       if (k.type === 'wait') {
@@ -876,20 +904,42 @@ details ul { padding-left: 18px; }
     // done: next step of the schedule
     c.run.entry = (c.run.entry + 1) % c.schedule.length;
     if (c.run.entry === 0 && !c.cyclic) { c.run = null; c.status = 'Schedule finished'; return c; }
-    c.run.phase = 'plan'; c.run.retry = 0;
+    c.run.phase = 'plan'; c.run.retry = 0.5; // short pause between schedule steps, like Create's cooldown
     return c;
   }
 
   /** advance the whole world by dt seconds */
   function step(s, dt) {
     s.time += dt;
+    indexSignals(s);
     const cfg = s.settings, blocks = computeBlocks(s), occ = occupancy(s, blocks);
     const claims = s._claims || (s._claims = {});
     // forget claims of trains that no longer exist or no longer need them
     for (const b in claims) if (!s.consists[claims[b]] || !s.consists[claims[b]].run) delete claims[b];
+    // body points of each train (and a bounding box), refreshed for a train when it moves
+    const bodies = {};
+    const bodyOf = k => {
+      if (bodies[k]) return bodies[k];
+      const o = s.consists[k], pts = [];
+      let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+      if (o && o.path.length) {
+        const L = pathLength(o.path);
+        for (let x = 0; x <= L + 1e-6; x += 0.8) {
+          const p = pointFromHead(s, o.path, Math.min(x, L)); pts.push({ p, cid: k });
+          x0 = Math.min(x0, p.x); z0 = Math.min(z0, p.z); x1 = Math.max(x1, p.x); z1 = Math.max(z1, p.z);
+        }
+      }
+      return (bodies[k] = { pts, x0, z0, x1, z1 });
+    };
     for (const cid of Object.keys(s.consists)) {
       let c = s.consists[cid];
       if (!c || !c.run) continue;
+      if (!c.schedule.length) { c.run = null; c.v = 0; c.status = 'No schedule'; continue; }
+      if (c.run.entry >= c.schedule.length) { c.run.entry = 0; c.run.phase = 'plan'; }
+      // the layout or the target station changed under a moving train: route again from here
+      if (c.run.phase === 'move' && c.run.sig !== planSig(s, c.run.sid)) {
+        if (!s.stations[c.run.sid] || !planTrip(s, c, true)) { c.run.phase = 'plan'; c.run.retry = 0; }
+      }
       if (c.run.phase === 'plan') {
         c.run.retry -= dt;
         if (c.run.retry > 0) continue;
@@ -899,7 +949,15 @@ details ul { padding-left: 18px; }
       if (c.run.phase !== 'move') continue;
 
       const look = c.v * c.v / (2 * cfg.decel) + c.v * 1.5 + 10;
-      const sc = scout(s, c, Math.min(look, c.run.remaining + 2), bodyPoints(s, c.id));
+      const range = Math.min(look, c.run.remaining + 2), lp = (() => { const l = leadOf(c, c.run.forward); return pointAt(s, l.e, l.d); })();
+      const near = [], R = range + 2;
+      for (const k in s.consists) {
+        if (k === c.id) continue;
+        const b = bodyOf(k);
+        if (b.x1 < lp.x - R || b.x0 > lp.x + R || b.z1 < lp.z - R || b.z0 > lp.z + R) continue;
+        for (const q of b.pts) if (Math.abs(q.p.x - lp.x) <= R && Math.abs(q.p.z - lp.z) <= R) near.push(q);
+      }
+      const sc = scout(s, c, range, near);
       let limit = Math.min(cfg.maxSpeed, c.v + cfg.accel * dt, Math.sqrt(2 * cfg.decel * Math.max(0, c.run.remaining)));
       c.run.waitingSignal = false; c.run.blocked = null;
       // signal ahead: may we pass it?
@@ -937,6 +995,7 @@ details ul { padding-left: 18px; }
         if (c.run.forward) { const got = extendHead(s, c.path, move, chooser); trimTail(c.path, got); move = got; }
         else { const got = extendTail(s, c.path, move, chooser); trimHead(c.path, got); move = got; }
         c.run.remaining -= move;
+        if (move > 0) delete bodies[c.id]; // it moved: others see its new position
       }
       const name = s.stations[c.run.sid] ? s.stations[c.run.sid].name : '?';
       if (c.run.waitingSignal && c.v < 0.05) c.status = 'Waiting at signal for ' + name;
@@ -970,6 +1029,7 @@ details ul { padding-left: 18px; }
     if (c.run) return { ok: false, msg: c.name + ' is running its schedule - stop it first' };
     if (!hasLoco(c)) return { ok: false, msg: c.name + ' has no loco' };
     if (!forward && !hasDoubleCab(c)) return { ok: false, msg: c.name + " can't reverse: single-cab locos only drive forwards (use Back into Station)" };
+    indexSignals(s);
     const fake = { id: cid, path: c.path, run: { forward, route: [] } };
     const sc = scout(s, fake, amount + 2, bodyPoints(s, cid));
     let go = amount;
@@ -1011,7 +1071,7 @@ details ul { padding-left: 18px; }
 
   const api = {
     LEN, GAP, COUPLE_REACH, newState, addNode, addEdge, findEdge, edgesAt, edgeLen, pointAt, dirVec, nextOptions,
-    removeNode, removeEdge, addStation, stationByName, addSignal, signalFaces, sigType, signalAspect, computeBlocks, blockAt, occupancy,
+    removeNode, removeEdge, addStation, stationByName, addSignal, indexSignals, signalFaces, sigType, signalAspect, computeBlocks, blockAt, occupancy,
     vehiclesLength, vlen, hasLoco, hasDoubleCab, pathLength, pointFromHead, slicePath, reversePath, layBack,
     newConsist, placeAtStation, routeContext, splitEdge, moveNode, nearestTrack, nudge, startNode, endNode, relayout, flipConsist, ends, findRoute, allowedDirections, findCoupling,
     couple, uncouple, splitConsist, startRun, step, serialize, deserialize, leadOf, logEvt,
@@ -2104,7 +2164,8 @@ details ul { padding-left: 18px; }
     if (playing) {
       acc += dt * speed;
       let n = 0;
-      while (acc >= 0.05 && n++ < 80) { C.step(S, 0.05); acc -= 0.05; }
+      try { while (acc >= 0.05 && n++ < 80) { C.step(S, 0.05); acc -= 0.05; } }
+      catch (e) { console.error(e); playing = false; updateHeader(); toast('Simulation error: ' + e.message); }
       if (n >= 80) acc = 0;
       dirty = true;
       liveT += dt;
