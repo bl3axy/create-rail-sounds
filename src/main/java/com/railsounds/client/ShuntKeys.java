@@ -19,12 +19,13 @@ import org.lwjgl.glfw.GLFW;
  *   Z + 1..9   uncouple at that coupling, counted from the car you're in
  *   Z (tap)    on foot: uncouple the coupling you're looking at (in a train it shows the hint)
  *   J          toggle auto-couple for trains you drive
+ *   K          start / shut down the engine of the train you're in (a shut-down loco stops idling)
  * While Z is held the number keys don't change your hotbar slot.
  */
 public final class ShuntKeys {
     private ShuntKeys() {}
 
-    private static KeyMapping couple, uncouple, toggleAuto;
+    private static KeyMapping couple, uncouple, toggleAuto, engine;
     private static boolean uncoupleWasDown, numberUsed;
 
     public static void register() {
@@ -32,6 +33,7 @@ public final class ShuntKeys {
         couple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.couple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, cat));
         uncouple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.uncouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
         toggleAuto = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.toggle_autocouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, cat));
+        engine = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.engine", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, cat));
 
         // START of the tick: grab number presses before vanilla turns them into hotbar switches
         ClientTickEvents.START_CLIENT_TICK.register(ShuntKeys::numbers);
@@ -79,5 +81,6 @@ public final class ShuntKeys {
         if (mc.player == null) return;
         while (couple.consumeClick()) send(Shunting.COUPLE, 0);
         while (toggleAuto.consumeClick()) send(Shunting.TOGGLE_AUTO, 0);
+        while (engine.consumeClick()) send(com.railsounds.Engines.TOGGLE, 0);
     }
 }

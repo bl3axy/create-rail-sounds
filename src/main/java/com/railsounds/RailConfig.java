@@ -125,6 +125,22 @@ public class RailConfig {
         /** ticks a train waits at a yard station before its couple/uncouple rule runs */
         public int yardRuleDelayTicks = 20;
 
+        // ---- engine sounds (idle / running) ----
+        /** master switch. Leave false until the engine clips are in the resource pack,
+         *  otherwise clients just log a missing-sound warning and you hear nothing */
+        public boolean engineSounds = false;
+        /** a running loco ticks over while it's standing still, like the real thing.
+         *  Turn off if the drone at your platforms annoys you - the shutdown key (K)
+         *  silences one loco at a time without changing this */
+        public boolean idleWhenStopped = true;
+        /** length of your diesel_idle.ogg / steam_idle.ogg in ticks (20 = 1 second) */
+        public int idleClipTicks = 200;
+        public float idleVolume = 0.35f;
+        public int idleHearingRange = 24;
+        /** startup sound and the engine note while moving */
+        public float engineVolume = 0.6f;
+        public int engineHearingRange = 48;
+
         // ---- misc ----
         /** don't touch: lets new versions update old default values in your existing config */
         public int configVersion = 0;

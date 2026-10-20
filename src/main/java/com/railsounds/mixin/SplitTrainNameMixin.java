@@ -27,5 +27,6 @@ public abstract class SplitTrainNameMixin {
     private static void railsounds$keepType(Train original, int numberOffEnd,
                                             org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Train> cir) {
         com.railsounds.TrainTypes.onSplit(original, cir.getReturnValue());
+        com.railsounds.Engines.onSplit(original, cir.getReturnValue());
     }
 }
