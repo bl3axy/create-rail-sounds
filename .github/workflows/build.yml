@@ -25,13 +25,28 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git add -A && git commit -qm "Log ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" buildlog
-      - name: Boot a test server (catches registry / data errors)
+      - name: Boot a test server and place every block in-game
         run: |
           mkdir -p run && echo "eula=true" > run/eula.txt
-          printf "online-mode=false\nlevel-type=minecraft\\:flat\n" > run/server.properties
-          (timeout 420 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true)
+          printf "online-mode=false\nlevel-type=minecraft\\:flat\nenable-rcon=true\nrcon.port=25575\nrcon.password=railsounds\nspawn-protection=0\n" > run/server.properties
+          (timeout 600 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true) &
+          GRADLE_PID=$!
+          set +e
+          python3 tools/ingame_test.py 127.0.0.1 25575 railsounds
+          TEST_RC=$?
+          set -e
+          wait $GRADLE_PID 2>/dev/null || true
           cp run/logs/latest.log server-log.txt 2>/dev/null || cp server-run.txt server-log.txt
-          grep -E "Done \(|ERROR|Exception|railsounds" server-log.txt | head -80 || true
+          echo "--- in-game test exit: $TEST_RC"
+          echo "--- unexpected errors in the server log:"
+          # Steam 'n' Rails is not installed on the test server, so its mixin targets are
+          # legitimately absent; Create writes its own config on first run.
+          grep -nE "ERROR|Exception|Caused by" server-log.txt \
+            | grep -viE "NoSuchFileException|config/create|UnixException|No key layers|ClassNotFoundException: com/railwayteam" \
+            > unexpected.txt || true
+          cat unexpected.txt
+          if [ -s unexpected.txt ]; then echo "server log has unexpected errors"; exit 1; fi
+          if [ "$TEST_RC" != "0" ]; then echo "in-game test failed"; exit 1; fi
       - name: Zip resource pack
         run: cd server-resourcepack && zip -qr ../create-rail-sounds-resourcepack.zip . -x README.txt
       - uses: actions/upload-artifact@v4
