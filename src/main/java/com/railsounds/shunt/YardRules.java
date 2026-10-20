@@ -82,6 +82,14 @@ public final class YardRules {
         return r == null ? null : r.approach;
     }
 
+    /** wipe every station's yard rules (couple / uncouple / back-in); returns how many */
+    public static int clearAll() {
+        int n = rules.size();
+        rules.clear();
+        save();
+        return n;
+    }
+
     public static boolean remove(String station) {
         boolean had = rules.remove(key(station)) != null;
         if (had) save();

@@ -26,6 +26,7 @@ import net.minecraft.world.phys.Vec3;
  * /railsounds yard couple <station>          - trains stopping there couple to the cut they touch
  * /railsounds yard uncouple <n|all> <station> - trains stopping there drop n cars (away from the loco)
  * /railsounds yard backin|reverse|forward <station> - trains must / may / may not back into it
+ * /railsounds yard reset all               - remove every station's yard rules
  * /railsounds yard clear <station>
  * /railsounds yard list
  */
@@ -107,6 +108,13 @@ public class RailCommands {
                             else ctx.getSource().sendFailure(Component.literal("No yard rule for " + st + "."));
                             return 1;
                         })))
+                .then(Commands.literal("reset")
+                    .then(Commands.literal("all").executes(ctx -> {
+                        int n = com.railsounds.shunt.YardRules.clearAll();
+                        ok(ctx, "Cleared yard rules from " + n + (n == 1 ? " station" : " stations")
+                            + ". All stations are back to normal (forward, no auto couple/uncouple).");
+                        return 1;
+                    })))
                 .then(Commands.literal("list").executes(ctx -> {
                     var all = com.railsounds.shunt.YardRules.all();
                     if (all.isEmpty()) ok(ctx, "No yard rules.");
