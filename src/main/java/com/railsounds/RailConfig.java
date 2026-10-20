@@ -178,7 +178,7 @@ public class RailConfig {
         /** ring the bell with the bell key (B). Off until you press it */
         public boolean locoBell = true;
         /** length of your loco_bell.ogg in ticks; replays every this many ticks while ringing */
-        public int locoBellClipTicks = 40;
+        public int locoBellClipTicks = 55;
         public float locoBellVolume = 0.55f;
         public int locoBellHearingRange = 48;
 
@@ -224,6 +224,11 @@ public class RailConfig {
             // v5: the real startup recording is 7.51s, not the 5s the placeholder was
             if (v.startClipTicks == 100) v.startClipTicks = 150;
             v.configVersion = 5;
+        }
+        if (v.configVersion < 6) {
+            // v6: the real bell is four strikes over 2.75s, not the 2s placeholder
+            if (v.locoBellClipTicks == 40) v.locoBellClipTicks = 55;
+            v.configVersion = 6;
         }
     }
 

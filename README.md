@@ -37,7 +37,7 @@ pretending to be a train.
 | **Engine running** | the engine note while moving, notched to speed (see below) |
 | **Notch up** | the engine digging in as it pulls away or takes another notch |
 | **Startup** | one-shot when you light a diesel — 7.5s of the real thing catching and settling, levelled so it fades into the idle with no step in volume |
-| **Loco bell** | the slow clang on the engine, on the **B** key |
+| **Loco bell** | the slow clang on the engine, four strikes on a 2.75s loop, on the **B** key |
 | **Crossing bell** | rings while a train is heading toward a crossing inside its radius, or any car is sitting on it. Stops about 2s after the last car clears |
 | **Horn / whistle** | `/railsounds diesel` and `/railsounds steam` set which one a train uses |
 
@@ -79,10 +79,10 @@ it everywhere without you having to shut down each loco individually.
 
 ### About the sound files
 
-The diesel idle, running loop, notch-up and startup are all built from real engine recordings.
-The **loco bell is a synthesised placeholder** — right length, loops cleanly, but it's a stand-in.
-There are no steam engine sounds at all (see above). If you record better ones, drop them straight
-in: match the length to the config value
+Every sound in the pack is real audio — the diesel idle, running loop, notch-up and startup from
+engine recordings, the bell from a recorded locomotive bell (Pixabay License, no attribution
+required). There are no steam engine sounds at all (see above). To swap any of them, drop the new
+file in and match the length to the config value
 (`idleClipTicks`, `runClipTicks`, `startClipTicks`, `locoBellClipTicks` — 20 ticks per second) and
 nothing else needs changing.
 
