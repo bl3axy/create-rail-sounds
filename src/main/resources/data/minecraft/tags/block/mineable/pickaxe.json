@@ -1,0 +1,32 @@
+{
+  "replace": false,
+  "values": [
+    "railsounds:battery_box",
+    "railsounds:buffer_stop",
+    "railsounds:car_counter",
+    "railsounds:car_retarder",
+    "railsounds:cargo_sensor",
+    "railsounds:crossbuck",
+    "railsounds:crossing_gate",
+    "railsounds:crossing_signal",
+    "railsounds:defect_detector",
+    "railsounds:derail",
+    "railsounds:interlocking_panel",
+    "railsounds:loading_hatch",
+    "railsounds:mile_post",
+    "railsounds:phone_box",
+    "railsounds:rail_rack",
+    "railsounds:relay_case",
+    "railsounds:route_sensor",
+    "railsounds:searchlight_signal",
+    "railsounds:signal_mast",
+    "railsounds:speed_sign",
+    "railsounds:switch_machine",
+    "railsounds:switch_stand",
+    "railsounds:wheel_stop",
+    "railsounds:wheelset",
+    "railsounds:whistle_post",
+    "railsounds:yard_light",
+    "railsounds:yard_limit_sign"
+  ]
+}

@@ -3,16 +3,30 @@
   "id": "railsounds",
   "version": "${version}",
   "name": "Create Rail Sounds",
-  "description": "Live train sounds and realistic shunting for Create: rail clack, brake squeal, coupler slack, air release, crossing bells, keybind coupling/uncoupling, buffers and yard rules. Goes on the server; also install on clients for the Steam 'n' Rails coupler sync fix, the shunting keys and smooth horn fade-outs. Sounds come from the server resource pack.",
+  "description": "Railroad mod for Create: live train sounds, realistic shunting (keybind coupling, flying switches, coasting cuts, buffers, yard rules), plus working railroad blocks - cargo sensor, car counter, loading hatch, 3-aspect searchlight signals, defect detectors, speed limit signs, crossing signals and gates, car retarders, switch stands, switch machines, route sensors, an interlocking panel and the Switch Linker - and trackside decor. Must be installed on the server AND every client.",
   "license": "MIT",
   "environment": "*",
-  "mixins": ["railsounds.mixins.json", { "config": "railsounds.client.mixins.json", "environment": "client" }],
-  "entrypoints": { "main": ["com.railsounds.RailSounds"], "client": ["com.railsounds.client.RailSoundsClient"] },
+  "mixins": [
+    "railsounds.mixins.json",
+    {
+      "config": "railsounds.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "entrypoints": {
+    "main": [
+      "com.railsounds.RailSounds"
+    ],
+    "client": [
+      "com.railsounds.client.RailSoundsClient"
+    ]
+  },
   "depends": {
     "fabricloader": "*",
     "fabric-api": "*",
     "minecraft": ">=26.2- <26.3-",
     "create": "*",
     "java": ">=25"
-  }
+  },
+  "accessWidener": "railsounds.classtweaker"
 }

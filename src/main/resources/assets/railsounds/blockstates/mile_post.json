@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/mile_post"
+    },
+    "facing=east": {
+      "model": "railsounds:block/mile_post",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/mile_post",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/mile_post",
+      "y": 270
+    }
+  }
+}

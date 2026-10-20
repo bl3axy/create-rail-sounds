@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "angle=0,facing=north,lit=false": {
+      "model": "railsounds:block/crossing_gate_0"
+    },
+    "angle=0,facing=east,lit=false": {
+      "model": "railsounds:block/crossing_gate_0",
+      "y": 90
+    },
+    "angle=0,facing=south,lit=false": {
+      "model": "railsounds:block/crossing_gate_0",
+      "y": 180
+    },
+    "angle=0,facing=west,lit=false": {
+      "model": "railsounds:block/crossing_gate_0",
+      "y": 270
+    },
+    "angle=0,facing=north,lit=true": {
+      "model": "railsounds:block/crossing_gate_0"
+    },
+    "angle=0,facing=east,lit=true": {
+      "model": "railsounds:block/crossing_gate_0",
+      "y": 90
+    },
+    "angle=0,facing=south,lit=true": {
+      "model": "railsounds:block/crossing_gate_0",
+      "y": 180
+    },
+    "angle=0,facing=west,lit=true": {
+      "model": "railsounds:block/crossing_gate_0",
+      "y": 270
+    },
+    "angle=1,facing=north,lit=false": {
+      "model": "railsounds:block/crossing_gate_1"
+    },
+    "angle=1,facing=east,lit=false": {
+      "model": "railsounds:block/crossing_gate_1",
+      "y": 90
+    },
+    "angle=1,facing=south,lit=false": {
+      "model": "railsounds:block/crossing_gate_1",
+      "y": 180
+    },
+    "angle=1,facing=west,lit=false": {
+      "model": "railsounds:block/crossing_gate_1",
+      "y": 270
+    },
+    "angle=1,facing=north,lit=true": {
+      "model": "railsounds:block/crossing_gate_1"
+    },
+    "angle=1,facing=east,lit=true": {
+      "model": "railsounds:block/crossing_gate_1",
+      "y": 90
+    },
+    "angle=1,facing=south,lit=true": {
+      "model": "railsounds:block/crossing_gate_1",
+      "y": 180
+    },
+    "angle=1,facing=west,lit=true": {
+      "model": "railsounds:block/crossing_gate_1",
+      "y": 270
+    },
+    "angle=2,facing=north,lit=false": {
+      "model": "railsounds:block/crossing_gate_2"
+    },
+    "angle=2,facing=east,lit=false": {
+      "model": "railsounds:block/crossing_gate_2",
+      "y": 90
+    },
+    "angle=2,facing=south,lit=false": {
+      "model": "railsounds:block/crossing_gate_2",
+      "y": 180
+    },
+    "angle=2,facing=west,lit=false": {
+      "model": "railsounds:block/crossing_gate_2",
+      "y": 270
+    },
+    "angle=2,facing=north,lit=true": {
+      "model": "railsounds:block/crossing_gate_2_lit"
+    },
+    "angle=2,facing=east,lit=true": {
+      "model": "railsounds:block/crossing_gate_2_lit",
+      "y": 90
+    },
+    "angle=2,facing=south,lit=true": {
+      "model": "railsounds:block/crossing_gate_2_lit",
+      "y": 180
+    },
+    "angle=2,facing=west,lit=true": {
+      "model": "railsounds:block/crossing_gate_2_lit",
+      "y": 270
+    }
+  }
+}

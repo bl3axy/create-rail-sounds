@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=north,target=none": {
+      "model": "railsounds:block/switch_stand_none"
+    },
+    "facing=east,target=none": {
+      "model": "railsounds:block/switch_stand_none",
+      "y": 90
+    },
+    "facing=south,target=none": {
+      "model": "railsounds:block/switch_stand_none",
+      "y": 180
+    },
+    "facing=west,target=none": {
+      "model": "railsounds:block/switch_stand_none",
+      "y": 270
+    },
+    "facing=north,target=normal": {
+      "model": "railsounds:block/switch_stand_normal"
+    },
+    "facing=east,target=normal": {
+      "model": "railsounds:block/switch_stand_normal",
+      "y": 90
+    },
+    "facing=south,target=normal": {
+      "model": "railsounds:block/switch_stand_normal",
+      "y": 180
+    },
+    "facing=west,target=normal": {
+      "model": "railsounds:block/switch_stand_normal",
+      "y": 270
+    },
+    "facing=north,target=reverse": {
+      "model": "railsounds:block/switch_stand_reverse"
+    },
+    "facing=east,target=reverse": {
+      "model": "railsounds:block/switch_stand_reverse",
+      "y": 90
+    },
+    "facing=south,target=reverse": {
+      "model": "railsounds:block/switch_stand_reverse",
+      "y": 180
+    },
+    "facing=west,target=reverse": {
+      "model": "railsounds:block/switch_stand_reverse",
+      "y": 270
+    }
+  }
+}

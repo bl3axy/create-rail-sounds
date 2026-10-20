@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IHI",
+    "ICI"
+  ],
+  "key": {
+    "I": "create:iron_sheet",
+    "H": "minecraft:hopper",
+    "C": "create:andesite_casing"
+  },
+  "result": {
+    "id": "railsounds:loading_hatch",
+    "count": 1
+  }
+}

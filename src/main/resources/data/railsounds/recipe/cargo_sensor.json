@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "T",
+    "Q",
+    "C"
+  ],
+  "key": {
+    "C": "create:andesite_casing",
+    "T": "create:electron_tube",
+    "Q": "minecraft:comparator"
+  },
+  "result": {
+    "id": "railsounds:cargo_sensor",
+    "count": 1
+  }
+}

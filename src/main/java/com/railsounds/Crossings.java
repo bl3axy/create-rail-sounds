@@ -46,6 +46,58 @@ public class Crossings {
         BlockPos signalPos() {
             return signalX == null ? null : new BlockPos(signalX, signalY, signalZ);
         }
+
+        /** true while the bell is ringing (a train is approaching or on the crossing) */
+        public boolean isActive() {
+            return active;
+        }
+    }
+
+    /** the crossing a crossing-signal / gate block at pos belongs to: nearest one within maxDist in that dimension */
+    public static Crossing nearest(ServerLevel level, BlockPos pos, double maxDist) {
+        String dim = level.dimension().identifier().toString();
+        Crossing best = null;
+        double bestD = maxDist * maxDist;
+        for (Crossing c : LIST) {
+            if (!dim.equals(c.dimension)) continue;
+            double dx = c.x - (pos.getX() + 0.5), dy = c.y - (pos.getY() + 0.5), dz = c.z - (pos.getZ() + 0.5);
+            double d = dx * dx + dy * dy + dz * dz;
+            if (d <= bestD) {
+                bestD = d;
+                best = c;
+            }
+        }
+        return best;
+    }
+
+    /** name used for a crossing that a Crossing Signal block made for itself */
+    public static String blockName(BlockPos pos) {
+        return "signal_" + pos.getX() + "_" + pos.getY() + "_" + pos.getZ();
+    }
+
+    /** make a crossing centred on a crossing-signal block */
+    public static Crossing addForBlock(ServerLevel level, BlockPos pos, int radius) {
+        Crossing c = get(blockName(pos));
+        if (c != null) return c;
+        c = new Crossing();
+        c.name = blockName(pos);
+        c.dimension = level.dimension().identifier().toString();
+        c.x = pos.getX() + 0.5;
+        c.y = pos.getY();
+        c.z = pos.getZ() + 0.5;
+        c.radius = radius;
+        LIST.add(c);
+        save();
+        return c;
+    }
+
+    /** remove the crossing a signal block made for itself (crossings made by command are left alone) */
+    public static void removeForBlock(BlockPos pos) {
+        Crossing c = get(blockName(pos));
+        if (c == null) return;
+        LIST.remove(c);
+        lastDist.keySet().removeIf(k -> k.startsWith(c.name + "#"));
+        save();
     }
 
     public static List<Crossing> LIST = new ArrayList<>();

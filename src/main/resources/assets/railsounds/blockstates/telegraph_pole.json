@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/telegraph_pole"
+    },
+    "facing=east": {
+      "model": "railsounds:block/telegraph_pole",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/telegraph_pole",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/telegraph_pole",
+      "y": 270
+    }
+  }
+}

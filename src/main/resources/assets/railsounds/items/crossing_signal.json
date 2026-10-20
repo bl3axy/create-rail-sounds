@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "railsounds:block/crossing_signal_left"
+  }
+}

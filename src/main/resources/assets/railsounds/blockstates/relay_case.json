@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/relay_case"
+    },
+    "facing=east": {
+      "model": "railsounds:block/relay_case",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/relay_case",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/relay_case",
+      "y": 270
+    }
+  }
+}

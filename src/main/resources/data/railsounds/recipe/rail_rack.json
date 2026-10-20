@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "RRR",
+    "W W"
+  ],
+  "key": {
+    "R": "minecraft:rail",
+    "W": "minecraft:dark_oak_slab"
+  },
+  "result": {
+    "id": "railsounds:rail_rack",
+    "count": 1
+  }
+}

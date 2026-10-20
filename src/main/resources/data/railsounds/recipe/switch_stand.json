@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "GR",
+    "IL",
+    "II"
+  ],
+  "key": {
+    "G": "minecraft:green_dye",
+    "R": "minecraft:red_dye",
+    "I": "minecraft:iron_ingot",
+    "L": "minecraft:lever"
+  },
+  "result": {
+    "id": "railsounds:switch_stand",
+    "count": 1
+  }
+}

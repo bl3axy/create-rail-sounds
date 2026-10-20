@@ -1,0 +1,139 @@
+{
+  "variants": {
+    "facing=north,limit=0": {
+      "model": "railsounds:block/speed_sign_10"
+    },
+    "facing=east,limit=0": {
+      "model": "railsounds:block/speed_sign_10",
+      "y": 90
+    },
+    "facing=south,limit=0": {
+      "model": "railsounds:block/speed_sign_10",
+      "y": 180
+    },
+    "facing=west,limit=0": {
+      "model": "railsounds:block/speed_sign_10",
+      "y": 270
+    },
+    "facing=north,limit=1": {
+      "model": "railsounds:block/speed_sign_15"
+    },
+    "facing=east,limit=1": {
+      "model": "railsounds:block/speed_sign_15",
+      "y": 90
+    },
+    "facing=south,limit=1": {
+      "model": "railsounds:block/speed_sign_15",
+      "y": 180
+    },
+    "facing=west,limit=1": {
+      "model": "railsounds:block/speed_sign_15",
+      "y": 270
+    },
+    "facing=north,limit=2": {
+      "model": "railsounds:block/speed_sign_20"
+    },
+    "facing=east,limit=2": {
+      "model": "railsounds:block/speed_sign_20",
+      "y": 90
+    },
+    "facing=south,limit=2": {
+      "model": "railsounds:block/speed_sign_20",
+      "y": 180
+    },
+    "facing=west,limit=2": {
+      "model": "railsounds:block/speed_sign_20",
+      "y": 270
+    },
+    "facing=north,limit=3": {
+      "model": "railsounds:block/speed_sign_25"
+    },
+    "facing=east,limit=3": {
+      "model": "railsounds:block/speed_sign_25",
+      "y": 90
+    },
+    "facing=south,limit=3": {
+      "model": "railsounds:block/speed_sign_25",
+      "y": 180
+    },
+    "facing=west,limit=3": {
+      "model": "railsounds:block/speed_sign_25",
+      "y": 270
+    },
+    "facing=north,limit=4": {
+      "model": "railsounds:block/speed_sign_30"
+    },
+    "facing=east,limit=4": {
+      "model": "railsounds:block/speed_sign_30",
+      "y": 90
+    },
+    "facing=south,limit=4": {
+      "model": "railsounds:block/speed_sign_30",
+      "y": 180
+    },
+    "facing=west,limit=4": {
+      "model": "railsounds:block/speed_sign_30",
+      "y": 270
+    },
+    "facing=north,limit=5": {
+      "model": "railsounds:block/speed_sign_40"
+    },
+    "facing=east,limit=5": {
+      "model": "railsounds:block/speed_sign_40",
+      "y": 90
+    },
+    "facing=south,limit=5": {
+      "model": "railsounds:block/speed_sign_40",
+      "y": 180
+    },
+    "facing=west,limit=5": {
+      "model": "railsounds:block/speed_sign_40",
+      "y": 270
+    },
+    "facing=north,limit=6": {
+      "model": "railsounds:block/speed_sign_50"
+    },
+    "facing=east,limit=6": {
+      "model": "railsounds:block/speed_sign_50",
+      "y": 90
+    },
+    "facing=south,limit=6": {
+      "model": "railsounds:block/speed_sign_50",
+      "y": 180
+    },
+    "facing=west,limit=6": {
+      "model": "railsounds:block/speed_sign_50",
+      "y": 270
+    },
+    "facing=north,limit=7": {
+      "model": "railsounds:block/speed_sign_60"
+    },
+    "facing=east,limit=7": {
+      "model": "railsounds:block/speed_sign_60",
+      "y": 90
+    },
+    "facing=south,limit=7": {
+      "model": "railsounds:block/speed_sign_60",
+      "y": 180
+    },
+    "facing=west,limit=7": {
+      "model": "railsounds:block/speed_sign_60",
+      "y": 270
+    },
+    "facing=north,limit=8": {
+      "model": "railsounds:block/speed_sign_r"
+    },
+    "facing=east,limit=8": {
+      "model": "railsounds:block/speed_sign_r",
+      "y": 90
+    },
+    "facing=south,limit=8": {
+      "model": "railsounds:block/speed_sign_r",
+      "y": 180
+    },
+    "facing=west,limit=8": {
+      "model": "railsounds:block/speed_sign_r",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "N",
+    "B"
+  ],
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "B": "minecraft:barrel"
+  },
+  "result": {
+    "id": "railsounds:spike_keg",
+    "count": 1
+  }
+}

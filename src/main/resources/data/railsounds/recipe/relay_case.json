@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "III",
+    "IRI",
+    "III"
+  ],
+  "key": {
+    "I": "create:iron_sheet",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "railsounds:relay_case",
+    "count": 1
+  }
+}

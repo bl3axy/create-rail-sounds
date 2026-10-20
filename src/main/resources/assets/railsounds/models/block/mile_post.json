@@ -1,0 +1,54 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "post": "railsounds:block/concrete",
+    "face": "railsounds:block/mile_post_face",
+    "particle": "railsounds:block/concrete"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        15,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#face",
+          "uv": [
+            6,
+            1,
+            10,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#face",
+          "uv": [
+            6,
+            1,
+            10,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#post"
+        },
+        "west": {
+          "texture": "#post"
+        },
+        "up": {
+          "texture": "#post"
+        },
+        "down": {
+          "texture": "#post"
+        }
+      }
+    }
+  ]
+}

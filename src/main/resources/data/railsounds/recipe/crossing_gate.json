@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "RWW",
+    "IP ",
+    "IC "
+  ],
+  "key": {
+    "R": "minecraft:redstone_lamp",
+    "W": "minecraft:white_wool",
+    "I": "create:iron_sheet",
+    "P": "minecraft:piston",
+    "C": "create:andesite_casing"
+  },
+  "result": {
+    "id": "railsounds:crossing_gate",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/whistle_post"
+    },
+    "facing=east": {
+      "model": "railsounds:block/whistle_post",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/whistle_post",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/whistle_post",
+      "y": 270
+    }
+  }
+}

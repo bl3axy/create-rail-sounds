@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "RRR",
+    "I I"
+  ],
+  "key": {
+    "R": "minecraft:red_concrete",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "railsounds:buffer_stop",
+    "count": 1
+  }
+}

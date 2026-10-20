@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "W",
+    "I"
+  ],
+  "key": {
+    "W": "minecraft:white_concrete",
+    "I": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:whistle_post",
+    "count": 2
+  }
+}

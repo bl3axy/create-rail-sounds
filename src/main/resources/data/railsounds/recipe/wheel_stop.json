@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "YIY"
+  ],
+  "key": {
+    "Y": "minecraft:yellow_dye",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "railsounds:wheel_stop",
+    "count": 2
+  }
+}

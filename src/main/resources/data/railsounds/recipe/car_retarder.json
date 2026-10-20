@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "YPY",
+    "III"
+  ],
+  "key": {
+    "Y": "minecraft:yellow_dye",
+    "P": "minecraft:piston",
+    "I": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:car_retarder",
+    "count": 1
+  }
+}

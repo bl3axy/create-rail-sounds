@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " G ",
+    "RTY",
+    " S "
+  ],
+  "key": {
+    "G": "minecraft:green_stained_glass",
+    "R": "minecraft:red_stained_glass",
+    "Y": "minecraft:yellow_stained_glass",
+    "T": "create:electron_tube",
+    "S": "create:track_signal"
+  },
+  "result": {
+    "id": "railsounds:searchlight_signal",
+    "count": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "WWW",
+    "I I"
+  ],
+  "key": {
+    "W": "minecraft:white_concrete",
+    "I": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:yard_limit_sign",
+    "count": 2
+  }
+}

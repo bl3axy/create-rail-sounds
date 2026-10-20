@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "aspect=dark,facing=north": {
+      "model": "railsounds:block/searchlight_signal_dark"
+    },
+    "aspect=dark,facing=east": {
+      "model": "railsounds:block/searchlight_signal_dark",
+      "y": 90
+    },
+    "aspect=dark,facing=south": {
+      "model": "railsounds:block/searchlight_signal_dark",
+      "y": 180
+    },
+    "aspect=dark,facing=west": {
+      "model": "railsounds:block/searchlight_signal_dark",
+      "y": 270
+    },
+    "aspect=red,facing=north": {
+      "model": "railsounds:block/searchlight_signal_red"
+    },
+    "aspect=red,facing=east": {
+      "model": "railsounds:block/searchlight_signal_red",
+      "y": 90
+    },
+    "aspect=red,facing=south": {
+      "model": "railsounds:block/searchlight_signal_red",
+      "y": 180
+    },
+    "aspect=red,facing=west": {
+      "model": "railsounds:block/searchlight_signal_red",
+      "y": 270
+    },
+    "aspect=yellow,facing=north": {
+      "model": "railsounds:block/searchlight_signal_yellow"
+    },
+    "aspect=yellow,facing=east": {
+      "model": "railsounds:block/searchlight_signal_yellow",
+      "y": 90
+    },
+    "aspect=yellow,facing=south": {
+      "model": "railsounds:block/searchlight_signal_yellow",
+      "y": 180
+    },
+    "aspect=yellow,facing=west": {
+      "model": "railsounds:block/searchlight_signal_yellow",
+      "y": 270
+    },
+    "aspect=green,facing=north": {
+      "model": "railsounds:block/searchlight_signal_green"
+    },
+    "aspect=green,facing=east": {
+      "model": "railsounds:block/searchlight_signal_green",
+      "y": 90
+    },
+    "aspect=green,facing=south": {
+      "model": "railsounds:block/searchlight_signal_green",
+      "y": 180
+    },
+    "aspect=green,facing=west": {
+      "model": "railsounds:block/searchlight_signal_green",
+      "y": 270
+    }
+  }
+}

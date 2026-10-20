@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/car_retarder"
+    },
+    "facing=east": {
+      "model": "railsounds:block/car_retarder",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/car_retarder",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/car_retarder",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/derail"
+    },
+    "facing=east": {
+      "model": "railsounds:block/derail",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/derail",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/derail",
+      "y": 270
+    }
+  }
+}

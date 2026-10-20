@@ -6,6 +6,10 @@ version = project.mod_version
 group = "com.railsounds"
 base { archivesName = "create-rail-sounds-${project.minecraft_version}" }
 
+loom {
+    accessWidenerPath = file("src/main/resources/railsounds.classtweaker")
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"

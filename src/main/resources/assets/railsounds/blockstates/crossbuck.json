@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/crossbuck"
+    },
+    "facing=east": {
+      "model": "railsounds:block/crossbuck",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/crossbuck",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/crossbuck",
+      "y": 270
+    }
+  }
+}

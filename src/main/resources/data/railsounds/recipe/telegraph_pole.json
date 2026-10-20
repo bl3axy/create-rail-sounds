@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SSS",
+    " L ",
+    " L "
+  ],
+  "key": {
+    "S": "minecraft:stick",
+    "L": "minecraft:stripped_spruce_log"
+  },
+  "result": {
+    "id": "railsounds:telegraph_pole",
+    "count": 3
+  }
+}

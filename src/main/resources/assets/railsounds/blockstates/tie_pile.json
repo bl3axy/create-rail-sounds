@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/tie_pile"
+    },
+    "facing=east": {
+      "model": "railsounds:block/tie_pile",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/tie_pile",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/tie_pile",
+      "y": 270
+    }
+  }
+}

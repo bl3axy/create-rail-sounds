@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " A ",
+    "IOI",
+    "ITI"
+  ],
+  "key": {
+    "A": "minecraft:lightning_rod",
+    "I": "create:iron_sheet",
+    "O": "create:track_observer",
+    "T": "create:electron_tube"
+  },
+  "result": {
+    "id": "railsounds:defect_detector",
+    "count": 1
+  }
+}

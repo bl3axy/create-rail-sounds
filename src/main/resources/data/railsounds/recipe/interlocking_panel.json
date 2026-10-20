@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "LLL",
+    "PCP",
+    "LTL"
+  ],
+  "key": {
+    "L": "minecraft:lever",
+    "P": "create:precision_mechanism",
+    "C": "create:railway_casing",
+    "T": "create:transmitter"
+  },
+  "result": {
+    "id": "railsounds:interlocking_panel",
+    "count": 1
+  }
+}

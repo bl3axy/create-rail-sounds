@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "RWR",
+    " B ",
+    " I "
+  ],
+  "key": {
+    "R": "minecraft:redstone_lamp",
+    "W": "minecraft:white_concrete",
+    "B": "minecraft:bell",
+    "I": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:crossing_signal",
+    "count": 1
+  }
+}

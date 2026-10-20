@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "railsounds:block/loading_hatch"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "W W",
+    " W ",
+    " I "
+  ],
+  "key": {
+    "W": "minecraft:white_concrete",
+    "I": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:crossbuck",
+    "count": 2
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IL",
+    "I "
+  ],
+  "key": {
+    "I": "minecraft:iron_bars",
+    "L": "minecraft:sea_lantern"
+  },
+  "result": {
+    "id": "railsounds:yard_light",
+    "count": 1
+  }
+}

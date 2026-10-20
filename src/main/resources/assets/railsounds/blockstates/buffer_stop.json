@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/buffer_stop"
+    },
+    "facing=east": {
+      "model": "railsounds:block/buffer_stop",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/buffer_stop",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/buffer_stop",
+      "y": 270
+    }
+  }
+}

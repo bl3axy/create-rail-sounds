@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "Y",
+    "I"
+  ],
+  "key": {
+    "Y": "minecraft:yellow_concrete",
+    "I": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:phone_box",
+    "count": 1
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "pole": "railsounds:block/white_paint",
+    "boards": "railsounds:block/crossbuck_boards",
+    "black": "railsounds:block/black_paint",
+    "particle": "railsounds:block/white_paint"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        16,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pole"
+        },
+        "south": {
+          "texture": "#pole"
+        },
+        "east": {
+          "texture": "#pole"
+        },
+        "west": {
+          "texture": "#pole"
+        },
+        "up": {
+          "texture": "#pole"
+        },
+        "down": {
+          "texture": "#pole"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        10.75,
+        6.5
+      ],
+      "to": [
+        16,
+        12.25,
+        7
+      ],
+      "faces": {
+        "north": {
+          "texture": "#boards",
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#pole"
+        },
+        "east": {
+          "texture": "#pole"
+        },
+        "west": {
+          "texture": "#pole"
+        },
+        "up": {
+          "texture": "#pole"
+        },
+        "down": {
+          "texture": "#pole"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          11.5,
+          6.75
+        ],
+        "axis": "z",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        10.75,
+        6.4
+      ],
+      "to": [
+        16,
+        12.25,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#boards",
+          "uv": [
+            0,
+            8,
+            16,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#pole"
+        },
+        "east": {
+          "texture": "#pole"
+        },
+        "west": {
+          "texture": "#pole"
+        },
+        "up": {
+          "texture": "#pole"
+        },
+        "down": {
+          "texture": "#pole"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          11.5,
+          6.45
+        ],
+        "axis": "z",
+        "angle": -45
+      }
+    }
+  ]
+}

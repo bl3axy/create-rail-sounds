@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "O",
+    "T",
+    "C"
+  ],
+  "key": {
+    "O": "create:track_observer",
+    "T": "create:electron_tube",
+    "C": "create:andesite_casing"
+  },
+  "result": {
+    "id": "railsounds:route_sensor",
+    "count": 1
+  }
+}

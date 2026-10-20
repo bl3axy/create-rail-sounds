@@ -1,0 +1,74 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "side": "railsounds:block/galvanized",
+    "lid": "railsounds:block/battery_box_lid",
+    "particle": "railsounds:block/galvanized"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        4
+      ],
+      "to": [
+        15,
+        6,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        6,
+        3.5
+      ],
+      "to": [
+        15.5,
+        7,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "up": {
+          "texture": "#lid"
+        },
+        "down": {
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

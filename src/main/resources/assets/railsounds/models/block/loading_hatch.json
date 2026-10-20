@@ -1,0 +1,43 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "side": "railsounds:block/loading_hatch_side",
+    "top": "railsounds:block/loading_hatch_top",
+    "bottom": "railsounds:block/dark_steel",
+    "particle": "railsounds:block/loading_hatch_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "up": {
+          "texture": "#top"
+        },
+        "down": {
+          "texture": "#bottom"
+        }
+      }
+    }
+  ]
+}

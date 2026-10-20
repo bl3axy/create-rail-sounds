@@ -99,8 +99,9 @@ public class RailConfig {
         /** at or below this closing speed trains stop against each other (buffers) instead of crashing.
          *  Above it Create's normal crash happens. 0.5 = 10 blocks/sec */
         public double bufferMaxSpeed = 0.5;
-        /** can't pull the cut lever faster than this (blocks/tick). -1 = any speed */
-        public double uncoupleMaxSpeed = 0.15;
+        /** can't pull the cut lever faster than this (blocks/tick). -1 = any speed.
+         *  0.75 = 15 blocks/sec, fast enough for flying switches / kicking cars */
+        public double uncoupleMaxSpeed = 0.75;
         /** ends this close (blocks) count as touching */
         public double contactGap = 0.35;
         /** the couple key / a yard rule can reach a cut this far away and draw it in */
@@ -108,8 +109,8 @@ public class RailConfig {
         /** how far (blocks) you can be from a coupling when working it on foot */
         public double onFootReach = 5.0;
         /** cars with no controls roll this much further than Create's default before stopping.
-         *  1 = Create's normal braking, 0.25 = coast 4x as far */
-        public double cutCoastFactor = 0.25;
+         *  1 = Create's normal braking, 0.06 = coast ~16x as far (good for kicking cars into a yard) */
+        public double cutCoastFactor = 0.06;
         /** fallback overhang past the end bogey when a car isn't loaded */
         public double defaultOverhang = 1.5;
         /** Space finds stations behind you too when reversing a single-cab loco (Create only allows it
@@ -125,8 +126,20 @@ public class RailConfig {
         public int yardRuleDelayTicks = 20;
 
         // ---- misc ----
+        /** don't touch: lets new versions update old default values in your existing config */
+        public int configVersion = 0;
         /** skip Steam 'n' Rails handcars (no brake squeal / couplers on a handcar) */
         public boolean ignoreHandcars = true;
+    }
+
+    /** bring an older config up to date without overwriting numbers the player changed */
+    static void migrate(Values v) {
+        if (v.configVersion < 2) {
+            // v2: flying switches + long coasting cuts. Only move values still on the old defaults
+            if (Math.abs(v.uncoupleMaxSpeed - 0.15) < 1e-9) v.uncoupleMaxSpeed = 0.75;
+            if (Math.abs(v.cutCoastFactor - 0.25) < 1e-9) v.cutCoastFactor = 0.06;
+            v.configVersion = 2;
+        }
     }
 
     public static void load() {
@@ -137,6 +150,7 @@ public class RailConfig {
                     if (loaded != null) V = loaded;
                 }
             }
+            migrate(V);
             save(); // writes defaults / fills in any new fields
         } catch (Exception e) {
             RailSounds.LOG.error("Could not read railsounds.json, using defaults", e);

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/switch_machine"
+    },
+    "facing=east": {
+      "model": "railsounds:block/switch_machine",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/switch_machine",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/switch_machine",
+      "y": 270
+    }
+  }
+}

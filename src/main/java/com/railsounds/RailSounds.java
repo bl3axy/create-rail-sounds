@@ -28,6 +28,7 @@ public class RailSounds implements ModInitializer {
         RailConfig.load();
         Crossings.load();
         com.railsounds.schedule.ScheduleTypes.register();
+        com.railsounds.rail.RailBlocks.register();
         PayloadTypeRegistry.clientboundPlay().register(HornPayload.TYPE, HornPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ShuntPayload.TYPE, ShuntPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(AutoCouplePayload.TYPE, AutoCouplePayload.CODEC);
@@ -46,6 +47,8 @@ public class RailSounds implements ModInitializer {
             TrainTypes.load(server);
             Shunting.reset();
             YardRules.load(server);
+            com.railsounds.rail.TowerLinks.load(server);
+            com.railsounds.rail.SpeedZones.reset();
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             SoundPlayer.clear();
@@ -55,12 +58,25 @@ public class RailSounds implements ModInitializer {
             TrainTypes.unload();
             Shunting.reset();
             YardRules.unload();
+            com.railsounds.rail.TowerLinks.unload();
+            com.railsounds.rail.SpeedZones.reset();
+            com.railsounds.rail.SearchlightSignalBlock.clearCache();
+            com.railsounds.rail.DefectDetectorBlock.clearCache();
+            com.railsounds.rail.InterlockingPanelBlock.clearCache();
+            com.railsounds.rail.CrossingGateBlock.clearCache();
+            com.railsounds.rail.RouteSensorBlock.clearCache();
+            com.railsounds.rail.RailItems.clearCache();
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             try {
                 Shunting.tick(server);
             } catch (Throwable t) {
                 LOG.error("[railsounds] shunting tick failed", t);
+            }
+            try {
+                com.railsounds.rail.SpeedZones.tick(server);
+            } catch (Throwable t) {
+                LOG.error("[railsounds] speed limit tick failed", t);
             }
             try {
                 TrainSoundTracker.tick(server);

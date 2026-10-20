@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "I",
+    "I",
+    "I"
+  ],
+  "key": {
+    "I": "minecraft:iron_bars"
+  },
+  "result": {
+    "id": "railsounds:signal_mast",
+    "count": 4
+  }
+}

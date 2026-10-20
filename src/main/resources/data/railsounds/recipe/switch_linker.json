@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " GR",
+    " I ",
+    "B  "
+  ],
+  "key": {
+    "G": "minecraft:green_dye",
+    "R": "minecraft:red_dye",
+    "I": "minecraft:iron_ingot",
+    "B": "create:brass_sheet"
+  },
+  "result": {
+    "id": "railsounds:switch_linker",
+    "count": 1
+  }
+}

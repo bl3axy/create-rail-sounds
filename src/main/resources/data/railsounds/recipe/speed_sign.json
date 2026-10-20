@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "W",
+    "S",
+    "S"
+  ],
+  "key": {
+    "W": "minecraft:white_concrete",
+    "S": "create:iron_sheet"
+  },
+  "result": {
+    "id": "railsounds:speed_sign",
+    "count": 2
+  }
+}

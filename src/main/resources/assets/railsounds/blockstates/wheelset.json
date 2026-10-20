@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "railsounds:block/wheelset"
+    },
+    "facing=east": {
+      "model": "railsounds:block/wheelset",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "railsounds:block/wheelset",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "railsounds:block/wheelset",
+      "y": 270
+    }
+  }
+}

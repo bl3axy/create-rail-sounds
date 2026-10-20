@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "I I",
+    "ICI"
+  ],
+  "key": {
+    "I": "create:iron_sheet",
+    "C": "minecraft:copper_ingot"
+  },
+  "result": {
+    "id": "railsounds:battery_box",
+    "count": 1
+  }
+}
