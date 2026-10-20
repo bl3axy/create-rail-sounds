@@ -126,9 +126,10 @@ public class RailConfig {
         public int yardRuleDelayTicks = 20;
 
         // ---- engine sounds (idle / running) ----
-        /** master switch. Leave false until the engine clips are in the resource pack,
-         *  otherwise clients just log a missing-sound warning and you hear nothing */
-        public boolean engineSounds = false;
+        /** master switch for engine noise. On by default: a running loco idles when it's
+         *  stopped and the K key shuts it down. Until diesel_idle.ogg / steam_idle.ogg are in
+         *  the resource pack there's simply nothing to hear (clients log a missing-sound line) */
+        public boolean engineSounds = true;
         /** a running loco ticks over while it's standing still, like the real thing.
          *  Turn off if the drone at your platforms annoys you - the shutdown key (K)
          *  silences one loco at a time without changing this */
@@ -150,11 +151,17 @@ public class RailConfig {
 
     /** bring an older config up to date without overwriting numbers the player changed */
     static void migrate(Values v) {
+        // oldest first: each step leaves configVersion where the next one expects it
         if (v.configVersion < 2) {
             // v2: flying switches + long coasting cuts. Only move values still on the old defaults
             if (Math.abs(v.uncoupleMaxSpeed - 0.15) < 1e-9) v.uncoupleMaxSpeed = 0.75;
             if (Math.abs(v.cutCoastFactor - 0.25) < 1e-9) v.cutCoastFactor = 0.06;
             v.configVersion = 2;
+        }
+        if (v.configVersion < 3) {
+            // v3: engine idle is on by default now. Only flip people still on the old default
+            if (!v.engineSounds) v.engineSounds = true;
+            v.configVersion = 3;
         }
     }
 
