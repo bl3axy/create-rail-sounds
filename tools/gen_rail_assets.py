@@ -204,16 +204,15 @@ def make_textures():
     draw_text_centered(yl, "LIMIT", 16, 7 + 0, INK)
     tex("yard_limit_face", yl)
 
-    # crossbuck boards: "RAILROAD" on rows 0-5, "CROSSING" on rows 16-21
-    # 5 rows of text need rows 1-5 inclusive; keep the board edge on row 0 and 6
-    cb = Image.new("RGBA", (32, 32), WHITE)
-    for x in range(32):
+    # Crossbuck boards. These used to carry RAILROAD / CROSSING in a 5px font, but each board
+    # face is only 1.5 blocks-pixels tall and showed a 3px slice of the texture, so what you
+    # actually saw was fragments of letters - black and white noise. No lettering survives at
+    # this size, so the boards are plain white with a dark edge, which is what reads.
+    # Rows 0-3 are the whole board; both faces UV to (0,0,16,4).
+    cb = Image.new("RGBA", (16, 16), WHITE)
+    for x in range(16):
         cb.putpixel((x, 0), INK)
-        cb.putpixel((x, 6), INK)
-        cb.putpixel((x, 16), INK)
-        cb.putpixel((x, 22), INK)
-    draw_text_centered(cb, "RAILROAD", 16, 1, INK)
-    draw_text_centered(cb, "CROSSING", 16, 17, INK)
+        cb.putpixel((x, 3), INK)
     tex("crossbuck_boards", cb)
 
     # speed limit plates
@@ -884,9 +883,11 @@ def gen_decor():
     # crossbuck only
     model("crossbuck", {"pole": t("white_paint"), "boards": t("crossbuck_boards"), "black": t("black_paint")}, [
         el((7, 0, 7), (9, 16, 9), {"all": "pole"}),
-        el((0, 10.75, 6.5), (16, 12.25, 7), {"all": "pole", "north": ("boards", (0, 0, 16, 3))},
+        el((0, 10.75, 6.5), (16, 12.25, 7),
+           {"all": "pole", "north": ("boards", (0, 0, 16, 4)), "south": ("boards", (0, 0, 16, 4))},
            {"origin": [8, 11.5, 6.75], "axis": "z", "angle": 45}),
-        el((0, 10.75, 6.4), (16, 12.25, 6.5), {"all": "pole", "north": ("boards", (0, 8, 16, 11))},
+        el((0, 10.75, 6.4), (16, 12.25, 6.5),
+           {"all": "pole", "north": ("boards", (0, 0, 16, 4)), "south": ("boards", (0, 0, 16, 4))},
            {"origin": [8, 11.5, 6.45], "axis": "z", "angle": -45}),
     ])
     # relay case / bungalow

@@ -57,11 +57,17 @@
             0,
             0,
             16,
-            3
+            4
           ]
         },
         "south": {
-          "texture": "#pole"
+          "texture": "#boards",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
         },
         "east": {
           "texture": "#pole"
@@ -102,13 +108,19 @@
           "texture": "#boards",
           "uv": [
             0,
-            8,
+            0,
             16,
-            11
+            4
           ]
         },
         "south": {
-          "texture": "#pole"
+          "texture": "#boards",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
         },
         "east": {
           "texture": "#pole"
