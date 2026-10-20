@@ -48,6 +48,14 @@ public final class Engines {
 
     /** train id -> ticks until its idle clip needs replaying */
     private static final Map<UUID, Integer> IDLE_TIMER = new HashMap<>();
+    /** train id -> ticks until the running clip needs replaying */
+    private static final Map<UUID, Integer> RUN_TIMER = new HashMap<>();
+    /** train id -> true once it has been moving, so notching up only fires on the way up */
+    private static final Map<UUID, Boolean> WAS_MOVING = new HashMap<>();
+    /** train id -> ticks before it may play the notch-up layer again */
+    private static final Map<UUID, Integer> NOTCH_COOLDOWN = new HashMap<>();
+
+    private static final double MOVING = 0.005;
 
     public static boolean isRunning(Train train) {
         return train != null && !shutDown.contains(train.id.toString());
@@ -57,7 +65,7 @@ public final class Engines {
         if (train == null) return;
         if (running) shutDown.remove(train.id.toString());
         else shutDown.add(train.id.toString());
-        IDLE_TIMER.remove(train.id);
+        drop(train.id);
         save();
     }
 
@@ -91,15 +99,32 @@ public final class Engines {
         player.sendOverlayMessage(Component.literal(text).withStyle(colour));
     }
 
-    /** one-shot startup sound when the engine is lit */
+    /**
+     * One-shot startup when the engine is lit, and set the idle to come in just before the
+     * start clip ends so the two overlap instead of leaving a hole. The first idle loop plays
+     * quieter (startFadeVolume) so it rises under the tail of the start rather than slamming in.
+     */
     private static void playStart(Train train) {
         RailConfig.Values c = RailConfig.V;
         if (!c.engineSounds) return;
         Spot spot = spotOf(train);
         if (spot == null) return;
-        String type = TrainTypes.get(train);
-        String sound = TrainTypes.STEAM.equals(type) ? "steam_start" : "diesel_start";
+        String sound = TrainTypes.STEAM.equals(TrainTypes.get(train)) ? "steam_start" : "diesel_start";
         SoundPlayer.play(spot.level, spot.pos, sound, c.engineVolume, 1.0f, c.engineHearingRange);
+        int hold = Math.max(0, c.startClipTicks - Math.max(0, c.startFadeTicks));
+        IDLE_TIMER.put(train.id, hold);
+        RUN_TIMER.put(train.id, hold);
+        FADING_IN.add(train.id);
+    }
+
+    /** trains whose next idle/run loop is the first one after a start, so it fades in */
+    private static final java.util.Set<UUID> FADING_IN = new HashSet<>();
+
+    /** volume for a loop, reduced once while it comes in under the start clip */
+    private static float enter(UUID id, float full) {
+        if (!FADING_IN.remove(id)) return full;
+        float f = RailConfig.V.startFadeVolume;
+        return full * (f <= 0 || f > 1 ? 0.6f : f);
     }
 
     private record Spot(ServerLevel level, Vec3 pos) {}
@@ -121,8 +146,8 @@ public final class Engines {
      */
     public static void tick(MinecraftServer server) {
         RailConfig.Values c = RailConfig.V;
-        if (!c.engineSounds || !c.idleWhenStopped) {
-            if (!IDLE_TIMER.isEmpty()) IDLE_TIMER.clear();
+        if (!c.engineSounds) {
+            if (!IDLE_TIMER.isEmpty()) forget();
             return;
         }
         if (Create.RAILWAYS == null || Create.RAILWAYS.trains == null) return;
@@ -130,36 +155,85 @@ public final class Engines {
         // copy first, same as the other per-tick loops: Create can drop a train mid-tick
         for (Train train : new java.util.ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (train == null || train.invalid || train.derailed) continue;
-            if (!isRunning(train)) {
-                IDLE_TIMER.remove(train.id);
+            if (!isRunning(train) || Compat.isHandcar(train)) {
+                drop(train.id);
                 continue;
             }
-            if (Math.abs(train.speed) > 0.005) {   // moving: not an idle
-                IDLE_TIMER.remove(train.id);
-                continue;
-            }
-            if (Compat.isHandcar(train)) continue;
+            boolean moving = Math.abs(train.speed) > MOVING;
+            boolean wasMoving = WAS_MOVING.getOrDefault(train.id, false);
+            WAS_MOVING.put(train.id, moving);
 
-            int left = IDLE_TIMER.getOrDefault(train.id, 0);
-            if (left > 0) {
-                IDLE_TIMER.put(train.id, left - 1);
-                continue;
-            }
-            Spot spot = spotOf(train);
-            if (spot == null) {
+            if (moving) {
                 IDLE_TIMER.remove(train.id);
-                continue;
+                if (!wasMoving) notchUp(train, c);
+                loop(train, c, RUN_TIMER, steam(train) ? "steam_run" : "diesel_run",
+                    c.engineVolume, c.runClipTicks, c.engineHearingRange);
+            } else {
+                RUN_TIMER.remove(train.id);
+                if (!c.idleWhenStopped) {
+                    IDLE_TIMER.remove(train.id);
+                    continue;
+                }
+                loop(train, c, IDLE_TIMER, steam(train) ? "steam_idle" : "diesel_idle",
+                    c.idleVolume, c.idleClipTicks, c.idleHearingRange);
             }
-            String type = TrainTypes.get(train);
-            String sound = TrainTypes.STEAM.equals(type) ? "steam_idle" : "diesel_idle";
-            SoundPlayer.play(spot.level, spot.pos, sound, c.idleVolume, 1.0f, c.idleHearingRange);
-            IDLE_TIMER.put(train.id, Math.max(1, c.idleClipTicks));
         }
 
-        // drop timers for trains that no longer exist
+        // drop state for trains that no longer exist
         if (server.getTickCount() % 200 == 0) {
             IDLE_TIMER.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
+            RUN_TIMER.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
+            WAS_MOVING.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
+            NOTCH_COOLDOWN.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
         }
+        NOTCH_COOLDOWN.replaceAll((id, t) -> t - 1);
+        NOTCH_COOLDOWN.values().removeIf(t -> t <= 0);
+    }
+
+    private static boolean steam(Train train) {
+        return TrainTypes.STEAM.equals(TrainTypes.get(train));
+    }
+
+    /** replay a looping clip when its timer runs out */
+    private static void loop(Train train, RailConfig.Values c, Map<UUID, Integer> timer,
+                             String sound, float volume, int clipTicks, int range) {
+        int left = timer.getOrDefault(train.id, 0);
+        if (left > 0) {
+            timer.put(train.id, left - 1);
+            return;
+        }
+        Spot spot = spotOf(train);
+        if (spot == null) {
+            timer.remove(train.id);
+            return;
+        }
+        SoundPlayer.play(spot.level, spot.pos, sound, enter(train.id, volume), 1.0f, range);
+        timer.put(train.id, Math.max(1, clipTicks));
+    }
+
+    /** the engine digging in as it pulls away, played once over the running loop */
+    private static void notchUp(Train train, RailConfig.Values c) {
+        if (NOTCH_COOLDOWN.containsKey(train.id)) return;
+        Spot spot = spotOf(train);
+        if (spot == null) return;
+        SoundPlayer.play(spot.level, spot.pos, steam(train) ? "steam_notch" : "diesel_notch",
+            c.engineVolume, 1.0f, c.engineHearingRange);
+        NOTCH_COOLDOWN.put(train.id, Math.max(20, c.notchCooldownTicks));
+    }
+
+    private static void drop(UUID id) {
+        IDLE_TIMER.remove(id);
+        RUN_TIMER.remove(id);
+        WAS_MOVING.remove(id);
+        FADING_IN.remove(id);
+    }
+
+    private static void forget() {
+        IDLE_TIMER.clear();
+        RUN_TIMER.clear();
+        WAS_MOVING.clear();
+        NOTCH_COOLDOWN.clear();
+        FADING_IN.clear();
     }
 
     // ---- persistence -------------------------------------------------------------------
@@ -167,7 +241,7 @@ public final class Engines {
     public static void load(MinecraftServer server) {
         file = server.getWorldPath(LevelResource.ROOT).resolve("railsounds_engines.json");
         shutDown = new HashSet<>();
-        IDLE_TIMER.clear();
+        forget();
         try {
             if (Files.exists(file)) {
                 try (Reader r = Files.newBufferedReader(file)) {
@@ -182,7 +256,7 @@ public final class Engines {
 
     public static void unload() {
         shutDown = new HashSet<>();
-        IDLE_TIMER.clear();
+        forget();
         file = null;
     }
 

@@ -15,6 +15,7 @@ jobs:
           distribution: temurin
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
+      - run: python3 tools/check_migrations.py
       - run: chmod +x gradlew && set -o pipefail && ./gradlew build --stacktrace 2>&1 | tee build.log
       - name: Boot a test server and place every block in-game
         run: |

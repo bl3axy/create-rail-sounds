@@ -22,7 +22,7 @@ public class RailConfig {
         public double clackSpacing = 6.0;
         /** below this speed (blocks/tick) no clack. 0.05 b/t = 1 block/sec */
         public double clackMinSpeed = 0.05;
-        public float clackVolume = 0.8f;
+        public float clackVolume = 0.65f;
         public int clackHearingRange = 32;
 
         // ---- brakes ----
@@ -35,7 +35,7 @@ public class RailConfig {
         public double brakeMinSpeed = 0.04;
         /** length of your brake_squeal.ogg in ticks (20 ticks = 1 sec). replays every this many ticks while braking */
         public int brakeClipTicks = 100;
-        public float brakeVolume = 0.45f;
+        public float brakeVolume = 0.6f;
         /** only squeal in the last part of a real stop (not when easing off for curves / speed limits) */
         public boolean brakeOnlyNearStop = true;
         /** "near stop" = slower than this (blocks/tick; 0.3 = 6 blocks/sec)... */
@@ -51,8 +51,8 @@ public class RailConfig {
         public int couplerRippleTicksStart = 6;
         /** ticks between each car's clunk when slack bunches up on stopping */
         public int couplerRippleTicksStop = 3;
-        public float couplerVolume = 1.0f;
-        public float airReleaseVolume = 1.0f;
+        public float couplerVolume = 0.85f;
+        public float airReleaseVolume = 0.5f;
         /** train must have been stopped this long before a start counts (stops spam at signals creeping) */
         public int minStoppedTicksForStart = 20;
         public int couplerHearingRange = 48;
@@ -62,7 +62,7 @@ public class RailConfig {
         public int defaultCrossingRadius = 64;
         /** length of your crossing_bell.ogg in ticks; replays every this many ticks while active */
         public int bellClipTicks = 48;
-        public float bellVolume = 1.0f;
+        public float bellVolume = 0.9f;
         public int bellHearingRange = 48;
         /** keep ringing this many ticks after the last car clears */
         public int bellTailTicks = 40;
@@ -125,6 +125,15 @@ public class RailConfig {
         /** ticks a train waits at a yard station before its couple/uncouple rule runs */
         public int yardRuleDelayTicks = 20;
 
+        /*  How loud each sound is relative to the others, loudest first. Trackside, a horn
+         *  drowns everything and an idling engine is nearly nothing, so:
+         *    1.00  horn / whistle        0.65  rail clack
+         *    0.90  crossing bell         0.60  brake squeal
+         *    0.85  coupler clunk         0.55  loco bell
+         *    0.70  engine running/start  0.50  air release
+         *                                0.25  engine idle
+         *  Change any of them freely - this is only the starting point. */
+
         // ---- engine sounds (idle / running) ----
         /** master switch for engine noise. On by default: a running loco idles when it's
          *  stopped and the K key shuts it down. Until diesel_idle.ogg / steam_idle.ogg are in
@@ -135,12 +144,33 @@ public class RailConfig {
          *  silences one loco at a time without changing this */
         public boolean idleWhenStopped = true;
         /** length of your diesel_idle.ogg / steam_idle.ogg in ticks (20 = 1 second) */
-        public int idleClipTicks = 200;
-        public float idleVolume = 0.35f;
+        public int idleClipTicks = 80;
+        public float idleVolume = 0.25f;
         public int idleHearingRange = 24;
-        /** startup sound and the engine note while moving */
-        public float engineVolume = 0.6f;
+        /** startup sound and the engine note while moving. Louder than idle on purpose */
+        public float engineVolume = 0.7f;
         public int engineHearingRange = 48;
+        /** length of diesel_run.ogg / steam_run.ogg in ticks; the engine note while moving */
+        public int runClipTicks = 80;
+        /** the engine digging in as it pulls away, played once over the running loop.
+         *  This many ticks must pass before it can fire again */
+        public int notchCooldownTicks = 120;
+        /** length of diesel_start.ogg / steam_start.ogg in ticks (20 = 1 second) */
+        public int startClipTicks = 100;
+        /** the idle comes in this many ticks before the start clip ends, so they overlap
+         *  instead of leaving a gap. Set to 0 for no overlap */
+        public int startFadeTicks = 20;
+        /** volume of the first idle loop, as a fraction of idleVolume, while it fades in
+         *  under the tail of the start clip */
+        public float startFadeVolume = 0.6f;
+
+        // ---- loco bell (the one on the engine, not at a crossing) ----
+        /** ring the bell with the bell key (B). Off until you press it */
+        public boolean locoBell = true;
+        /** length of your loco_bell.ogg in ticks; replays every this many ticks while ringing */
+        public int locoBellClipTicks = 40;
+        public float locoBellVolume = 0.55f;
+        public int locoBellHearingRange = 48;
 
         // ---- misc ----
         /** don't touch: lets new versions update old default values in your existing config */
@@ -149,9 +179,15 @@ public class RailConfig {
         public boolean ignoreHandcars = true;
     }
 
+    private static boolean eq(float a, float b) {
+        return Math.abs(a - b) < 1e-6f;
+    }
+
     /** bring an older config up to date without overwriting numbers the player changed */
     static void migrate(Values v) {
-        // oldest first: each step leaves configVersion where the next one expects it
+        // steps run oldest first and each one ends by setting configVersion to its own
+        // number. Put a new step at the BOTTOM - out of order, a later step bumps the
+        // version past an earlier one and that earlier step silently never runs.
         if (v.configVersion < 2) {
             // v2: flying switches + long coasting cuts. Only move values still on the old defaults
             if (Math.abs(v.uncoupleMaxSpeed - 0.15) < 1e-9) v.uncoupleMaxSpeed = 0.75;
@@ -162,6 +198,17 @@ public class RailConfig {
             // v3: engine idle is on by default now. Only flip people still on the old default
             if (!v.engineSounds) v.engineSounds = true;
             v.configVersion = 3;
+        }
+        if (v.configVersion < 4) {
+            // v4: one coherent loudness ladder. Only move volumes still on their old defaults
+            if (eq(v.clackVolume, 0.8f)) v.clackVolume = 0.65f;
+            if (eq(v.brakeVolume, 0.45f)) v.brakeVolume = 0.6f;
+            if (eq(v.couplerVolume, 1.0f)) v.couplerVolume = 0.85f;
+            if (eq(v.airReleaseVolume, 1.0f)) v.airReleaseVolume = 0.5f;
+            if (eq(v.bellVolume, 1.0f)) v.bellVolume = 0.9f;
+            if (eq(v.idleVolume, 0.35f)) v.idleVolume = 0.25f;
+            if (eq(v.engineVolume, 0.6f)) v.engineVolume = 0.7f;
+            v.configVersion = 4;
         }
     }
 

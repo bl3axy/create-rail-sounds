@@ -133,5 +133,50 @@
         "attenuation_distance": 48
       }
     ]
+  },
+  "diesel_run": {
+    "subtitle": "Diesel engine working",
+    "sounds": [
+      {
+        "name": "railsounds:diesel_run",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "steam_run": {
+    "subtitle": "Steam locomotive working",
+    "sounds": [
+      {
+        "name": "railsounds:steam_run",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "diesel_notch": {
+    "subtitle": "Diesel engine digs in",
+    "sounds": [
+      {
+        "name": "railsounds:diesel_notch",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "steam_notch": {
+    "subtitle": "Steam locomotive digs in",
+    "sounds": [
+      {
+        "name": "railsounds:steam_notch",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "loco_bell": {
+    "subtitle": "Locomotive bell",
+    "sounds": [
+      {
+        "name": "railsounds:loco_bell",
+        "attenuation_distance": 48
+      }
+    ]
   }
 }

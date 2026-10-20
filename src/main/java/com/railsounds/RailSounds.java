@@ -53,6 +53,10 @@ public class RailSounds implements ModInitializer {
                     Engines.onKey(ctx.player());
                     return;
                 }
+                if (p.action() == Bells.TOGGLE) {
+                    Bells.onKey(ctx.player());
+                    return;
+                }
                 Shunting.onKey(ctx.player(), p.action(), p.number());
             } catch (RuntimeException e) {
                 LOG.error("[railsounds] shunting key failed", e);
@@ -65,6 +69,7 @@ public class RailSounds implements ModInitializer {
             Shunting.reset();
             YardRules.load(server);
             Engines.load(server);
+            Bells.load(server);
             com.railsounds.rail.TowerLinks.load(server);
             com.railsounds.rail.SpeedZones.reset();
         });
@@ -77,6 +82,7 @@ public class RailSounds implements ModInitializer {
             Shunting.reset();
             YardRules.unload();
             Engines.unload();
+            Bells.unload();
             com.railsounds.rail.TowerLinks.unload();
             com.railsounds.rail.SpeedZones.reset();
             com.railsounds.rail.SearchlightSignalBlock.clearCache();
@@ -94,6 +100,7 @@ public class RailSounds implements ModInitializer {
             }
             try {
                 Engines.tick(server);
+                Bells.tick(server);
             } catch (Throwable t) {
                 LOG.error("[railsounds] engine sound tick failed", t);
             }

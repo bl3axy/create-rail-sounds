@@ -20,12 +20,13 @@ import org.lwjgl.glfw.GLFW;
  *   Z (tap)    on foot: uncouple the coupling you're looking at (in a train it shows the hint)
  *   J          toggle auto-couple for trains you drive
  *   K          start / shut down the engine of the train you're in (a shut-down loco stops idling)
+ *   B          ring the loco bell on / off
  * While Z is held the number keys don't change your hotbar slot.
  */
 public final class ShuntKeys {
     private ShuntKeys() {}
 
-    private static KeyMapping couple, uncouple, toggleAuto, engine;
+    private static KeyMapping couple, uncouple, toggleAuto, engine, bell;
     private static boolean uncoupleWasDown, numberUsed;
 
     public static void register() {
@@ -34,6 +35,7 @@ public final class ShuntKeys {
         uncouple = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.uncouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
         toggleAuto = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.toggle_autocouple", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, cat));
         engine = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.engine", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, cat));
+        bell = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.railsounds.bell", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, cat));
 
         // START of the tick: grab number presses before vanilla turns them into hotbar switches
         ClientTickEvents.START_CLIENT_TICK.register(ShuntKeys::numbers);
@@ -82,5 +84,6 @@ public final class ShuntKeys {
         while (couple.consumeClick()) send(Shunting.COUPLE, 0);
         while (toggleAuto.consumeClick()) send(Shunting.TOGGLE_AUTO, 0);
         while (engine.consumeClick()) send(com.railsounds.Engines.TOGGLE, 0);
+        while (bell.consumeClick()) send(com.railsounds.Bells.TOGGLE, 0);
     }
 }
