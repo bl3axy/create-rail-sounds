@@ -153,6 +153,7 @@ public class RouteSensorBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without its tick (schematic, /setblock with no update)
         int mode = player.isShiftKeyDown() ? state.getValue(MODE) : (state.getValue(MODE) + 1) % 3;
         if (mode != state.getValue(MODE)) level.setBlock(pos, state.setValue(MODE, mode), Block.UPDATE_CLIENTS);
         TowerLinks.Link link = TowerLinks.get(level, pos, 0);

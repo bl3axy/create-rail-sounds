@@ -54,8 +54,8 @@ public class CargoSensorBlock extends FacingRailBlock {
 
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        update(state, level, pos);
         level.scheduleTick(pos, this, RATE);
+        update(state, level, pos);
     }
 
     private void update(BlockState state, ServerLevel level, BlockPos pos) {
@@ -79,6 +79,7 @@ public class CargoSensorBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without a tick (e.g. by a schematic)
         BlockState next;
         if (player.isShiftKeyDown()) {
             next = state.setValue(FLUIDS, !state.getValue(FLUIDS));

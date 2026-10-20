@@ -39,7 +39,7 @@ public final class RailBlocks {
 
     public static Block CARGO_SENSOR, CAR_COUNTER, LOADING_HATCH, SEARCHLIGHT_SIGNAL, DEFECT_DETECTOR,
         SPEED_SIGN, SWITCH_STAND, INTERLOCKING_PANEL, CROSSING_SIGNAL, CROSSING_GATE, CAR_RETARDER,
-        SWITCH_MACHINE, ROUTE_SENSOR;
+        SWITCH_MACHINE, ROUTE_SENSOR, SIGNAL_MAST;
 
     public static void register() {
         // ---- working blocks ----
@@ -64,7 +64,7 @@ public final class RailBlocks {
         WORKING.add(RailItems.SWITCH_LINKER);
 
         // ---- trackside decor ----
-        decor("signal_mast", metal(MapColor.COLOR_BLACK), box(7, 0, 7, 9, 16, 9));
+        SIGNAL_MAST = decor("signal_mast", metal(MapColor.COLOR_BLACK), box(7, 0, 7, 9, 16, 9));
         decor("mile_post", stone(MapColor.SNOW), box(6, 0, 6, 10, 15, 10));
         decor("whistle_post", metal(MapColor.SNOW), box(7, 0, 7, 9, 9, 9), box(4, 7, 7, 12, 15, 8));
         decor("yard_limit_sign", metal(MapColor.SNOW), box(2, 0, 7.5, 3, 8, 8.5), box(13, 0, 7.5, 14, 8, 8.5),
@@ -105,9 +105,9 @@ public final class RailBlocks {
         return Properties.of().mapColor(color).strength(1.5f, 6.0f).sound(SoundType.STONE).noOcclusion();
     }
 
-    private static void decor(String name, Properties props, RailShapes.Box... boxes) {
+    private static Block decor(String name, Properties props, RailShapes.Box... boxes) {
         Map<Direction, VoxelShape> shapes = horizontal(boxes);
-        add(DECOR, name, p -> new FacingRailBlock(p, shapes), props);
+        return add(DECOR, name, p -> new FacingRailBlock(p, shapes), props);
     }
 
     private static Block add(List<Item> list, String name, Function<Properties, Block> factory, Properties props) {

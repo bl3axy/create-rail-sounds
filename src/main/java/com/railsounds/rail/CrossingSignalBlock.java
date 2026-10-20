@@ -110,6 +110,7 @@ public class CrossingSignalBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without its tick (schematic, /setblock with no update)
         Crossings.Crossing c = crossing(sl, pos);
         if (c == null) return InteractionResult.SUCCESS;
         if (player.isShiftKeyDown()) {

@@ -68,6 +68,7 @@ public class SpeedSignBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without its tick (schematic, /setblock with no update)
         int next = (state.getValue(LIMIT) + 1) % (SpeedZones.RESUME + 1);
         level.setBlock(pos, state.setValue(LIMIT, next), Block.UPDATE_ALL);
         String text = next == SpeedZones.RESUME ? "Resume normal speed" : "Speed limit " + SpeedZones.MPH[next] + " mph";

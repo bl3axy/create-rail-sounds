@@ -83,6 +83,7 @@ public class SearchlightSignalBlock extends FacingRailBlock {
 
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        level.scheduleTick(pos, this, RATE);
         Aspect a;
         try {
             a = compute(level, pos);
@@ -90,19 +91,23 @@ public class SearchlightSignalBlock extends FacingRailBlock {
             a = Aspect.DARK;
         }
         if (state.getValue(ASPECT) != a) level.setBlock(pos, state.setValue(ASPECT, a), Block.UPDATE_CLIENTS);
-        level.scheduleTick(pos, this, RATE);
         if (level.getGameTime() % 1200 == 0) {
             long now = level.getGameTime();
             CHAINS.values().removeIf(c -> c.until < now - CHAIN_REFRESH);
         }
     }
 
+    /** the Create signal this head reads: touching it, or touching any Signal Mast block it sits on (up to 8 tall) */
     private static SignalBlockEntity findSignal(Level level, BlockPos pos) {
-        // below first (head on top of the signal), then the sides, then above
         Direction[] order = {Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.UP};
-        for (Direction d : order) {
-            BlockEntity be = level.getBlockEntity(pos.relative(d));
-            if (be instanceof SignalBlockEntity sbe) return sbe;
+        BlockPos at = pos;
+        for (int i = 0; i <= 8; i++) {
+            for (Direction d : order) {
+                BlockEntity be = level.getBlockEntity(at.relative(d));
+                if (be instanceof SignalBlockEntity sbe) return sbe;
+            }
+            at = at.below();
+            if (RailBlocks.SIGNAL_MAST == null || !level.getBlockState(at).is(RailBlocks.SIGNAL_MAST)) break;
         }
         return null;
     }
@@ -159,6 +164,7 @@ public class SearchlightSignalBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1);
         Aspect a = state.getValue(ASPECT);
         String text = switch (a) {
             case DARK -> "Signal dark - put it touching a Create Train Signal that's on the track";

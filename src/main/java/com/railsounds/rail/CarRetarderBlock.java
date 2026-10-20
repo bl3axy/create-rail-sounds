@@ -87,6 +87,7 @@ public class CarRetarderBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without its tick (schematic, /setblock with no update)
         int next = (state.getValue(SETTING) + 1) % EXIT_BPS.length;
         level.setBlock(pos, state.setValue(SETTING, next), Block.UPDATE_CLIENTS);
         String text = EXIT_BPS[next] < 0 ? "coupling speed" : (int) EXIT_BPS[next] + " blocks/sec";

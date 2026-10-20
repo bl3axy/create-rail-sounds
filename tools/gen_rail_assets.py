@@ -367,6 +367,44 @@ def make_textures():
     tex("target_red", noisy(16, (190, 34, 30), 6, 65))
     tex("target_gray", noisy(16, (120, 120, 120), 6, 66))
 
+    # retarder: yellow rails with black grip teeth
+    rt = noisy(16, (210, 170, 30), 7, 70)
+    for x in range(1, 15, 3):
+        rect(rt, x, 2, x + 1, 13, (38, 38, 38, 255))
+    border(rt, (120, 96, 18, 255))
+    tex("retarder_top", rt)
+    rs2 = noisy(16, (180, 145, 26), 7, 71)
+    for y in (4, 11):
+        for x in range(16):
+            rs2.putpixel((x, y), (38, 38, 38, 255))
+    tex("retarder_side", rs2)
+
+    # switch machine: grey motor case with a rod slot and a position window
+    sm = noisy(16, (150, 152, 154), 7, 72)
+    border(sm, (96, 98, 100, 255))
+    rect(sm, 2, 6, 13, 8, (60, 62, 64, 255))
+    rect(sm, 3, 7, 12, 7, (190, 192, 194, 255))
+    rect(sm, 11, 10, 13, 12, (40, 180, 90, 255))
+    tex("switch_machine_front", sm)
+
+    # route sensor: dark pad with an orange eye
+    rsn = noisy(16, (58, 58, 62, 255)[:3], 5, 73)
+    border(rsn, (140, 142, 144, 255))
+    disc(rsn, 8, 8, 4, (235, 140, 30, 255))
+    disc(rsn, 8, 8, 2, (255, 210, 120, 255))
+    tex("route_sensor_top", rsn)
+
+    # switch linker item: a brass key-ish wand with a green tip
+    sl = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for i in range(10):
+        sl.putpixel((3 + i, 12 - i), (176, 142, 54, 255))
+        sl.putpixel((4 + i, 12 - i), (208, 176, 80, 255))
+        sl.putpixel((3 + i, 13 - i), (120, 96, 34, 255))
+    rect(sl, 2, 11, 4, 13, (96, 72, 28, 255))
+    rect(sl, 11, 1, 13, 3, (60, 220, 110, 255))
+    sl.putpixel((12, 2), (210, 255, 225, 255))
+    tex("switch_linker", sl)
+
     # crossing gate arm: red/white stripes along its length
     ga = Image.new("RGBA", (16, 16))
     for y in range(16):
@@ -771,6 +809,58 @@ def gen_new_tools():
         "pattern": [" GR", " I ", "B  "],
         "key": {"G": "minecraft:green_dye", "R": "minecraft:red_dye", "I": "minecraft:iron_ingot",
                 "B": "create:brass_sheet"},
+        "result": {"id": f"{NS}:switch_linker", "count": 1}})
+
+
+def gen_car_retarder():
+    model("car_retarder", {"top": t("retarder_top"), "side": t("retarder_side")}, [
+        el((0, 0, 4), (16, 3, 12), {"all": "side", "up": "top"}),
+        el((0, 3, 4.5), (16, 4, 6), {"all": "side", "up": "top"}),
+        el((0, 3, 10), (16, 4, 11.5), {"all": "side", "up": "top"}),
+    ])
+    blockstate_facing("car_retarder", props={"setting": ["0", "1", "2", "3"], "powered": ["false", "true"]})
+    item("car_retarder")
+    block("car_retarder", "Car Retarder")
+    recipe("car_retarder", ["YYY", "III", "CCC"], {"Y": "minecraft:yellow_dye", "I": "create:iron_sheet",
+                                                   "C": "create:andesite_casing"})
+
+
+def gen_switch_machine():
+    model("switch_machine", {"side": t("galvanized"), "front": t("switch_machine_front"), "top": t("dark_steel")}, [
+        el((2, 0, 3), (14, 7, 13), {"all": "side", "north": ("front", (0, 0, 16, 16)), "up": "top"}),
+        el((1.5, 7, 2.5), (14.5, 8, 13.5), {"all": "top"}),
+        el((6, 2, 1), (10, 4, 3), {"all": "top"}),
+    ])
+    blockstate_facing("switch_machine", props={"route": ["0", "1", "2"],
+                                               "input": [str(i) for i in range(16)]})
+    item("switch_machine")
+    block("switch_machine", "Switch Machine")
+    recipe("switch_machine", ["IPI", "RCR"], {"I": "create:iron_sheet", "P": "minecraft:piston",
+                                              "R": "minecraft:redstone", "C": "create:andesite_casing"})
+
+
+def gen_route_sensor():
+    model("route_sensor", {"top": t("route_sensor_top"), "side": t("dark_steel")}, [
+        el((4, 0, 4), (12, 4, 12), {"all": "side", "up": "top"}),
+        el((6, 4, 6), (10, 6, 10), {"all": "side", "up": "top"}),
+    ])
+    blockstate_facing("route_sensor", props={"mode": ["0", "1", "2"]})
+    item("route_sensor")
+    block("route_sensor", "Route Sensor")
+    recipe("route_sensor", [" O ", "ITI", " C "], {"O": "create:track_observer", "I": "create:iron_sheet",
+                                                   "T": "create:electron_tube", "C": "create:andesite_casing"})
+
+
+def gen_switch_linker():
+    write_json(os.path.join(ASSETS, "models", "item", "switch_linker.json"),
+               {"parent": "minecraft:item/generated", "textures": {"layer0": f"{NS}:block/switch_linker"}})
+    write_json(os.path.join(ASSETS, "items", "switch_linker.json"),
+               {"model": {"type": "minecraft:model", "model": f"{NS}:item/switch_linker"}})
+    LANG[f"item.{NS}.switch_linker"] = "Switch Linker"
+    write_json(os.path.join(DATA, "recipe", "switch_linker.json"), {
+        "type": "minecraft:crafting_shaped", "category": "redstone",
+        "pattern": ["  E", " B ", "B  "],
+        "key": {"E": "create:electron_tube", "B": "create:brass_sheet"},
         "result": {"id": f"{NS}:switch_linker", "count": 1}})
 
 

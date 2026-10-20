@@ -103,6 +103,7 @@ public class CrossingGateBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without its tick (schematic, /setblock with no update)
         Crossings.Crossing c = Crossings.nearest(sl, pos, CrossingSignalBlock.JOIN_DISTANCE);
         String text = c == null
             ? "Gate: no crossing within 12 blocks - only redstone will lower it"

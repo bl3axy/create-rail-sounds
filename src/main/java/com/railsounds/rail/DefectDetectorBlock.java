@@ -160,6 +160,7 @@ public class DefectDetectorBlock extends FacingRailBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1); // self-heal if it was placed without its tick (schematic, /setblock with no update)
         boolean on = !state.getValue(ENABLED);
         level.setBlock(pos, state.setValue(ENABLED, on), Block.UPDATE_ALL);
         player.sendOverlayMessage(Component.literal("Detector MP " + milepost(pos) + ": chat reports " + (on ? "ON" : "OFF"))

@@ -48,16 +48,17 @@ public class CarCounterBlock extends FacingRailBlock {
 
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        level.scheduleTick(pos, this, RATE);
         Train train = StationSensors.dockedTrain(StationSensors.adjacentStation(level, pos));
         int cars = train == null ? 0 : train.carriages.size();
         BlockState next = state.setValue(LEVEL, Math.min(15, cars)).setValue(POWERED, train != null);
         if (next != state) level.setBlock(pos, next, Block.UPDATE_ALL);
-        level.scheduleTick(pos, this, RATE);
     }
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        level.scheduleTick(pos, this, 1);
         var station = StationSensors.adjacentStation(level, pos);
         Component msg;
         if (station == null) {
