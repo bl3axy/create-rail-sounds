@@ -6,5 +6,8 @@
   "key.railsounds.uncouple": "Uncouple (hold + 1-9, or tap on foot)",
   "key.railsounds.toggle_autocouple": "Toggle auto-couple",
   "railsounds.display_source.departure_board": "Departure Board",
-  "railsounds.display_source.platform_display": "Platform Display (next train)"
+  "railsounds.display_source.platform_display": "Platform Display (next train)",
+  "railsounds.schedule.condition.couple": "Couple up",
+  "railsounds.schedule.condition.uncouple": "Uncouple cars",
+  "railsounds.schedule.instruction.back_in": "Back into Station"
 }

@@ -141,41 +141,48 @@ public final class YardRules {
     }
 
     private static void run(Train t, Rule r) {
+        if ("couple".equals(r.mode)) coupleAtStop(t);
+        else if ("uncouple".equals(r.mode)) uncoupleAtStop(t, r.count);
+    }
+
+    /** couple a stopped train to the cars touching (or within couplerReach of) either end */
+    public static boolean coupleAtStop(Train t) {
         RailConfig.Values c = RailConfig.V;
-        if ("couple".equals(r.mode)) {
-            TrainEnds.Contact best = null;
-            for (boolean f : new boolean[]{true, false}) {
-                TrainEnds.End e = TrainEnds.end(t, f);
-                if (e == null) continue;
-                TrainEnds.Contact ct = TrainEnds.findContact(e, c.contactGap + c.couplerReach, Shunting.allTrains());
-                if (ct != null && (best == null || ct.gap() < best.gap())) best = ct;
-            }
-            if (best == null) {
-                RailSounds.LOG.info("[railsounds] yard rule: {} found nothing to couple to", t.name.getString());
-                return;
-            }
-            Train other = best.theirs().train();
-            if (Math.abs(other.speed) > c.coupleMaxSpeed) return;
-            Shunting.couple(t, best.ours().front(), other, best.theirs().front(), null, c.contactGap + c.couplerReach);
-        } else if ("uncouple".equals(r.mode)) {
-            int size = t.carriages.size();
-            if (size < 2) return;
-            boolean locoAtFront = controls(t.carriages.get(0)) || !controls(t.carriages.get(size - 1));
-            int n = r.count;
-            if (n <= 0) {
-                // everything without controls, counted from the far end
-                n = 0;
-                for (int i = 0; i < size - 1; i++) {
-                    Carriage car = t.carriages.get(locoAtFront ? size - 1 - i : i);
-                    if (controls(car)) break;
-                    n++;
-                }
-            }
-            n = Math.min(n, size - 1);
-            if (n <= 0) return;
-            // S&R only splits off the back: dropping from the front means the loco end is what comes off
-            Shunting.uncouple(t, locoAtFront ? n : size - n, null);
+        TrainEnds.Contact best = null;
+        for (boolean f : new boolean[]{true, false}) {
+            TrainEnds.End e = TrainEnds.end(t, f);
+            if (e == null) continue;
+            TrainEnds.Contact ct = TrainEnds.findContact(e, c.contactGap + c.couplerReach, Shunting.allTrains());
+            if (ct != null && (best == null || ct.gap() < best.gap())) best = ct;
         }
+        if (best == null) {
+            RailSounds.LOG.info("[railsounds] {} found nothing to couple to", t.name.getString());
+            return false;
+        }
+        Train other = best.theirs().train();
+        if (Math.abs(other.speed) > c.coupleMaxSpeed) return false;
+        return Shunting.couple(t, best.ours().front(), other, best.theirs().front(), null, c.contactGap + c.couplerReach);
+    }
+
+    /** drop n cars off the end away from the loco (n <= 0: every car without controls) */
+    public static boolean uncoupleAtStop(Train t, int count) {
+        int size = t.carriages.size();
+        if (size < 2) return false;
+        boolean locoAtFront = controls(t.carriages.get(0)) || !controls(t.carriages.get(size - 1));
+        int n = count;
+        if (n <= 0) {
+            // everything without controls, counted from the far end
+            n = 0;
+            for (int i = 0; i < size - 1; i++) {
+                Carriage car = t.carriages.get(locoAtFront ? size - 1 - i : i);
+                if (controls(car)) break;
+                n++;
+            }
+        }
+        n = Math.min(n, size - 1);
+        if (n <= 0) return false;
+        // S&R only splits off the back: dropping from the front means the loco end is what comes off
+        return Shunting.uncouple(t, locoAtFront ? n : size - n, null);
     }
 
     private static boolean controls(Carriage car) {

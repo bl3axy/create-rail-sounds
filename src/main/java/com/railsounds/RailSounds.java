@@ -27,6 +27,7 @@ public class RailSounds implements ModInitializer {
     public void onInitialize() {
         RailConfig.load();
         Crossings.load();
+        com.railsounds.schedule.ScheduleTypes.register();
         PayloadTypeRegistry.clientboundPlay().register(HornPayload.TYPE, HornPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ShuntPayload.TYPE, ShuntPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(AutoCouplePayload.TYPE, AutoCouplePayload.CODEC);

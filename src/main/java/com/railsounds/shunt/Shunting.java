@@ -81,6 +81,8 @@ public final class Shunting {
     private static long now;
     /** single-cab trains currently allowed to Space-dock backwards (see ControlsDockMixin) */
     public static final Set<UUID> BACK_DOCK = java.util.Collections.synchronizedSet(new HashSet<>());
+    /** trains choosing a route for a "Back into station" schedule step: forward routes not allowed */
+    public static final Set<UUID> MUST_BACK = java.util.Collections.synchronizedSet(new HashSet<>());
 
     public static void reset() {
         CONTACT.clear();
@@ -735,6 +737,11 @@ public final class Shunting {
 
     // used by yard rules
     static void queue(Runnable r) {
+        QUEUE.add(r);
+    }
+
+    /** run something at the end of this server tick, outside Create's train loop */
+    public static void queueAction(Runnable r) {
         QUEUE.add(r);
     }
 

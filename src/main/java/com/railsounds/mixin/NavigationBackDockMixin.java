@@ -61,6 +61,7 @@ public abstract class NavigationBackDockMixin {
         at = @At(value = "INVOKE", target = "Lcom/zurrtum/create/content/trains/entity/Train;hasForwardConductor()Z"))
     private boolean railsounds$forwardConductorPath(Train train) {
         // only for trains on a schedule: a player Space-docking can still pull in forwards
+        if (Shunting.MUST_BACK.contains(train.id)) return false;
         if (train.runtime != null && train.runtime.getSchedule() != null && allBack(RAILSOUNDS_DESTS.get())) return false;
         return train.hasForwardConductor();
     }
