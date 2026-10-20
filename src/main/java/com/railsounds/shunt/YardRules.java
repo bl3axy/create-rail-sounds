@@ -36,9 +36,12 @@ public final class YardRules {
     private YardRules() {}
 
     public static class Rule {
-        public String mode;   // "couple" or "uncouple"
-        public int count;     // uncouple only
+        public String mode;     // "couple" or "uncouple" (or null: no coupling job here)
+        public int count;       // uncouple only
+        public String approach; // null = forward like Create, "any" = may back in, "back" = must back in
     }
+
+    public static final String ANY = "any", BACK = "back";
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static Map<String, Rule> rules = new HashMap<>();
@@ -58,11 +61,25 @@ public final class YardRules {
     }
 
     public static void set(String station, String mode, int count) {
-        Rule r = new Rule();
+        Rule r = rules.computeIfAbsent(key(station), k -> new Rule());
         r.mode = mode;
         r.count = count;
-        rules.put(key(station), r);
         save();
+    }
+
+    /** how trains may approach this station: null (forward), ANY or BACK */
+    public static void setApproach(String station, String approach) {
+        Rule r = rules.computeIfAbsent(key(station), k -> new Rule());
+        r.approach = approach;
+        if (r.mode == null && r.approach == null) rules.remove(key(station));
+        save();
+    }
+
+    /** approach rule for a station by name, or null */
+    public static String approach(String stationName) {
+        if (stationName == null) return null;
+        Rule r = rules.get(key(stationName));
+        return r == null ? null : r.approach;
     }
 
     public static boolean remove(String station) {

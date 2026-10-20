@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
  * /railsounds reload                         - re-read config/railsounds.json
  * /railsounds yard couple <station>          - trains stopping there couple to the cut they touch
  * /railsounds yard uncouple <n|all> <station> - trains stopping there drop n cars (away from the loco)
+ * /railsounds yard backin|reverse|forward <station> - trains must / may / may not back into it
  * /railsounds yard clear <station>
  * /railsounds yard list
  */
@@ -85,6 +86,18 @@ public class RailCommands {
                         .then(Commands.argument("station", StringArgumentType.greedyString())
                             .suggests(RailCommands::stations)
                             .executes(ctx -> yard(ctx, "uncouple", IntegerArgumentType.getInteger(ctx, "cars"))))))
+                .then(Commands.literal("backin")
+                    .then(Commands.argument("station", StringArgumentType.greedyString())
+                        .suggests(RailCommands::stations)
+                        .executes(ctx -> approach(ctx, com.railsounds.shunt.YardRules.BACK))))
+                .then(Commands.literal("reverse")
+                    .then(Commands.argument("station", StringArgumentType.greedyString())
+                        .suggests(RailCommands::stations)
+                        .executes(ctx -> approach(ctx, com.railsounds.shunt.YardRules.ANY))))
+                .then(Commands.literal("forward")
+                    .then(Commands.argument("station", StringArgumentType.greedyString())
+                        .suggests(RailCommands::stations)
+                        .executes(ctx -> approach(ctx, null))))
                 .then(Commands.literal("clear")
                     .then(Commands.argument("station", StringArgumentType.greedyString())
                         .suggests(RailCommands::stations)
@@ -97,8 +110,10 @@ public class RailCommands {
                 .then(Commands.literal("list").executes(ctx -> {
                     var all = com.railsounds.shunt.YardRules.all();
                     if (all.isEmpty()) ok(ctx, "No yard rules.");
-                    all.forEach((st, r) -> ok(ctx, st + ": " + r.mode + ("uncouple".equals(r.mode)
-                        ? " " + (r.count <= 0 ? "all" : String.valueOf(r.count)) : "")));
+                    all.forEach((st, r) -> ok(ctx, st + ": "
+                        + (r.mode == null ? "" : r.mode + ("uncouple".equals(r.mode) ? " " + (r.count <= 0 ? "all" : String.valueOf(r.count)) : ""))
+                        + (r.approach == null ? "" : (r.mode == null ? "" : ", ")
+                            + (com.railsounds.shunt.YardRules.BACK.equals(r.approach) ? "back in" : "either way"))));
                     return 1;
                 })))
             .then(Commands.literal("reload").executes(ctx -> {
@@ -121,6 +136,16 @@ public class RailCommands {
         String typed = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
         for (String n : names) if (n.toLowerCase(java.util.Locale.ROOT).startsWith(typed)) b.suggest(n);
         return b.buildFuture();
+    }
+
+    private static int approach(CommandContext<CommandSourceStack> ctx, String how) {
+        String st = StringArgumentType.getString(ctx, "station");
+        com.railsounds.shunt.YardRules.setApproach(st, how);
+        ok(ctx, how == null ? "Trains approach " + st + " forwards again (Create's normal behaviour)."
+            : com.railsounds.shunt.YardRules.BACK.equals(how)
+                ? "Trains heading to " + st + " will back in (they reverse all the way from their previous stop)."
+                : "Trains heading to " + st + " may back in when that's the shorter way.");
+        return 1;
     }
 
     private static int yard(CommandContext<CommandSourceStack> ctx, String mode, int count) {

@@ -34,6 +34,8 @@ No coupler blocks needed. Keys are rebindable under Controls > Train Shunting.
 - **Yard rules** (stations do it automatically when a train stops there):
   - `/railsounds yard couple <station>`
   - `/railsounds yard uncouple <n|all> <station>` (drops cars off the end away from the loco)
+  - `/railsounds yard backin <station>`: scheduled trains MUST back into it (even single-cab locos). The trip is driven in reverse from the previous stop, so make that stop the switch/lead just past the spur.
+  - `/railsounds yard reverse <station>`: trains MAY back in when that's the shorter way; `forward <station>` puts it back to normal.
   - `/railsounds yard clear <station>` / `list`
 
 ## Station displays (Display Link on a Train Station)
