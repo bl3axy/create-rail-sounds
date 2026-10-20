@@ -36,7 +36,7 @@ pretending to be a train.
 | **Engine idle** | a running diesel ticks over while it's standing, like the real thing |
 | **Engine running** | the engine note while moving, notched to speed (see below) |
 | **Notch up** | the engine digging in as it pulls away or takes another notch |
-| **Startup** | one-shot when you light a diesel, fading into the idle so there's no gap |
+| **Startup** | one-shot when you light a diesel — 7.5s of the real thing catching and settling, levelled so it fades into the idle with no step in volume |
 | **Loco bell** | the slow clang on the engine, on the **B** key |
 | **Crossing bell** | rings while a train is heading toward a crossing inside its radius, or any car is sitting on it. Stops about 2s after the last car clears |
 | **Horn / whistle** | `/railsounds diesel` and `/railsounds steam` set which one a train uses |
@@ -79,9 +79,10 @@ it everywhere without you having to shut down each loco individually.
 
 ### About the sound files
 
-The diesel sounds are built from a real engine recording. The **loco bell is a synthesised
-placeholder** — right length, loops cleanly, but it's a stand-in. There are no steam engine sounds
-at all (see above). If you record better ones, drop them straight in: match the length to the config value
+The diesel idle, running loop, notch-up and startup are all built from real engine recordings.
+The **loco bell is a synthesised placeholder** — right length, loops cleanly, but it's a stand-in.
+There are no steam engine sounds at all (see above). If you record better ones, drop them straight
+in: match the length to the config value
 (`idleClipTicks`, `runClipTicks`, `startClipTicks`, `locoBellClipTicks` — 20 ticks per second) and
 nothing else needs changing.
 
@@ -296,7 +297,8 @@ Change any of them freely — that's a starting point, not a rule.
 
 **Clip lengths** — `idleClipTicks`, `runClipTicks`, `startClipTicks`, `locoBellClipTicks`,
 `bellClipTicks`, `brakeClipTicks`, `hornClipTicks`, `whistleClipTicks`. These must match your
-actual .ogg lengths at 20 ticks per second, or loops will gap or overlap.
+actual .ogg lengths at 20 ticks per second, or loops will gap or overlap. CI checks the five
+looping ones against the real files on every build, so a mismatch can't ship.
 
 **Shunting** — `coupleMaxSpeed`, `bufferMaxSpeed`, `uncoupleMaxSpeed`, `cutCoastFactor`,
 `collisionAvoidance`, `easeIntoCuts`, `reverseIntoStations`.
@@ -342,15 +344,18 @@ CI does this on every push:
 1. Build the mod.
 2. Check the config migration chain by lifting the real `migrate()` out of the source, compiling it
    and running it from every past version.
-3. Check every sound the code plays is declared and has a file behind it.
-4. Boot a real server, place all 30 blocks in-game over RCON, tick them, power the redstone ones,
+3. Check every sound the code plays is declared, has a file behind it, and that each looping
+   clip is exactly as long as the config claims.
+4. Check every mixin class is registered in a config — an unregistered one compiles, ships and
+   silently does nothing.
+5. Boot a real server, place all 30 blocks in-game over RCON, tick them, power the redstone ones,
    run every console command, break them all.
-5. **Restart the server** and verify the blocks that were left standing survived, that crossings
+6. **Restart the server** and verify the blocks that were left standing survived, that crossings
    and switch links persisted, and that scheduled ticks are still running after the reload.
-6. Load a deliberately old-format config and verify migrations applied, hand-tuned values survived
+7. Load a deliberately old-format config and verify migrations applied, hand-tuned values survived
    and absent fields came back as defaults rather than zeros.
 
-Step 5 is the one that earns its keep. It caught a display-source binding race that three read-
+Step 6 is the one that earns its keep. It caught a display-source binding race that three read-
 throughs had missed, where the registration order between Create and this mod turned out to be
 non-deterministic — it bound fine creating a world and failed loading the same world again.
 

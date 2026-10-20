@@ -20,6 +20,7 @@ Variants built by concatenation ("diesel_horn" + "_hold") aren't literals anywhe
 rest on checks 1 and 2.
 """
 import json
+import subprocess
 import os
 import re
 import sys
@@ -116,9 +117,39 @@ undeclared = sorted(played - set(j))
 if undeclared:
     fail.append("played by the code but not in sounds.json: %s" % undeclared)
 
+# ---- 4: looping clips must be exactly as long as the config says ---------------------------
+# A loop whose config length doesn't match the file gaps or overlaps itself every time round,
+# which is the kind of thing you hear but can't place. ffprobe only - no decoding.
+LOOPS = [
+    ("diesel_start", "startClipTicks"),
+    ("diesel_idle", "idleClipTicks"),
+    ("diesel_run", "runClipTicks"),
+    ("loco_bell", "locoBellClipTicks"),
+    ("crossing_bell", "bellClipTicks"),
+]
+cfg_src = open("src/main/java/com/railsounds/RailConfig.java").read()
+checked = 0
+for sound, option in LOOPS:
+    path = os.path.join(PACK, "sounds", sound + ".ogg")
+    m = re.search(r"public int %s = (\d+)" % option, cfg_src)
+    if not m or not os.path.exists(path):
+        continue
+    want = int(m.group(1))
+    try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                              "-of", "default=nw=1:nk=1", path],
+                             capture_output=True, text=True, timeout=30)
+        ticks = float(out.stdout.strip()) * 20
+    except (ValueError, OSError, subprocess.SubprocessError):
+        continue           # no ffprobe on this machine - the other checks still stand
+    checked += 1
+    if abs(ticks - want) > 1.5:
+        fail.append("%s.ogg is %.1f ticks but %s says %d - the loop will gap or overlap"
+                    % (sound, ticks, option, want))
+
 for f in fail:
     print("  FAIL " + f)
 if not fail:
-    print("  ok   %d sounds declared, %d files, %d names played by the code - all wired up"
-          % (len(j), len(files), len(played)))
+    print("  ok   %d sounds declared, %d files, %d names played by the code, "
+          "%d clip lengths match the config" % (len(j), len(files), len(played), checked))
 sys.exit(1 if fail else 0)

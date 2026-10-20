@@ -155,8 +155,8 @@ public class RailConfig {
         /** the engine digging in as it pulls away, played once over the running loop.
          *  This many ticks must pass before it can fire again */
         public int notchCooldownTicks = 120;
-        /** length of diesel_start.ogg / steam_start.ogg in ticks (20 = 1 second) */
-        public int startClipTicks = 100;
+        /** length of diesel_start.ogg in ticks (20 = 1 second) */
+        public int startClipTicks = 150;
         /** the idle comes in this many ticks before the start clip ends, so they overlap
          *  instead of leaving a gap. Set to 0 for no overlap */
         public int startFadeTicks = 20;
@@ -219,6 +219,11 @@ public class RailConfig {
             if (eq(v.idleVolume, 0.35f)) v.idleVolume = 0.25f;
             if (eq(v.engineVolume, 0.6f)) v.engineVolume = 0.7f;
             v.configVersion = 4;
+        }
+        if (v.configVersion < 5) {
+            // v5: the real startup recording is 7.51s, not the 5s the placeholder was
+            if (v.startClipTicks == 100) v.startClipTicks = 150;
+            v.configVersion = 5;
         }
     }
 
