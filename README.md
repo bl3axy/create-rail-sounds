@@ -31,6 +31,10 @@ No coupler blocks needed. Keys are rebindable under Controls > Train Shunting.
 - **Collision safety net** (`collisionAvoidance`): every moving train scouts the track it's actually taking (its route, or how the switches are set) and brakes for any train in the way: ahead, round curves, fouling a junction. Following trains keep their distance. Parked cars end-on are still approached at coupling speed. Keep signals: two trains meeting head-on both stop and wait.
 - **Ease-in:** trains closing on parked cars slow down on their own so they arrive at coupling speed (`easeIntoCuts`).
 - **Back into stations:** reversing a single-cab loco, Space now finds the station behind you and backs onto the platform (`reverseIntoStations`). Create normally only allows that with controls at both ends.
+- **Schedule entries** (per train, in Create's schedule editor):
+  - instruction **Back into Station**: like Travel to Station but driven in reverse (single-cab locos too). Put a forward stop at the lead/wye just before it.
+  - condition **Couple up**: couple to the cars touching either end, then carry on.
+  - condition **Uncouple cars** (count, 0 = all): drop cars off the end away from the loco, then carry on.
 - **Yard rules** (stations do it automatically when a train stops there):
   - `/railsounds yard couple <station>`
   - `/railsounds yard uncouple <n|all> <station>` (drops cars off the end away from the loco)
