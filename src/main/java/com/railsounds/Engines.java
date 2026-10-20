@@ -161,11 +161,9 @@ public final class Engines {
         // copy first, same as the other per-tick loops: Create can drop a train mid-tick
         for (Train train : new java.util.ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (train == null || train.invalid || train.derailed) continue;
-            // No engine audio for steam. The notch machinery below works for it, but there are
-            // no steam engine clips in the pack, and playing names with no files behind them
-            // just spams every client's log. To add them later: drop steam_idle / steam_run /
-            // steam_notch / steam_start into the pack, declare them in sounds.json, and swap
-            // the three diesel names here for the steam() ternaries this replaced.
+            // Diesel only. There are no steam engine clips in the pack, and asking clients for
+            // files that aren't there just fills their logs, so a steam loco is skipped here
+            // outright - it still gets its whistle, clacks, brakes and couplers elsewhere.
             if (!isRunning(train) || Compat.isHandcar(train) || steam(train)) {
                 drop(train.id);
                 continue;
@@ -178,7 +176,7 @@ public final class Engines {
                 IDLE_TIMER.remove(train.id);
                 int step = stepOf(train, c);
                 Integer before = STEP.put(train.id, step);
-                float pitch = pitchFor(step, c, train);
+                float pitch = pitchFor(step, c);
                 // The new notch is picked up when the loop next comes round, NOT straight away.
                 // Restarting it here would leave the old four-second clip still playing on the
                 // client at the old pitch - vanilla can only stop a sound by name, which would
@@ -216,21 +214,19 @@ public final class Engines {
         return TrainTypes.STEAM.equals(TrainTypes.get(train));
     }
 
-    /** a steam engine's chuff rate follows the wheels, so give it fine steps rather than notches */
-    private static final int STEAM_STEPS = 16;
-
-    private static int steps(Train train, RailConfig.Values c) {
-        return steam(train) ? STEAM_STEPS : Math.max(1, Math.min(32, c.dieselNotches));
+    /** how many notches the engine note steps between. Diesel only - steam has no engine audio */
+    private static int steps(RailConfig.Values c) {
+        return Math.max(1, Math.min(32, c.dieselNotches));
     }
 
     /**
      * Which notch the train is working in, 0 up to steps-1, from how much of the top speed it
      * is doing. maxSpeed() is Create's configured ceiling in blocks/tick - the higher powered
      * figure for a fuelled train - and it isn't scaled by the throttle, so easing off drops the
-     * notch the way it should instead of pinning it at full.
+     * notch the way it should instead of pinning it at full. Diesel only; see tick().
      */
     private static int stepOf(Train train, RailConfig.Values c) {
-        int n = steps(train, c);
+        int n = steps(c);
         if (n <= 1) return 0;
         float top = train.maxSpeed();
         if (!(top > 0.001f)) top = 1.0f;
@@ -248,12 +244,12 @@ public final class Engines {
         if (Math.abs(train.speed) <= MOVING) return "engine on, idling";
         int step = stepOf(train, c);
         return String.format("engine on, notch %d/%d at pitch %.2f",
-            step + 1, steps(train, c), pitchFor(step, c, train));
+            step + 1, steps(c), pitchFor(step, c));
     }
 
     /** playback pitch for a notch. Minecraft clamps to 0.5-2.0, so this does too */
-    private static float pitchFor(int step, RailConfig.Values c, Train train) {
-        int n = steps(train, c);
+    private static float pitchFor(int step, RailConfig.Values c) {
+        int n = steps(c);
         float lo = c.enginePitchMin, hi = c.enginePitchMax;
         float p = n <= 1 ? lo : lo + (hi - lo) * ((float) step / (n - 1));
         return Math.max(0.5f, Math.min(2.0f, p));

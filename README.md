@@ -51,13 +51,10 @@ this works: the running loop plays at one of **8 playback pitches**, picked from
 Create's top speed the train is doing. Speed up, it takes the next notch up, and you hear the
 notch-up layer as it does.
 
-Steam is different — a chuff rate is tied directly to the wheels, so it wants fine smooth steps
-rather than notches. The machinery for that is in there (16 steps), but **there are no steam engine
-clips in the pack**, so steam locos get no engine audio: no idle, no chuffs, no startup. They still
-get the whistle, the clacks, the brakes, the couplers and everything else. If you ever want steam
-engine sounds, drop `steam_idle` / `steam_run` / `steam_notch` / `steam_start` into the pack,
-declare them in `sounds.json`, and there's a comment in `Engines.java` marking the three lines to
-change.
+**Steam locos get no engine audio** — no idle, no chuffs, no startup. There are no steam engine
+clips in the pack, so rather than ask clients for files that aren't there and fill their logs, steam
+is skipped outright. They still get the whistle, the clacks, the brakes, the couplers and
+everything else.
 
 This is also why the recorded clip doesn't need a huge rev range baked into it. A real diesel
 rev-up only swings the fundamental around 10–15% anyway; the notch spread comes from playback
