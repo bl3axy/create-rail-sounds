@@ -34,6 +34,8 @@ public class RailSounds implements ModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(AutoCouplePayload.TYPE, AutoCouplePayload.CODEC);
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register(
             (handler, sender, server) -> Shunting.sendAutoState(handler.player));
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register(
+            (handler, server) -> com.railsounds.rail.RailItems.forget(handler.player.getUUID()));
         ServerPlayNetworking.registerGlobalReceiver(ShuntPayload.TYPE, (p, ctx) -> {
             try {
                 Shunting.onKey(ctx.player(), p.action(), p.number());

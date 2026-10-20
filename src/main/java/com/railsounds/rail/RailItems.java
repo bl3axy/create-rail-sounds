@@ -47,6 +47,12 @@ public final class RailItems {
         REMEMBERED.clear();
     }
 
+    /** a player who logs off mid-link leaves nothing behind */
+    public static void forget(java.util.UUID player) {
+        REMEMBERED.remove(player);
+        InterlockingPanelBlock.forget(player);
+    }
+
     /** UseBlockCallback: the linker's clicks, and the sneak-click linking flow from the panel */
     public static InteractionResult onUseBlock(Player player, Level level, InteractionHand hand, BlockHitResult hit) {
         if (player.isSpectator()) return InteractionResult.PASS;

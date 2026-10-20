@@ -87,7 +87,7 @@ public class Crossings {
         c.z = pos.getZ() + 0.5;
         c.radius = radius;
         LIST.add(c);
-        save();
+        saveSoon();
         return c;
     }
 
@@ -97,12 +97,16 @@ public class Crossings {
         if (c == null) return;
         LIST.remove(c);
         lastDist.keySet().removeIf(k -> k.startsWith(c.name + "#"));
-        save();
+        saveSoon();
     }
 
     public static List<Crossing> LIST = new ArrayList<>();
     /** server stopping: next start re-checks signals, and ringing state starts fresh */
     public static void onServerStop() {
+        if (dirty) {
+            dirty = false;
+            save();
+        }
         lastDist = new HashMap<>();
         for (Crossing c : LIST) {
             c.signalChecked = false;
@@ -125,6 +129,20 @@ public class Crossings {
         }
     }
 
+    /** block placement can add many crossings in one tick; coalesce those into one write */
+    private static boolean dirty;
+
+    public static void saveSoon() {
+        dirty = true;
+    }
+
+    /** called from the server tick; writes at most once a second */
+    static void flush(MinecraftServer server) {
+        if (!dirty || server.getTickCount() % 20 != 0) return;
+        dirty = false;
+        save();
+    }
+
     public static void save() {
         try (Writer w = Files.newBufferedWriter(FILE)) {
             GSON.toJson(LIST, w);
@@ -139,6 +157,7 @@ public class Crossings {
     }
 
     public static void tick(MinecraftServer server) {
+        flush(server);
         if (LIST.isEmpty() || Create.RAILWAYS == null) return;
         RailConfig.Values cfg = RailConfig.V;
 

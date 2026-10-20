@@ -49,6 +49,10 @@ public class InterlockingPanelBlock extends FacingRailBlock {
         LINKING.clear();
     }
 
+    static void forget(java.util.UUID player) {
+        LINKING.remove(player);
+    }
+
     /** which lever (0-7) the player clicked on the front, or -1 (top row 1-4, bottom row 5-8, left to right) */
     static int leverAt(BlockState state, BlockPos pos, BlockHitResult hit) {
         Direction facing = state.getValue(FACING);
