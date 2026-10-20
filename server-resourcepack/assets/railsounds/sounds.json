@@ -107,29 +107,11 @@
       }
     ]
   },
-  "steam_idle": {
-    "subtitle": "Steam locomotive simmering",
-    "sounds": [
-      {
-        "name": "railsounds:steam_idle",
-        "attenuation_distance": 24
-      }
-    ]
-  },
   "diesel_start": {
     "subtitle": "Diesel engine starts",
     "sounds": [
       {
         "name": "railsounds:diesel_start",
-        "attenuation_distance": 48
-      }
-    ]
-  },
-  "steam_start": {
-    "subtitle": "Steam locomotive fires up",
-    "sounds": [
-      {
-        "name": "railsounds:steam_start",
         "attenuation_distance": 48
       }
     ]
@@ -143,29 +125,11 @@
       }
     ]
   },
-  "steam_run": {
-    "subtitle": "Steam locomotive working",
-    "sounds": [
-      {
-        "name": "railsounds:steam_run",
-        "attenuation_distance": 48
-      }
-    ]
-  },
   "diesel_notch": {
     "subtitle": "Diesel engine digs in",
     "sounds": [
       {
         "name": "railsounds:diesel_notch",
-        "attenuation_distance": 48
-      }
-    ]
-  },
-  "steam_notch": {
-    "subtitle": "Steam locomotive digs in",
-    "sounds": [
-      {
-        "name": "railsounds:steam_notch",
         "attenuation_distance": 48
       }
     ]

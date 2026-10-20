@@ -111,7 +111,8 @@ public final class Engines {
         if (!c.engineSounds) return;
         Spot spot = spotOf(train);
         if (spot == null) return;
-        String sound = TrainTypes.STEAM.equals(TrainTypes.get(train)) ? "steam_start" : "diesel_start";
+        if (steam(train)) return;   // no steam engine clips in the pack
+        String sound = "diesel_start";
         SoundPlayer.play(spot.level, spot.pos, sound, c.engineVolume, 1.0f, c.engineHearingRange);
         int hold = Math.max(0, c.startClipTicks - Math.max(0, c.startFadeTicks));
         IDLE_TIMER.put(train.id, hold);
@@ -160,7 +161,12 @@ public final class Engines {
         // copy first, same as the other per-tick loops: Create can drop a train mid-tick
         for (Train train : new java.util.ArrayList<>(Create.RAILWAYS.trains.values())) {
             if (train == null || train.invalid || train.derailed) continue;
-            if (!isRunning(train) || Compat.isHandcar(train)) {
+            // No engine audio for steam. The notch machinery below works for it, but there are
+            // no steam engine clips in the pack, and playing names with no files behind them
+            // just spams every client's log. To add them later: drop steam_idle / steam_run /
+            // steam_notch / steam_start into the pack, declare them in sounds.json, and swap
+            // the three diesel names here for the steam() ternaries this replaced.
+            if (!isRunning(train) || Compat.isHandcar(train) || steam(train)) {
                 drop(train.id);
                 continue;
             }
@@ -180,7 +186,7 @@ public final class Engines {
                 // right anyway: a real engine takes a few seconds to settle into a notch, and
                 // the notch-up layer below is the immediate cue that it changed.
                 if (!wasMoving || (before != null && step > before)) notchUp(train, c, pitch);
-                loop(train, RUN_TIMER, steam(train) ? "steam_run" : "diesel_run",
+                loop(train, RUN_TIMER, "diesel_run",
                     c.engineVolume, pitch, c.runClipTicks, c.engineHearingRange);
             } else {
                 RUN_TIMER.remove(train.id);
@@ -189,7 +195,7 @@ public final class Engines {
                     IDLE_TIMER.remove(train.id);
                     continue;
                 }
-                loop(train, IDLE_TIMER, steam(train) ? "steam_idle" : "diesel_idle",
+                loop(train, IDLE_TIMER, "diesel_idle",
                     c.idleVolume, 1.0f, c.idleClipTicks, c.idleHearingRange);
             }
         }
@@ -236,6 +242,7 @@ public final class Engines {
     public static String describe(Train train) {
         if (train == null) return "";
         if (!isRunning(train)) return "engine off";
+        if (steam(train)) return "steam (no engine clips in the pack)";
         RailConfig.Values c = RailConfig.V;
         if (!c.engineSounds) return "engine on (engine sounds disabled)";
         if (Math.abs(train.speed) <= MOVING) return "engine on, idling";
@@ -274,7 +281,7 @@ public final class Engines {
         if (NOTCH_COOLDOWN.containsKey(train.id)) return;
         Spot spot = spotOf(train);
         if (spot == null) return;
-        SoundPlayer.play(spot.level, spot.pos, steam(train) ? "steam_notch" : "diesel_notch",
+        SoundPlayer.play(spot.level, spot.pos, "diesel_notch",
             c.engineVolume, pitch, c.engineHearingRange);
         NOTCH_COOLDOWN.put(train.id, Math.max(20, c.notchCooldownTicks));
     }
