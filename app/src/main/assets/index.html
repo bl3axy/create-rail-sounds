@@ -47,12 +47,16 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 #hint button { min-height: 32px; padding: 3px 12px; border-radius: 999px; font-size: 14px; }
 #fab { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
 #fab button { width: 52px; height: 52px; padding: 0; border-radius: 14px; background: rgba(29,38,47,.94); font-size: 22px; }
-#trackbar { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 8px; align-items: center; }
-#trackbar[hidden] { display: none; }
-#trackbar .seg { background: rgba(22,29,36,.95); }
-#trackbar .seg button { min-height: 52px; padding: 8px 16px; font-size: 15px; }
-#trackbar #tbUndo { min-height: 52px; background: rgba(29,38,47,.94); }
-#toast { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%) translateY(20px); opacity: 0; transition: .2s;
+#pendbar { position: absolute; left: 8px; right: 70px; bottom: 8px; background: rgba(22,29,36,.97); border: 1px solid var(--line); border-radius: 16px; padding: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+#pendbar[hidden] { display: none; }
+#pendbar .btns { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 0.8fr; gap: 6px; }
+#pendbar button { min-height: 54px; padding: 4px 2px; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.1; }
+#pendbar button b { font-size: 20px; line-height: 1; }
+#pendbar button:disabled { opacity: .4; }
+#pbInfo { font-size: 15px; padding: 2px 4px 2px; font-weight: 700; }
+#pbLock { font-size: 13px; color: var(--dim); padding: 0 4px 8px; }
+#pbInfo.good { color: #7dffb3; } #pbInfo.warn { color: #ffcf70; } #pbInfo.bad { color: #ff8a8a; }
+#toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%) translateY(-20px); z-index: 6; opacity: 0; transition: .2s;
   background: #24303b; border: 1px solid var(--line); border-radius: 12px; padding: 9px 14px; font-size: 14px; max-width: calc(100% - 90px); pointer-events: none; text-align: center; }
 #toast.show { opacity: 1; transform: translateX(-50%); }
 
@@ -128,8 +132,15 @@ details ul { padding-left: 18px; }
   <div id="stage">
     <canvas id="cv"></canvas>
     <div id="hint"></div>
-    <div id="trackbar" hidden>
-      <div class="seg"><button data-mode="curve" class="on">⤳ Curve</button><button data-mode="straight">— Straight</button></div>
+    <div id="pendbar" hidden>
+      <div id="pbInfo"></div><div id="pbLock"></div>
+      <div class="btns">
+        <button id="pbPlace" class="primary"><b>✓</b>Place</button>
+        <button id="pbFlip"><b>⇅</b>Flip bend</button>
+        <button id="pbStraight"><b>—</b>Straight</button>
+        <button id="pbFit"><b>↺</b>Reset</button>
+        <button id="pbCancel"><b>✕</b>Cancel</button>
+      </div>
     </div>
     <div id="fab">
       <button id="zin" title="Zoom in">+</button>
@@ -380,21 +391,167 @@ details ul { padding-left: 18px; }
     for (const v of dirs) { const d = v.x * c.x + v.z * c.z; if (d > bd) { bd = d; best = v; } }
     return best;
   }
+  /** circular arc from A through M to B, cut into ~2 block pieces (straight if the three line up) */
+  function arcPoints(A, M, B) {
+    const ax = A.x, az = A.z, bx = M.x, bz = M.z, cx = B.x, cz = B.z;
+    const d = 2 * (ax * (bz - cz) + bx * (cz - az) + cx * (az - bz));
+    const L = Math.hypot(cx - ax, cz - az);
+    if (L < 1) return { ok: false, msg: 'Too short', pts: [] };
+    // how far M sits off the straight line, compared to the length: tiny = straight
+    const off = Math.abs((cx - ax) * (bz - az) - (cz - az) * (bx - ax)) / L;
+    if (Math.abs(d) < 1e-9 || off < 0.3) return { ok: true, pts: [A, B], straight: true, len: L };
+    const ux = ((ax * ax + az * az) * (bz - cz) + (bx * bx + bz * bz) * (cz - az) + (cx * cx + cz * cz) * (az - bz)) / d;
+    const uz = ((ax * ax + az * az) * (cx - bx) + (bx * bx + bz * bz) * (ax - cx) + (cx * cx + cz * cz) * (bx - ax)) / d;
+    const r = Math.hypot(ax - ux, az - uz);
+    const a0 = Math.atan2(az - uz, ax - ux), am = Math.atan2(bz - uz, bx - ux), a1 = Math.atan2(cz - uz, cx - ux);
+    const norm = x => { while (x < 0) x += 2 * Math.PI; while (x >= 2 * Math.PI) x -= 2 * Math.PI; return x; };
+    // go from a0 to a1 the way that passes am
+    let sweep = norm(a1 - a0);
+    if (norm(am - a0) > sweep) sweep = sweep - 2 * Math.PI;
+    const len = Math.abs(sweep) * r;
+    if (Math.abs(sweep) > Math.PI * 1.5) return { ok: false, msg: 'That loops round too far', pts: [] };
+    const n = Math.max(2, Math.round(len / 2));
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const t = a0 + sweep * i / n; pts.push({ x: ux + r * Math.cos(t), z: uz + r * Math.sin(t) }); }
+    pts[0] = { x: A.x, z: A.z }; pts[n] = { x: B.x, z: B.z };
+    if (r < 6) return { ok: false, msg: 'Too tight for trains - make the curve wider', pts, len };
+    return { ok: true, pts, len, radius: r };
+  }
   /**
-   * lay a piece of track from a to b. a/b = {x,z} plus optionally {node} or {edge,d} it starts/ends
-   * on. curved: follow the existing track's direction at either end. Returns {ok,msg,nodes}.
+   * Bezier "pen" curve: from A to B pulled toward control point Q. The track leaves A heading at Q
+   * and arrives at B coming from Q, so where Q sits decides which way and how hard it bends.
+   * Cut into ~2 block pieces. Returns {ok, pts, len, radius, straight}.
    */
-  function layTrack(s, a, b, curved) {
-    const P0 = { x: a.x, z: a.z }, P1 = { x: b.x, z: b.z }, chord = { x: P1.x - P0.x, z: P1.z - P0.z };
-    if ((a.node && a.node === b.node) || Math.hypot(chord.x, chord.z) < 1) return { ok: false, msg: 'Too short' };
-    let t0 = null, t1 = null;
-    if (curved) {
-      const d0 = joinDirections(s, a, false), d1 = joinDirections(s, b, true);
-      if (d0.length) t0 = bestDirection(d0, chord);
-      if (d1.length) t1 = bestDirection(d1, chord);
+  function quadPoints(A, Q, B) {
+    const L = Math.hypot(B.x - A.x, B.z - A.z);
+    if (L < 1) return { ok: false, msg: 'Too short', pts: [] };
+    const off = Math.abs((B.x - A.x) * (Q.z - A.z) - (B.z - A.z) * (Q.x - A.x)) / L;
+    const along = ((Q.x - A.x) * (B.x - A.x) + (Q.z - A.z) * (B.z - A.z)) / (L * L);
+    if (off < 0.25 && along > 0 && along < 1) return { ok: true, pts: [{ x: A.x, z: A.z }, { x: B.x, z: B.z }], straight: true, len: L };
+    const P = t => { const u = 1 - t; return { x: u * u * A.x + 2 * u * t * Q.x + t * t * B.x, z: u * u * A.z + 2 * u * t * Q.z + t * t * B.z }; };
+    let len = 0, prev = A;
+    for (let i = 1; i <= 96; i++) { const q = P(i / 96); len += Math.hypot(q.x - prev.x, q.z - prev.z); prev = q; }
+    // place points evenly by length (uniform t bunches up on tight bends)
+    const table = [{ t: 0, l: 0 }]; prev = A; let acc = 0;
+    for (let i = 1; i <= 400; i++) { const q = P(i / 400); acc += Math.hypot(q.x - prev.x, q.z - prev.z); table.push({ t: i / 400, l: acc }); prev = q; }
+    const n = Math.max(2, Math.round(len / 2)), pts = [{ x: A.x, z: A.z }];
+    let j = 0;
+    for (let i = 1; i < n; i++) {
+      const want = len * i / n;
+      while (j < table.length - 1 && table[j + 1].l < want) j++;
+      const a = table[j], b = table[Math.min(j + 1, table.length - 1)], f = b.l > a.l ? (want - a.l) / (b.l - a.l) : 0;
+      pts.push(P(a.t + (b.t - a.t) * f));
     }
-    const cp = curvePoints(P0, P1, t0, t1);
-    if (!cp.ok) return cp;
+    pts.push({ x: B.x, z: B.z });
+    // tightest bend, as a radius in blocks
+    let radius = Infinity;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const u = unit({ x: pts[i].x - pts[i - 1].x, z: pts[i].z - pts[i - 1].z }), v = unit({ x: pts[i + 1].x - pts[i].x, z: pts[i + 1].z - pts[i].z });
+      const ang = Math.acos(Math.max(-1, Math.min(1, u.x * v.x + u.z * v.z)));
+      const seg = (Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) + Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].z - pts[i].z)) / 2;
+      if (ang > 1e-4) radius = Math.min(radius, seg / ang);
+    }
+    if (radius < 5) return { ok: false, msg: 'Too tight for trains - pull the bend handle further out', pts, len, radius };
+    return { ok: true, pts, len, radius };
+  }
+
+  const SNAP_DEG = 7;
+  const snapAngle = v => {
+    const a = Math.atan2(v.z, v.x), step = Math.PI / 4, s2 = Math.round(a / step) * step;
+    return Math.abs(a - s2) < SNAP_DEG * Math.PI / 180 ? { x: Math.cos(s2), z: Math.sin(s2) } : null;
+  };
+  /** where lines P + u*d and R - v*e meet: {u, v} (or null if parallel) */
+  function meet(P, d, R, e) {
+    const den = d.x * e.z - d.z * e.x;
+    if (Math.abs(den) < 1e-9) return null;
+    const wx = R.x - P.x, wz = R.z - P.z;
+    // P + u d = R - v e  ->  u d + v e = w
+    const u = (wx * e.z - wz * e.x) / den, v = (d.x * wz - d.z * wx) / den;
+    return { u, v };
+  }
+  /**
+   * work out the bend handle for a new piece of track. If an end sits on existing track the
+   * handle is held on that track's line (so trains run on smoothly); otherwise it goes where the
+   * finger is. Headings snap to the 8 compass directions when close. want = finger (or null for
+   * the default shape); pick = {ia, ib} to choose between join directions at a switch.
+   * Returns {q, t0, t1, locked, cubic}.
+   */
+  function bendControl(s, a, b, want, pick) {
+    pick = pick || {};
+    const A = { x: a.x, z: a.z }, B = { x: b.x, z: b.z }, chord = { x: B.x - A.x, z: B.z - A.z }, L = Math.hypot(chord.x, chord.z) || 1;
+    const d0 = joinDirections(s, a, false), d1 = joinDirections(s, b, true);
+    const choose = (dirs, i) => !dirs.length ? null : i != null ? dirs[((i % dirs.length) + dirs.length) % dirs.length] : bestDirection(dirs, chord);
+    const t0 = choose(d0, pick.ia), t1 = choose(d1, pick.ib);
+    const at = (P, d, u) => ({ x: P.x + d.x * u, z: P.z + d.z * u });
+    if (t0 && t1) {
+      const m = meet(A, t0, B, t1);
+      if (m && m.u > 0.5 && m.v > 0.5) return { q: at(A, t0, m.u), t0, t1, locked: 'both' };
+      // the two ends' directions don't cross in front: an S-bend (no handle to move)
+      return { q: null, t0, t1, locked: 'both', cubic: true };
+    }
+    if (t0 || t1) {
+      // slide the handle along the existing track's line
+      const P = t0 ? A : B, d = t0 ? t0 : { x: -t1.x, z: -t1.z }, O = t0 ? B : A;
+      let u = want ? ((want.x - P.x) * d.x + (want.z - P.z) * d.z) : L * 0.5;
+      u = Math.max(0.5, Math.min(L * 4, u));
+      // snap the free end's heading to a compass direction
+      const head = t0 ? { x: O.x - (P.x + d.x * u), z: O.z - (P.z + d.z * u) } : { x: (P.x + d.x * u) - O.x, z: (P.z + d.z * u) - O.z };
+      const sn = snapAngle(head);
+      if (sn) {
+        const m = t0 ? meet(P, d, O, sn) : meet(P, d, O, { x: -sn.x, z: -sn.z });
+        if (m && m.u > 0.5 && m.u < L * 4) u = m.u;
+      }
+      return { q: at(P, d, u), t0, t1, locked: t0 ? 'start' : 'end' };
+    }
+    // both ends free: the handle goes where you put it, headings snap to compass directions
+    let q = want ? { x: want.x, z: want.z } : { x: (A.x + B.x) / 2, z: (A.z + B.z) / 2 };
+    if (want) {
+      const h0 = snapAngle({ x: q.x - A.x, z: q.z - A.z }), h1 = snapAngle({ x: B.x - q.x, z: B.z - q.z });
+      if (h0 && h1) { const m = meet(A, h0, B, h1); if (m && m.u > 0.5 && m.v > 0.5) q = at(A, h0, m.u); }
+    }
+    return { q, t0: null, t1: null, locked: null };
+  }
+  /** the shape of a new piece for the planner: bend handle (or S-bend), then the join checks */
+  function bendShape(s, a, b, want, pick, straight) {
+    if (Math.hypot(b.x - a.x, b.z - a.z) < 2 || (a.node && a.node === b.node)) return { ok: false, msg: 'Too short', pts: [a, b] };
+    const bc = bendControl(s, a, b, straight ? null : want, pick);
+    let sh;
+    if (straight) sh = { ok: true, pts: [{ x: a.x, z: a.z }, { x: b.x, z: b.z }], straight: true, len: Math.hypot(b.x - a.x, b.z - a.z) };
+    else if (bc.cubic) sh = curvePoints(a, b, bc.t0, bc.t1);
+    else sh = quadPoints(a, bc.q, b);
+    if (!sh.pts || sh.pts.length < 2) sh.pts = [{ x: a.x, z: a.z }, { x: b.x, z: b.z }];
+    if (sh.ok) { const chk = checkTrack(s, a, b, sh.pts); if (!chk.ok) { sh.ok = false; sh.msg = chk.msg; } }
+    sh.control = bc;
+    return sh;
+  }
+
+  /** can trains run this new piece, including onto the track already at either end? */
+  function checkTrack(s, a, b, pts) {
+    if (pts.length < 2) return { ok: false, msg: 'Too short' };
+    const dirOf = (p, q) => unit({ x: q.x - p.x, z: q.z - p.z });
+    for (let i = 1; i < pts.length - 1; i++) {
+      const u = dirOf(pts[i - 1], pts[i]), v = dirOf(pts[i], pts[i + 1]);
+      if (u.x * v.x + u.z * v.z <= SMOOTH + 0.05) return { ok: false, msg: 'Too tight for trains - make the curve wider' };
+    }
+    const first = dirOf(pts[0], pts[1]), last = dirOf(pts[pts.length - 2], pts[pts.length - 1]);
+    const d0 = joinDirections(s, a, false), d1 = joinDirections(s, b, true);
+    const fits = (dirs, v) => !dirs.length || dirs.some(w => w.x * v.x + w.z * v.z > SMOOTH + 0.05);
+    if (!fits(d0, first)) return { ok: false, msg: "Trains can't turn from the old track onto this - bend it the other way" };
+    if (!fits(d1, last)) return { ok: false, msg: "Trains can't turn from this onto the track it meets - bend it the other way" };
+    if (a.node && a.node === b.node) return { ok: false, msg: 'Too short' };
+    return { ok: true };
+  }
+  /** the smooth shape for a new piece: follows the track already at its ends (or straight) */
+  function autoTrack(s, a, b) {
+    const chord = { x: b.x - a.x, z: b.z - a.z };
+    const d0 = joinDirections(s, a, false), d1 = joinDirections(s, b, true);
+    const t0 = d0.length ? bestDirection(d0, chord) : null, t1 = d1.length ? bestDirection(d1, chord) : null;
+    const r = curvePoints(a, b, t0, t1);
+    if (!r.pts.length) r.pts = [{ x: a.x, z: a.z }, { x: b.x, z: b.z }];
+    return r;
+  }
+  /** put the points down as track: nodes along the way are marked as curve-inside */
+  function buildTrack(s, a, b, pts) {
     const ends = [];
     for (let r of [a, b]) {
       // the first end's split may have replaced the edge the second end was on: find it again
@@ -403,13 +560,28 @@ details ul { padding-left: 18px; }
     }
     if (ends[0] === ends[1]) return { ok: false, msg: 'Too short' };
     const ids = [ends[0]];
-    for (let i = 1; i < cp.pts.length - 1; i++) {
-      const k = addNode(s, Math.round(cp.pts[i].x * 100) / 100, Math.round(cp.pts[i].z * 100) / 100);
-      s.nodes[k].c = 1; ids.push(k);                       // inside a curve: drawn without a joint dot
+    for (let i = 1; i < pts.length - 1; i++) {
+      const k = addNode(s, Math.round(pts[i].x * 100) / 100, Math.round(pts[i].z * 100) / 100);
+      s.nodes[k].c = 1; ids.push(k);
     }
     ids.push(ends[1]);
     for (let i = 0; i < ids.length - 1; i++) addEdge(s, ids[i], ids[i + 1]);
-    return { ok: true, nodes: ids, curved: !cp.straight, len: cp.len };
+    return { ok: true, nodes: ids, curved: pts.length > 2 };
+  }
+  /**
+   * lay a piece of track from a to b. a/b = {x,z} plus optionally {node} or {edge,d} it starts/ends
+   * on. curved: follow the existing track's direction at either end; or pass bend = a point the
+   * curve must go through (an arc). Returns {ok,msg,nodes}.
+   */
+  function layTrack(s, a, b, curved, bend) {
+    if ((a.node && a.node === b.node) || Math.hypot(b.x - a.x, b.z - a.z) < 1) return { ok: false, msg: 'Too short' };
+    const shape = bend ? arcPoints(a, bend, b) : curved ? autoTrack(s, a, b) : { ok: true, pts: [a, b] };
+    if (!shape.ok) return shape;
+    const chk = checkTrack(s, a, b, shape.pts);
+    if (!chk.ok) return chk;
+    const r = buildTrack(s, a, b, shape.pts);
+    if (r.ok) r.len = shape.len;
+    return r;
   }
   /** every edge of the curve/straight run this edge belongs to (through curve-inside joints) */
   function trackRun(s, e) {
@@ -1234,7 +1406,7 @@ details ul { padding-left: 18px; }
     LEN, GAP, COUPLE_REACH, newState, addNode, addEdge, findEdge, edgesAt, edgeLen, pointAt, dirVec, nextOptions,
     removeNode, removeEdge, addStation, stationByName, addSignal, indexSignals, signalFaces, sigType, signalAspect, computeBlocks, blockAt, occupancy,
     vehiclesLength, vlen, hasLoco, hasDoubleCab, pathLength, pointFromHead, slicePath, reversePath, layBack,
-    newConsist, placeAtStation, routeContext, layTrack, curvePoints, joinDirections, bestDirection, trackRun, removeRun, splitEdge, moveNode, nearestTrack, nudge, startNode, endNode, relayout, flipConsist, ends, findRoute, allowedDirections, findCoupling,
+    newConsist, placeAtStation, routeContext, layTrack, quadPoints, bendControl, bendShape, arcPoints, checkTrack, autoTrack, buildTrack, curvePoints, joinDirections, bestDirection, trackRun, removeRun, splitEdge, moveNode, nearestTrack, nudge, startNode, endNode, relayout, flipConsist, ends, findRoute, allowedDirections, findCoupling,
     couple, uncouple, splitConsist, startRun, step, serialize, deserialize, leadOf, logEvt,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Core = api;
@@ -1499,7 +1671,7 @@ details ul { padding-left: 18px; }
     hintT = setTimeout(() => h.classList.add('fade'), 6000);
     const txt = {
       select: 'Tap anything to edit it · drag to pan · pinch to zoom · drag a track joint to move it',
-      track: 'Drag to draw track. Start on a track end and it curves smoothly out of it. Two fingers move the map.',
+      track: pend ? 'Drag the blue handle to bend it · drag the ends to move them · then ✓ Place' : 'Drag out a piece of track, then bend it with the blue handle. Two fingers move the map.',
       station: 'Tap a track to put a station there',
       signal: 'Tap a track to put a signal there',
       train: 'Tap a track to put a new train there',
@@ -1513,6 +1685,40 @@ details ul { padding-left: 18px; }
   function trackPath(e) {
     const E = S.edges[e], A = S.nodes[E.a], B = S.nodes[E.b];
     return [A, B];
+  }
+  /**
+   * track look, bold enough to read on a phone: a dark bed, wooden sleepers when zoomed in, and
+   * two steel rails (one thick line when zoomed out). tint = colour override for previews.
+   */
+  function drawRails(segs, tint) {
+    const k = view.k;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // bed
+    ctx.strokeStyle = tint ? tint.bed : '#26313b'; ctx.lineWidth = Math.max(12, k * 2.3); ctx.beginPath();
+    for (const [A, B] of segs) { ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); }
+    ctx.stroke();
+    if (k >= 3) {
+      ctx.strokeStyle = tint ? tint.tie : '#7a6149'; ctx.lineWidth = Math.max(2.5, k * 0.34); ctx.lineCap = 'butt'; ctx.beginPath();
+      for (const [A, B] of segs) {
+        const L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
+        const ux = (B.x - A.x) / L, uz = (B.z - A.z) / L, nx = -uz * 0.85, nz = ux * 0.85;
+        for (let d = 0.5; d < L; d += 1) { const x = A.x + ux * d, z = A.z + uz * d; ctx.moveTo(sx(x + nx), sz(z + nz)); ctx.lineTo(sx(x - nx), sz(z - nz)); }
+      }
+      ctx.stroke(); ctx.lineCap = 'round';
+    }
+    if (k >= 5) {
+      ctx.strokeStyle = tint ? tint.rail : '#e3eaf0'; ctx.lineWidth = Math.max(3, Math.min(6, k * 0.26)); ctx.beginPath();
+      for (const [A, B] of segs) {
+        const L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
+        const nx = -(B.z - A.z) / L * 0.45, nz = (B.x - A.x) / L * 0.45;
+        for (const g of [1, -1]) { ctx.moveTo(sx(A.x + nx * g), sz(A.z + nz * g)); ctx.lineTo(sx(B.x + nx * g), sz(B.z + nz * g)); }
+      }
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = tint ? tint.rail : '#cfd8e0'; ctx.lineWidth = Math.max(5, k * 1.1); ctx.beginPath();
+      for (const [A, B] of segs) { ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); }
+      ctx.stroke();
+    }
   }
   function draw() {
     const k = view.k;
@@ -1534,42 +1740,15 @@ details ul { padding-left: 18px; }
     const occEdges = [];
     for (const e in blocks.intervals) for (const iv of blocks.intervals[e]) if (occ[iv.block] && occ[iv.block].size) occEdges.push({ e, iv });
 
-    // sleepers
-    if (k >= 4) {
-      ctx.strokeStyle = '#3b3128'; ctx.lineWidth = Math.max(1, k * 0.28); ctx.beginPath();
-      for (const e in S.edges) {
-        const [A, B] = trackPath(e), L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
-        const ux = (B.x - A.x) / L, uz = (B.z - A.z) / L, nx = -uz * 0.75, nz = ux * 0.75;
-        for (let d = 0.5; d < L; d += 1) {
-          const x = A.x + ux * d, z = A.z + uz * d;
-          ctx.moveTo(sx(x + nx), sz(z + nz)); ctx.lineTo(sx(x - nx), sz(z - nz));
-        }
-      }
-      ctx.stroke();
-    }
-    // occupied tint
-    ctx.lineCap = 'round';
-    if (occEdges.length && Object.keys(S.signals).length) { // with no signals the whole network is one block: don't paint it all
-      ctx.strokeStyle = 'rgba(255,93,93,.22)'; ctx.lineWidth = Math.max(6, k * 1.8); ctx.beginPath();
+    const segs = Object.keys(S.edges).map(trackPath);
+    drawRails(segs, null);
+    // occupied blocks (only once there are signals: without any the whole network is one block)
+    if (occEdges.length && Object.keys(S.signals).length) {
+      ctx.strokeStyle = 'rgba(255,93,93,.28)'; ctx.lineWidth = Math.max(10, k * 2.2); ctx.lineCap = 'round'; ctx.beginPath();
       for (const { e, iv } of occEdges) { const p = C.pointAt(S, e, iv.d0), q = C.pointAt(S, e, iv.d1); ctx.moveTo(sx(p.x), sz(p.z)); ctx.lineTo(sx(q.x), sz(q.z)); }
       ctx.stroke();
     }
-    // rails
-    const railW = Math.max(1.6, Math.min(3, k * 0.18));
     const selEdge = sel && sel.kind === 'edge' ? sel.id : null;
-    if (k >= 6) {
-      ctx.strokeStyle = '#9aa7b3'; ctx.lineWidth = railW; ctx.lineCap = 'round'; ctx.beginPath();
-      for (const e in S.edges) {
-        const [A, B] = trackPath(e), L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
-        const nx = -(B.z - A.z) / L * 0.42, nz = (B.x - A.x) / L * 0.42;
-        for (const sgn of [1, -1]) { ctx.moveTo(sx(A.x + nx * sgn), sz(A.z + nz * sgn)); ctx.lineTo(sx(B.x + nx * sgn), sz(B.z + nz * sgn)); }
-      }
-      ctx.stroke();
-    } else {
-      ctx.strokeStyle = '#8b98a5'; ctx.lineWidth = Math.max(2, k * 0.9); ctx.beginPath();
-      for (const e in S.edges) { const [A, B] = trackPath(e); ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); }
-      ctx.stroke();
-    }
     if (selEdge && S.edges[selEdge]) {
       ctx.strokeStyle = 'rgba(242,184,75,.55)'; ctx.lineWidth = Math.max(8, k * 1.6); ctx.lineCap = 'round'; ctx.beginPath();
       for (const f of C.trackRun(S, selEdge)) { const [A, B] = trackPath(f); ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); }
@@ -1641,19 +1820,46 @@ details ul { padding-left: 18px; }
     }
     // trains
     for (const id in S.consists) drawTrain(S.consists[id]);
-    // track being drawn
-    if (gesture && gesture.type === 'draw') {
-      const a = gesture.start;
-      if (a && !a.bad) { ctx.fillStyle = '#f2b84b'; ctx.beginPath(); ctx.arc(sx(a.x), sz(a.z), 8, 0, 7); ctx.fill(); }
-      const pv = gesture.preview;
-      if (pv && pv.pts && pv.pts.length > 1) {
-        ctx.strokeStyle = pv.ok ? 'rgba(61,220,132,.9)' : 'rgba(255,93,93,.9)'; ctx.lineWidth = Math.max(4, k * 0.9); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.setLineDash([10, 8]); ctx.beginPath(); pv.pts.forEach((p, i) => (i ? ctx.lineTo(sx(p.x), sz(p.z)) : ctx.moveTo(sx(p.x), sz(p.z)))); ctx.stroke(); ctx.setLineDash([]);
-        const e = gesture.end; ctx.fillStyle = pv.ok ? '#3ddc84' : '#ff5d5d'; ctx.beginPath(); ctx.arc(sx(e.x), sz(e.z), 8, 0, 7); ctx.fill();
-        // length / reason above the finger
-        const len = pv.ok ? (pv.len || Math.hypot(e.x - a.x, e.z - a.z)) : 0;
-        const label = pv.ok ? Math.round(len) + ' blocks' + (pv.straight ? '' : ' (curve)') : (pv.msg || '');
-        if (label) { ctx.font = '600 15px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineWidth = 4; ctx.strokeStyle = '#0e1318'; ctx.strokeText(label, sx(e.x), sz(e.z) - 18); ctx.fillStyle = pv.ok ? '#d6ffe6' : '#ffd0d0'; ctx.fillText(label, sx(e.x), sz(e.z) - 18); }
+    // track being dragged out, or laid out and waiting to be placed
+    const showing = gesture && gesture.type === 'draw' && gesture.moved && gesture.end ? { a: gesture.start, b: gesture.end, want: null, pick: {} } : pend;
+    if (showing) {
+      const sh = shapeOf(showing);
+      const col = !sh.ok ? { bed: 'rgba(255,93,93,.4)', tie: 'rgba(255,93,93,.6)', rail: '#ff7b7b' }
+        : { bed: 'rgba(61,220,132,.32)', tie: 'rgba(61,220,132,.55)', rail: '#8dffbf' };
+      const segs = []; for (let i = 1; i < sh.pts.length; i++) segs.push([sh.pts[i - 1], sh.pts[i]]);
+      drawRails(segs, col);
+      const ring = (q, r, fill, stroke, w) => { ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = w || 4; ctx.beginPath(); ctx.arc(sx(q.x), sz(q.z), r, 0, 7); ctx.fill(); ctx.stroke(); };
+      const m = showing === pend ? bendHandle() : null;
+      if (m) {
+        // pen-tool guide lines: the track leaves the start toward the handle and arrives at the end from it
+        const c = sh.control || {};
+        ctx.setLineDash([8, 7]); ctx.strokeStyle = 'rgba(90,169,255,.85)'; ctx.lineWidth = 2.5; ctx.beginPath();
+        ctx.moveTo(sx(showing.a.x), sz(showing.a.z)); ctx.lineTo(sx(m.x), sz(m.z)); ctx.lineTo(sx(showing.b.x), sz(showing.b.z)); ctx.stroke();
+        if (c.locked === 'start' || c.locked === 'end') {
+          // the line the handle slides along (the old track carried on)
+          const P = c.t0 ? showing.a : showing.b, d = c.t0 ? c.t0 : { x: -c.t1.x, z: -c.t1.z }, far = Math.hypot(showing.b.x - showing.a.x, showing.b.z - showing.a.z) * 4;
+          ctx.strokeStyle = 'rgba(90,169,255,.35)'; ctx.setLineDash([3, 9]); ctx.beginPath();
+          ctx.moveTo(sx(P.x), sz(P.z)); ctx.lineTo(sx(P.x + d.x * far), sz(P.z + d.z * far)); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
+      ring(showing.a, 15, '#ff9f43', '#ffffff'); ring(showing.b, 15, sh.ok ? '#3ddc84' : '#ff5d5d', '#ffffff');
+      if (m) {
+        ring(m, 24, '#5aa9ff', '#ffffff', 4);
+        // four-way arrows: drag me anywhere
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath();
+        const cx = sx(m.x), cz = sz(m.z);
+        for (const [ux, uz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          ctx.moveTo(cx + ux * 4, cz + uz * 4); ctx.lineTo(cx + ux * 13, cz + uz * 13);
+          ctx.moveTo(cx + ux * 13, cz + uz * 13); ctx.lineTo(cx + ux * 9 - uz * 4, cz + uz * 9 + ux * 4);
+          ctx.moveTo(cx + ux * 13, cz + uz * 13); ctx.lineTo(cx + ux * 9 + uz * 4, cz + uz * 9 - ux * 4);
+        }
+        ctx.stroke();
+      }
+      if (showing !== pend) {
+        const e = showing.b, label = sh.ok ? Math.round(sh.len || 0) + ' blocks' : (sh.msg || '');
+        ctx.font = '700 17px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineWidth = 5; ctx.strokeStyle = '#0e1318';
+        ctx.strokeText(label, sx(e.x), sz(e.z) - 26); ctx.fillStyle = sh.ok ? '#d6ffe6' : '#ffd0d0'; ctx.fillText(label, sx(e.x), sz(e.z) - 26);
       }
     }
     // scale bar
@@ -1755,7 +1961,6 @@ details ul { padding-left: 18px; }
 
   // ------------------------------------------------------------------ tool actions
   // ---- drawing track: drag from where it starts to where it ends
-  let curveMode = true;
   /** what's under the finger for drawing: an existing joint, a point on straight track, or open ground */
   function resolveSpot(px, py) {
     const x = wx(px), z = wz(py), r = HIT_PX / view.k;
@@ -1775,28 +1980,95 @@ details ul { padding-left: 18px; }
     const g = view.k < 1.5 ? 4 : 1; // whole blocks; coarser when zoomed far out
     return { x: Math.round(x / g) * g, z: Math.round(z / g) * g };
   }
-  function previewTrack(a, b) {
-    if (a.bad) return { ok: false, msg: a.bad, pts: [] };
-    if (b.bad) return { ok: false, msg: b.bad, pts: [a, b] };
-    if (a.node && a.node === b.node) return { ok: false, msg: '', pts: [] };
-    const chord = { x: b.x - a.x, z: b.z - a.z };
-    let t0 = null, t1 = null;
-    if (curveMode) {
-      const d0 = C.joinDirections(S, a, false), d1 = C.joinDirections(S, b, true);
-      if (d0.length) t0 = C.bestDirection(d0, chord);
-      if (d1.length) t1 = C.bestDirection(d1, chord);
-    }
-    const r = C.curvePoints(a, b, t0, t1);
-    if (!r.pts.length) r.pts = [a, b];
-    return r;
+  /** open ground under the finger, ignoring track (used when the end landed somewhere it can't join) */
+  function resolveSpotFree(px, py) { const g = view.k < 1.5 ? 4 : 1; return { x: Math.round(wx(px) / g) * g, z: Math.round(wz(py) / g) * g }; }
+  /**
+   * a track you've laid out but not placed yet: drag its ends or the bend handle, then Place.
+   * pend = { a, b, bend } - bend null = follow the track at the ends (or straight)
+   */
+  let pend = null;            // { a, b, want, pick: {ia, ib}, straight }
+  const COMPASS = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+  const heading = (p, q) => COMPASS[((Math.round(Math.atan2(q.z - p.z, q.x - p.x) / (Math.PI / 4)) % 8) + 8) % 8];
+  function shapeOf(p) {
+    if (!p) return null;
+    if (p.a.bad || p.b.bad) return { ok: false, msg: (p.a.bad || p.b.bad), pts: [p.a, p.b], control: {} };
+    return C.bendShape(S, p.a, p.b, p.want, p.pick, p.straight);
   }
-  function commitTrack(a, b) {
-    const pv = previewTrack(a, b);
-    if (!pv.ok) { if (pv.msg) toast(pv.msg); return; }
+  function bendHandle() {
+    if (!pend) return null;
+    const sh = shapeOf(pend);
+    return sh && sh.control && sh.control.q && !pend.straight ? sh.control.q : null;
+  }
+  function setPend(p) {
+    pend = p;
+    if (pend && !pend.pick) pend.pick = {};
+    $('pendbar').hidden = !pend;
+    if (pend) updatePendbar();
+    setHint(); dirty = true;
+  }
+  function updatePendbar() {
+    const sh = shapeOf(pend), place = $('pbPlace');
+    place.disabled = !sh || !sh.ok;
+    let info = '';
+    if (sh && sh.ok) {
+      const n = sh.pts.length;
+      info = Math.round(sh.len || 0) + ' blocks · ' + (sh.straight ? 'straight' : 'radius ' + Math.round(sh.radius || 0)) +
+        ' · ' + heading(sh.pts[0], sh.pts[1]) + ' → ' + heading(sh.pts[n - 2], sh.pts[n - 1]);
+    } else if (sh) info = sh.msg || '';
+    $('pbInfo').textContent = info;
+    $('pbInfo').className = !sh || !sh.ok ? 'bad' : sh.radius && sh.radius < 12 ? 'warn' : 'good';
+    const c = sh && sh.control || {};
+    $('pbLock').textContent = pend.straight ? 'Straight line' : c.cubic ? 'Joins both tracks (S-bend)' : c.locked === 'both' ? 'Locked to both tracks' :
+      c.locked ? 'Follows the track at the ' + c.locked + ' - slide the handle' : 'Drag the blue handle to bend it';
+  }
+  function placePend() {
+    const sh = shapeOf(pend);
+    if (!sh || !sh.ok) { toast(sh ? sh.msg : 'Nothing to place'); return; }
     pushUndo();
-    const r = C.layTrack(S, a, b, curveMode);
+    const r = C.buildTrack(S, pend.a, pend.b, sh.pts);
     if (!r.ok) { undo.pop(); toast(r.msg || "Couldn't place that"); return; }
     changed();
+    // keep drawing from where this piece ended
+    const end = r.nodes[r.nodes.length - 1];
+    setPend(null);
+    toast('Placed ' + Math.round(sh.len || 0) + ' blocks - drag from the orange end to keep going');
+    lastEnd = end;
+  }
+  let lastEnd = null;
+  /** bend the other way: free ends mirror; at a switch, use the other direction along the track */
+  function flipPend() {
+    const sh = shapeOf(pend), c = sh && sh.control || {};
+    const d0 = C.joinDirections(S, pend.a, false), d1 = C.joinDirections(S, pend.b, true);
+    const idx = (dirs, t) => dirs.findIndex(w => t && Math.abs(w.x - t.x) < 1e-6 && Math.abs(w.z - t.z) < 1e-6);
+    if (c.t0 && d0.length > 1) pend.pick.ia = idx(d0, c.t0) + 1;
+    else if (c.t1 && d1.length > 1) pend.pick.ib = idx(d1, c.t1) + 1;
+    else if (!c.t0 && !c.t1) {
+      const q = c.q || { x: (pend.a.x + pend.b.x) / 2, z: (pend.a.z + pend.b.z) / 2 }, a = pend.a, b = pend.b;
+      const L = Math.hypot(b.x - a.x, b.z - a.z) || 1, ux = (b.x - a.x) / L, uz = (b.z - a.z) / L;
+      const t = (q.x - a.x) * ux + (q.z - a.z) * uz, px = a.x + ux * t, pz = a.z + uz * t;
+      if (Math.hypot(q.x - px, q.z - pz) < 0.5) { toast('Pull the blue handle sideways first'); return; }
+      pend.want = { x: 2 * px - q.x, z: 2 * pz - q.z };
+    } else { toast("This end carries on from the track it's on, so it can only bend one way - move the end instead"); return; }
+    pend.straight = false; updatePendbar(); dirty = true;
+  }
+  function straightPend() { pend.straight = !pend.straight; updatePendbar(); dirty = true; }
+  function fitPend() { pend.want = null; pend.straight = false; pend.pick = {}; updatePendbar(); dirty = true; }
+  /** which handle (if any) is under the finger: 'm' bend, 'a' start, 'b' end */
+  function pendHandleAt(px, py) {
+    if (!pend) return null;
+    const m = bendHandle(), d = (q) => Math.hypot(sx(q.x) - px, sz(q.z) - py);
+    const cands = [['b', d(pend.b)], ['a', d(pend.a)]];
+    if (m) cands.push(['m', d(m) - 6]); // the bend handle wins a close call
+    const hits = cands.filter(c => c[1] < 40).sort((x, y) => x[1] - y[1]);
+    return hits.length ? hits[0][0] : null;
+  }
+  function dragHandle(which, px, py) {
+    if (which === 'm') { pend.want = { x: wx(px), z: wz(py) }; pend.straight = false; }
+    else {
+      const spot = resolveSpot(px, py);
+      if (!spot.bad) { pend[which] = spot; pend.pick = {}; }
+    }
+    updatePendbar(); dirty = true;
   }
 
   function onTrack(px, py) {
@@ -1870,7 +2142,10 @@ details ul { padding-left: 18px; }
   cv.addEventListener('pointerdown', e => {
     cv.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
-    if (ptrs.size === 1 && tool === 'track') {
+    if (ptrs.size === 1 && tool === 'track' && pend) {
+      const which = pendHandleAt(e.offsetX, e.offsetY);
+      gesture = which ? { type: 'handle', which, x: e.offsetX, y: e.offsetY } : { type: 'tap', x: e.offsetX, y: e.offsetY, vx: view.x, vz: view.z };
+    } else if (ptrs.size === 1 && tool === 'track') {
       gesture = { type: 'draw', x: e.offsetX, y: e.offsetY, start: resolveSpot(e.offsetX, e.offsetY), end: null, moved: false };
       dirty = true;
     } else if (ptrs.size === 1) {
@@ -1898,9 +2173,10 @@ details ul { padding-left: 18px; }
     const dx = e.offsetX - gesture.x, dy = e.offsetY - gesture.y;
     if (gesture.type === 'draw') {
       if (Math.hypot(dx, dy) > 10) gesture.moved = true;
-      if (gesture.moved) { gesture.end = resolveSpot(e.offsetX, e.offsetY); gesture.preview = previewTrack(gesture.start, gesture.end); dirty = true; }
+      if (gesture.moved) { gesture.end = resolveSpot(e.offsetX, e.offsetY); dirty = true; }
       return;
     }
+    if (gesture.type === 'handle') { dragHandle(gesture.which, e.offsetX, e.offsetY); return; }
     if (gesture.type === 'tap' && Math.hypot(dx, dy) > 8) {
       if (gesture.dragNode) {
         pushUndo();
@@ -1919,8 +2195,10 @@ details ul { padding-left: 18px; }
     ptrs.delete(e.pointerId);
     if (gesture && gesture.type === 'tap' && ptrs.size === 0) onTap(e.offsetX, e.offsetY);
     if (gesture && gesture.type === 'draw' && ptrs.size === 0) {
-      if (gesture.moved && gesture.end) commitTrack(gesture.start, gesture.end);
-      else toast('Drag from where the track starts to where it ends');
+      if (gesture.moved && gesture.end) {
+        if (gesture.start.bad) toast(gesture.start.bad);
+        else setPend({ a: gesture.start, b: gesture.end.bad ? resolveSpotFree(e.offsetX, e.offsetY) : gesture.end, want: null, pick: {} });
+      } else toast('Drag from where the track starts to where it ends');
       dirty = true;
     }
     if (gesture && gesture.type === 'node' && ptrs.size === 0) { changed(); if (gesture.warned) undo.pop(); }
@@ -1937,6 +2215,7 @@ details ul { padding-left: 18px; }
   }, { passive: false });
 
   function onTap(px, py) {
+    if (tool === 'track') return; // taps while laying track do nothing (drag pans)
     if (tool === 'station') return tapStation(px, py);
     if (tool === 'signal') return tapSignal(px, py);
     if (tool === 'train') return tapTrain(px, py);
@@ -2262,7 +2541,7 @@ details ul { padding-left: 18px; }
           'Nothing close enough to couple to (get within 1.5 blocks) / Too fast to couple / Can\'t couple: those cars face the other way round - the mod\'s coupling messages.',
           'Waiting at signal / Stopped behind <train> - held by a signal, or by the safety net.'].map(t => el('li', {}, t)))));
       b.append(el('details', {}, el('summary', {}, 'Controls'), el('ul', {},
-        ['Track: drag from where it starts to where it ends. Start on a track end and it curves smoothly out of it; end on track and it joins smoothly. Start in the middle of a straight to make a switch. Curve / Straight at the bottom left.',
+        ['Track: drag from where it starts to where it ends, then drag the blue handle to bend it whichever way (headings snap to N/NE/E... when close). Starting on a track end, the curve carries straight on from it and the handle slides along that line. Start in the middle of a straight to make a switch; Flip picks which way the switch faces. ✓ Place when the info line is green.',
           'Pinch to zoom, drag to pan. In Select you can drag a joint to move it.',
           'Tap a train to add cars, drive it, uncouple (✂) or give it a schedule.',
           'Play runs all scheduled trains. ⟲ puts everything back to how it was before you pressed Play.'].map(t => el('li', {}, t)))));
@@ -2369,6 +2648,7 @@ details ul { padding-left: 18px; }
   $('reset').onclick = resetSim;
   $('speed').onclick = () => { speed = speed >= 8 ? 1 : speed * 2; updateHeader(); };
   $('undo').onclick = () => {
+    if (pend) { setPend(null); return; }
     if (!undo.length) { toast('Nothing to undo'); return; }
     try { S = C.deserialize(undo.pop()); } catch (e) { return; }
     draft = null; if (sel && !exists(sel)) closeSheet(); else refresh(); changed(); setHint();
@@ -2380,13 +2660,15 @@ details ul { padding-left: 18px; }
   const zoomBy = f => { view.k = Math.max(0.03, Math.min(60, view.k * f)); dirty = true; };
   $('zin').onclick = () => zoomBy(1.5);
   $('zout').onclick = () => zoomBy(1 / 1.5);
-  for (const b of document.querySelectorAll('#trackbar [data-mode]')) b.onclick = () => {
-    curveMode = b.dataset.mode === 'curve';
-    for (const o of document.querySelectorAll('#trackbar [data-mode]')) o.classList.toggle('on', o === b);
-  };
+  $('pbPlace').onclick = placePend;
+  $('pbFlip').onclick = flipPend;
+  $('pbStraight').onclick = straightPend;
+  $('pbFit').onclick = fitPend;
+  $('pbCancel').onclick = () => setPend(null);
+
   function setTool(t) {
     tool = t; draft = null;
-    $('trackbar').hidden = t !== 'track';
+    if (pend) setPend(null);
     for (const b of document.querySelectorAll('#tools button')) b.classList.toggle('on', b.dataset.tool === t);
     setHint(); dirty = true;
   }
@@ -2430,7 +2712,7 @@ details ul { padding-left: 18px; }
   requestAnimationFrame(frame);
   // a link shared into the app before the page was ready
   try { const t = window.AndroidBridge && window.AndroidBridge.takeSharedText && window.AndroidBridge.takeSharedText(); if (t) window.onSharedText(t); } catch (e) { /* ignore */ }
-  window.RailPlanner = { saveNow: () => save(true), back: () => { if (sheet.classList.contains('open')) { closeSheet(); return true; } if (draft) { draft = null; setHint(); dirty = true; return true; } return false; }, get state() { return S; }, togglePlay, fetchMap, openMenu, select, view };
+  window.RailPlanner = { saveNow: () => save(true), back: () => { if (pend) { setPend(null); return true; } if (sheet.classList.contains('open')) { closeSheet(); return true; } if (draft) { draft = null; setHint(); dirty = true; return true; } return false; }, get state() { return S; }, togglePlay, fetchMap, openMenu, select, view };
 })();
 
 </script>
