@@ -37,6 +37,11 @@ public final class DisplaySourceScreens {
         AllDisplaySourceRenders.register(DisplaySources.PLATFORM_DISPLAY, () -> (DisplaySourceRender) (source, context, builder, isFirstLine) -> {
             if (isFirstLine) filterBox(builder);
         });
+        // the sensor readouts take their settings from the sensor block itself, so no rows here
+        AllDisplaySourceRenders.register(DisplaySources.CARGO_READOUT,
+            () -> (DisplaySourceRender) (source, context, builder, isFirstLine) -> {});
+        AllDisplaySourceRenders.register(DisplaySources.CAR_COUNT,
+            () -> (DisplaySourceRender) (source, context, builder, isFirstLine) -> {});
     }
 
     private static void filterBox(com.zurrtum.create.client.foundation.gui.ModularGuiLineBuilder builder) {

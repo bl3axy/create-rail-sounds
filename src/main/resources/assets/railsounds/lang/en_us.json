@@ -41,5 +41,7 @@
   "block.railsounds.switch_machine": "Switch Machine",
   "block.railsounds.route_sensor": "Route Sensor",
   "item.railsounds.switch_linker": "Switch Linker",
-  "key.railsounds.engine": "Start / shut down engine"
+  "key.railsounds.engine": "Start / shut down engine",
+  "railsounds.display_source.cargo_sensor": "Cargo Sensor reading",
+  "railsounds.display_source.car_counter": "Car Counter reading"
 }
