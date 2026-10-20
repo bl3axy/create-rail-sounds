@@ -73,11 +73,11 @@ public final class RailBlocks {
         decor("relay_case", metal(MapColor.COLOR_LIGHT_GRAY), box(2, 0, 3, 14, 15, 13));
         decor("battery_box", metal(MapColor.COLOR_LIGHT_GRAY), box(1, 0, 4, 15, 7, 12));
         decor("phone_box", metal(MapColor.COLOR_YELLOW), box(7, 0, 7, 9, 8, 9), box(4, 8, 6, 12, 16, 10));
-        decor("buffer_stop", metal(MapColor.COLOR_RED), box(1, 0, 4, 15, 12, 14));
+        decor("buffer_stop", metal(MapColor.COLOR_RED), box(1, 0, 1, 15, 12, 14));
         decor("wheel_stop", metal(MapColor.COLOR_YELLOW), box(2, 0, 5, 14, 4, 11));
         decor("derail", metal(MapColor.COLOR_YELLOW), box(3, 0, 6, 13, 3, 10));
         decor("tie_pile", wood(MapColor.COLOR_BROWN), box(0, 0, 1, 16, 9, 15));
-        decor("rail_rack", metal(MapColor.METAL), box(0, 0, 2, 16, 7, 14));
+        decor("rail_rack", metal(MapColor.METAL), box(0, 0, 2, 16, 5, 14));
         decor("spike_keg", wood(MapColor.WOOD), box(4, 0, 4, 12, 11, 12));
         decor("wheelset", metal(MapColor.METAL), box(1, 0, 3, 3, 10, 13), box(13, 0, 3, 15, 10, 13),
             box(3, 4, 7, 13, 6, 9));

@@ -25,6 +25,13 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git add -A && git commit -qm "Log ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" buildlog
+      - name: Boot a test server (catches registry / data errors)
+        run: |
+          mkdir -p run && echo "eula=true" > run/eula.txt
+          printf "online-mode=false\nlevel-type=minecraft\\:flat\n" > run/server.properties
+          (timeout 420 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true)
+          cp run/logs/latest.log server-log.txt 2>/dev/null || cp server-run.txt server-log.txt
+          grep -E "Done \(|ERROR|Exception|railsounds" server-log.txt | head -80 || true
       - name: Zip resource pack
         run: cd server-resourcepack && zip -qr ../create-rail-sounds-resourcepack.zip . -x README.txt
       - uses: actions/upload-artifact@v4
@@ -36,6 +43,7 @@ jobs:
       - name: Publish to dist branch
         run: |
           mkdir dist && cp build/libs/*.jar create-rail-sounds-resourcepack.zip dist/
+          cp server-log.txt dist/ 2>/dev/null || true
           rm -f dist/*-sources.jar
           cd dist
           git init -q -b dist
