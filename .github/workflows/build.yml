@@ -78,6 +78,17 @@ jobs:
           cat run/world/railsounds_towers.json 2>/dev/null || echo "(no towers file!)"
           grep -q "11111111-2222-3333-4444-555555555555" run/world/railsounds_towers.json || { echo "the link file did not survive the restart"; exit 1; }
           grep -q "Coal" run/world/railsounds_towers.json || { echo "the link file lost its route-sensor filter on reload"; exit 1; }
+          # the sensor display sources must bind on EVERY boot - init order between our mod and
+          # Create's display-source setup is not stable, and binding from one side silently
+          # failed on the second boot before this was made order-independent.
+          BOUND=$(grep -c "sensor display sources bound" server-log.txt || true)
+          BOOTS=$(grep -c "railroad blocks registered" server-log.txt || true)
+          echo "sensor display sources bound on $BOUND of $BOOTS boots"
+          if [ "$BOUND" != "$BOOTS" ]; then
+            echo "display sources failed to bind on at least one boot"
+            grep -n "display sources" server-log.txt || true
+            exit 1
+          fi
           echo "restart checks: blocks survived, crossing + link files persisted, ticks still running"
           if [ "$PRESENT" != "$EXPECTED" ]; then
             echo "some blocks vanished or changed state while ticking"

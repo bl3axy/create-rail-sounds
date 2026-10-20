@@ -11,10 +11,10 @@ import net.minecraft.world.level.block.Block;
 /**
  * Our display link sources.
  *
- * Registration happens in two steps on purpose. We depend on Create, so Create's init - and
- * the mixin that calls {@link #register()} - runs before ours. At that moment our own blocks
- * don't exist yet, so anything pointing at them has to wait for {@link #bindOwnBlocks(Block,
- * Block)}, which RailBlocks calls once it has registered them.
+ * Binding the two sensor sources needs both our sources AND our blocks to exist, and the
+ * order those happen in is NOT stable - a test server bound them fine creating a fresh world
+ * and came up the other way round loading that same world again. So both sides call
+ * {@link #tryBindSensors()} and whichever runs second does the work, once.
  */
 public final class DisplaySources {
     private DisplaySources() {}
@@ -24,7 +24,10 @@ public final class DisplaySources {
     public static SensorDisplaySource CARGO_READOUT;
     public static SensorDisplaySource CAR_COUNT;
 
-    /** step 1, during Create's init: make the sources and bind the ones that sit on a Station */
+    private static Block cargoSensorBlock, carCounterBlock;
+    private static boolean sensorsBound;
+
+    /** Create's side: make the sources and bind the ones that sit on a Station */
     public static void register() {
         DEPARTURE_BOARD = Registry.register(CreateRegistries.DISPLAY_SOURCE,
             Identifier.fromNamespaceAndPath(RailSounds.MOD_ID, "departure_board"), new DepartureBoardSource());
@@ -37,16 +40,24 @@ public final class DisplaySources {
 
         AllDisplaySources.register(DEPARTURE_BOARD, AllBlocks.TRACK_STATION);
         AllDisplaySources.register(PLATFORM_DISPLAY, AllBlocks.TRACK_STATION);
+        tryBindSensors();
     }
 
-    /** step 2, once our blocks exist: point a Display Link at a sensor and read it */
-    public static void bindOwnBlocks(Block cargoSensor, Block carCounter) {
-        if (CARGO_READOUT == null || CAR_COUNT == null) {
-            // register() never ran - Create's init changed shape. The sources simply won't be offered.
-            RailSounds.LOG.warn("[railsounds] display sources were not set up; sensor readouts unavailable");
-            return;
-        }
-        AllDisplaySources.register(CARGO_READOUT, cargoSensor);
-        AllDisplaySources.register(CAR_COUNT, carCounter);
+    /** our side: hand over the blocks as soon as they exist */
+    public static void ownBlocksReady(Block cargoSensor, Block carCounter) {
+        cargoSensorBlock = cargoSensor;
+        carCounterBlock = carCounter;
+        tryBindSensors();
+    }
+
+    /** runs twice, binds once - on whichever call finds both halves present */
+    private static synchronized void tryBindSensors() {
+        if (sensorsBound) return;
+        if (CARGO_READOUT == null || CAR_COUNT == null) return;
+        if (cargoSensorBlock == null || carCounterBlock == null) return;
+        AllDisplaySources.register(CARGO_READOUT, cargoSensorBlock);
+        AllDisplaySources.register(CAR_COUNT, carCounterBlock);
+        sensorsBound = true;
+        RailSounds.LOG.info("[railsounds] sensor display sources bound");
     }
 }

@@ -86,8 +86,8 @@ public final class RailBlocks {
         decor("telegraph_pole", wood(MapColor.WOOD), box(6.5, 0, 6.5, 9.5, 16, 9.5), box(0, 12, 7, 16, 14, 9));
 
         MovementBehaviour.REGISTRY.register(LOADING_HATCH, new LoadingHatchMovement());
-        // Create's init (and our display-source mixin) already ran, so bind these now
-        com.railsounds.display.DisplaySources.bindOwnBlocks(CARGO_SENSOR, CAR_COUNTER);
+        // may run before or after Create's display-source init; whichever is second binds them
+        com.railsounds.display.DisplaySources.ownBlocksReady(CARGO_SENSOR, CAR_COUNTER);
         UseBlockCallback.EVENT.register(RailItems::onUseBlock);
 
         tab("redstone_blocks", WORKING);
