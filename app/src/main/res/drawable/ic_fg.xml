@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- two rails curving into a junction, with a signal light -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#3B3128" android:strokeWidth="5" android:pathData="M34,40 L48,40 M34,50 L48,50 M34,60 L48,60 M34,70 L48,70" />
+    <path android:strokeColor="#9AA7B3" android:strokeWidth="3.5" android:fillColor="#00000000" android:pathData="M37,30 L37,80 M45,30 L45,80" />
+    <path android:strokeColor="#F2B84B" android:strokeWidth="3.5" android:fillColor="#00000000" android:pathData="M41,62 C41,48 56,40 74,38" />
+    <path android:fillColor="#0B0F13" android:strokeColor="#56636F" android:strokeWidth="2" android:pathData="M66,52 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+    <path android:fillColor="#3DDC84" android:pathData="M66,52 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>

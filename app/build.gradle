@@ -1,0 +1,24 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.bl3axy.railplanner'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.bl3axy.railplanner'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    signingConfigs {
+        release {
+            storeFile file('app-release.jks')
+            storePassword 'railplanner'
+            keyAlias 'railplanner'
+            keyPassword 'railplanner'
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}

@@ -1,0 +1,2143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e1318">
+<title>Rail Planner</title>
+<style>
+:root {
+  --bg: #0e1318; --panel: #161d24; --panel2: #1d262f; --line: #2a3540; --text: #e6edf3; --dim: #8b98a5;
+  --accent: #f2b84b; --accent2: #ffcf70; --green: #3ddc84; --red: #ff5d5d; --yellow: #ffd23f; --blue: #5aa9ff;
+  --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+  font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+button, input, select { font: inherit; color: inherit; }
+button { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 40px; cursor: pointer; }
+button:active { filter: brightness(1.25); }
+button.primary { background: var(--accent); color: #1a1405; border-color: var(--accent); font-weight: 650; }
+button.danger { color: var(--red); }
+button.ghost { background: transparent; border-color: transparent; }
+input[type=text], input[type=number], input[type=url], select, textarea {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; min-height: 40px; width: 100%; color: var(--text); }
+textarea { font: 12px/1.4 ui-monospace, monospace; min-height: 140px; resize: vertical; }
+input[type=number] { width: 84px; }
+label { color: var(--dim); font-size: 13px; }
+
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+header { display: flex; align-items: center; gap: 6px; padding: calc(6px + var(--safe-t)) 8px 6px; background: var(--panel); border-bottom: 1px solid var(--line); z-index: 5; }
+header h1 { font-size: 16px; margin: 0 4px 0 2px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
+header h1 span { color: var(--accent); }
+header .sp { flex: 1; }
+header button { min-height: 38px; padding: 6px 9px; }
+@media (max-width: 460px) { header h1 { display: none; } header { gap: 5px; } }
+#play { min-width: 76px; font-weight: 700; white-space: nowrap; }
+#play.on { background: var(--green); color: #06210f; border-color: var(--green); }
+#clock { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 12px; min-width: 40px; text-align: right; }
+
+#stage { position: relative; flex: 1; overflow: hidden; touch-action: none; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); max-width: calc(100% - 24px);
+  background: rgba(22,29,36,.94); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 13px;
+  display: flex; gap: 10px; align-items: center; pointer-events: auto; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+#hint:empty { display: none; }
+#hint.fade { opacity: 0; pointer-events: none; transition: opacity .6s; }
+#hint button { min-height: 28px; padding: 3px 10px; border-radius: 999px; font-size: 13px; }
+#fab { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+#fab button { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: rgba(29,38,47,.94); font-size: 18px; }
+#toast { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%) translateY(20px); opacity: 0; transition: .2s;
+  background: #24303b; border: 1px solid var(--line); border-radius: 12px; padding: 9px 14px; font-size: 14px; max-width: calc(100% - 90px); pointer-events: none; text-align: center; }
+#toast.show { opacity: 1; transform: translateX(-50%); }
+
+nav#tools { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--panel); border-top: 1px solid var(--line);
+  padding: 4px 4px calc(4px + var(--safe-b)); z-index: 5; }
+nav#tools button { background: transparent; border: none; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 11px; color: var(--dim); padding: 6px 0; min-height: 52px; }
+nav#tools button svg { width: 24px; height: 24px; }
+nav#tools button.on { color: var(--accent); background: rgba(242,184,75,.10); }
+
+#sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 58%; background: var(--panel); border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0; z-index: 20; transform: translateY(105%); transition: transform .22s ease; display: flex; flex-direction: column;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.45); padding-bottom: var(--safe-b); }
+#sheet.open { transform: none; }
+#sheet .top { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; }
+#sheet .top h2 { margin: 0; font-size: 17px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sheet .grab { width: 38px; height: 4px; border-radius: 4px; background: var(--line); margin: 7px auto 0; }
+#sheetBody { overflow-y: auto; padding: 4px 12px 16px; -webkit-overflow-scrolling: touch; }
+.sec { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--dim); font-weight: 650; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+.row > .grow { flex: 1; min-width: 120px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex-wrap: nowrap; }
+.seg button { border: none; border-radius: 0; flex: 1; background: transparent; padding: 8px 6px; font-size: 13px; min-height: 38px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--accent); color: #1a1405; font-weight: 650; }
+.note { color: var(--dim); font-size: 13px; margin: 4px 0; }
+.status { padding: 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; margin: 6px 0; }
+.strip { display: flex; align-items: center; overflow-x: auto; padding: 6px 2px; gap: 0; }
+.veh { display: flex; flex-direction: column; align-items: center; min-width: 64px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); position: relative; }
+.veh .t { font-size: 12px; color: var(--dim); }
+.veh .ic { font-size: 20px; line-height: 1; }
+.veh .x { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; min-height: 0; padding: 0; border-radius: 50%; font-size: 12px; background: var(--panel2); }
+.cut { min-height: 0; padding: 4px 3px; border: none; background: transparent; color: var(--dim); font-size: 15px; }
+.frontTag { font-size: 11px; color: var(--accent); margin-right: 6px; writing-mode: vertical-rl; transform: rotate(180deg); }
+.card { border: 1px solid var(--line); border-radius: 12px; padding: 8px; margin: 8px 0; background: var(--panel2); }
+.card .row { margin: 4px 0; flex-wrap: nowrap; }
+.card select { width: auto; min-width: 0; }
+.card .grow { min-width: 0; }
+.card .grow select { width: 100%; }
+.card .row.wrap { flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); font-size: 13px; }
+.chip input[type=number] { width: 64px; min-height: 30px; padding: 3px 6px; }
+.chip button { min-height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; }
+.list .item { display: flex; align-items: center; gap: 10px; padding: 10px 6px; border-bottom: 1px solid var(--line); }
+.list .item:last-child { border-bottom: none; }
+.sw { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+.item .main { flex: 1; min-width: 0; }
+.item .sub { color: var(--dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log div { padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.log span { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: 8px; }
+.check { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 14px; }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+details { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+details summary { cursor: pointer; font-weight: 600; }
+details p, details li { color: var(--dim); font-size: 13.5px; }
+details ul { padding-left: 18px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Rail<span>Planner</span></h1>
+    <button id="play" title="Play / pause">▶ Play</button>
+    <button id="speed" title="Simulation speed">1×</button>
+    <button id="reset" title="Back to before you pressed Play" hidden>⟲</button>
+    <span id="clock"></span>
+    <span class="sp"></span>
+    <button id="undo" title="Undo">↶</button>
+    <button id="trainsBtn" title="Trains">🚆</button>
+    <button id="menuBtn" title="Menu">☰</button>
+  </header>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hint"></div>
+    <div id="fab">
+      <button id="fit" title="Fit to screen">⤢</button>
+      <button id="logBtn" title="Event log">≡</button>
+    </div>
+    <div id="toast"></div>
+  </div>
+  <nav id="tools">
+    <button data-tool="select" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 3l14 8-6 2-3 6z"/></svg>Select</button>
+    <button data-tool="track"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3c0 6 8 12 8 18M4 6h7M5 10h8M8 14h8M11 18h7"/></svg>Track</button>
+    <button data-tool="station"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="6" width="16" height="9" rx="2"/><path d="M8 19l2-4M16 19l-2-4M9 10h6"/></svg>Station</button>
+    <button data-tool="signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2.5" width="8" height="13" rx="3"/><circle cx="12" cy="6.5" r="1.6"/><circle cx="12" cy="11.5" r="1.6"/><path d="M12 15.5V21M8 21h8"/></svg>Signal</button>
+    <button data-tool="train"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 21l2-4M16 21l-2-4"/><circle cx="9" cy="13.5" r=".8"/><circle cx="15" cy="13.5" r=".8"/></svg>Train</button>
+    <button data-tool="erase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 16l9-9 6 6-6 6H8z M10 10l6 6M13 19h7"/></svg>Erase</button>
+  </nav>
+</div>
+<div id="sheet">
+  <div class="grab"></div>
+  <div class="top"><h2 id="sheetTitle"></h2><button id="sheetClose" class="ghost">✕</button></div>
+  <div id="sheetBody"></div>
+</div>
+<script>
+/*
+ * Rail Planner core: track graph, trains (consists), routing, signals, coupling and schedules.
+ * Mirrors the rules of Create (Fly) trains + Steam 'n' Rails + Create Rail Sounds:
+ *  - a train's FRONT is where it was built facing; cars inside a train all face that way
+ *  - couplings join one train's BACK to another's FRONT (front-to-front / back-to-back can't couple)
+ *  - single-cab locos only drive forwards; double-cab (controls both ends) drive either way
+ *  - "Back into Station" (or a station marked back-in / reverse) lets a single-cab train reverse
+ *    for that whole trip; Create can't change direction part-way through a trip
+ *  - a station only accepts trains travelling the way its arrow points; the leading end stops on it
+ *  - signals split the track into blocks; a train waits at a signal if the block beyond is
+ *    occupied or claimed; chain signals also need the block after that to be free
+ *  - collision safety net: trains brake for anything on the track they're about to use
+ * Units: blocks and seconds. No DOM in here so it can be tested in node.
+ */
+(function (root) {
+  'use strict';
+
+  const LEN = { loco1: 6, loco2: 7, car: 5 };       // vehicle lengths in blocks
+  const GAP = 1;                                    // space between coupled vehicles
+  const COUPLE_REACH = 1.85;                        // contactGap + couplerReach from the mod
+  const HIT = 1.0;                                  // body point this close to our path = in the way
+  const STOP_SHORT = 0.4;                           // stop this far short of an obstacle
+  const SMOOTH = 0.5;
+  const ARRIVE_SLACK = 8;                           // stopped against parked cars this close to the marker = arrived                               // cos(60deg): sharpest turn a train can take at a node
+
+  function newState() {
+    return {
+      nodes: {}, edges: {}, stations: {}, signals: {}, consists: {},
+      nextId: 1,
+      settings: { maxSpeed: 28, accel: 3, decel: 3, autoCouple: true }, // Create defaults: top speed 28 b/s, acceleration 3 b/s2
+      log: [], time: 0,
+    };
+  }
+  const nid = (s, p) => p + (s.nextId++);
+
+  // ---------------------------------------------------------------- graph
+  function addNode(s, x, z) { const k = nid(s, 'n'); s.nodes[k] = { x, z }; return k; }
+  function edgeLen(s, e) {
+    const E = s.edges[e]; if (!E) return 0;
+    const A = s.nodes[E.a], B = s.nodes[E.b];
+    return Math.hypot(B.x - A.x, B.z - A.z);
+  }
+  function findEdge(s, a, b) {
+    for (const k in s.edges) { const E = s.edges[k]; if ((E.a === a && E.b === b) || (E.a === b && E.b === a)) return k; }
+    return null;
+  }
+  function addEdge(s, a, b) {
+    if (a === b || !s.nodes[a] || !s.nodes[b]) return null;
+    const ex = findEdge(s, a, b); if (ex) return ex;
+    const k = nid(s, 'e'); s.edges[k] = { a, b }; return k;
+  }
+  function edgesAt(s, n) {
+    const out = [];
+    for (const k in s.edges) { const E = s.edges[k]; if (E.a === n || E.b === n) out.push(k); }
+    return out;
+  }
+  function pointAt(s, e, d) {
+    const E = s.edges[e], A = s.nodes[E.a], B = s.nodes[E.b];
+    const L = Math.hypot(B.x - A.x, B.z - A.z) || 1;
+    const t = Math.max(0, Math.min(1, d / L));
+    return { x: A.x + (B.x - A.x) * t, z: A.z + (B.z - A.z) * t };
+  }
+  function dirVec(s, e, dir) {
+    const E = s.edges[e], A = s.nodes[E.a], B = s.nodes[E.b];
+    const L = Math.hypot(B.x - A.x, B.z - A.z) || 1;
+    return { x: (B.x - A.x) / L * dir, z: (B.z - A.z) / L * dir };
+  }
+  const endNode = (s, e, dir) => (dir > 0 ? s.edges[e].b : s.edges[e].a);
+  const startNode = (s, e, dir) => (dir > 0 ? s.edges[e].a : s.edges[e].b);
+
+  /** where a train on directed edge (e,dir) can go at the far node: smooth turns only, straightest first */
+  function nextOptions(s, e, dir) {
+    const n = endNode(s, e, dir), v = dirVec(s, e, dir), out = [];
+    for (const f of edgesAt(s, n)) {
+      if (f === e) continue;
+      const fd = s.edges[f].a === n ? 1 : -1;
+      const w = dirVec(s, f, fd), dot = v.x * w.x + v.z * w.z;
+      if (dot > SMOOTH) out.push({ e: f, dir: fd, dot });
+    }
+    out.sort((p, q) => q.dot - p.dot);
+    return out;
+  }
+
+  function removeNode(s, n) {
+    for (const e of edgesAt(s, n)) removeEdge(s, e);
+    delete s.nodes[n];
+  }
+  function removeEdge(s, e) {
+    for (const k in s.stations) if (s.stations[k].e === e) delete s.stations[k];
+    for (const k in s.signals) if (s.signals[k].e === e) delete s.signals[k];
+    for (const k in s.consists) if (s.consists[k].path.some(p => p.e === e)) delete s.consists[k];
+    delete s.edges[e];
+  }
+
+  /** cut edge e at distance d with a new node; stations, signals and trains on it move over */
+  function splitEdge(s, e, d) {
+    const E = s.edges[e]; if (!E) return null;
+    const L = edgeLen(s, e);
+    if (d < 0.5 || d > L - 0.5) return d < L / 2 ? E.a : E.b;
+    const P = pointAt(s, e, d), n = addNode(s, Math.round(P.x * 100) / 100, Math.round(P.z * 100) / 100);
+    const e1 = nid(s, 'e'), e2 = nid(s, 'e');
+    s.edges[e1] = { a: E.a, b: n }; s.edges[e2] = { a: n, b: E.b };
+    const L1 = edgeLen(s, e1), L2 = edgeLen(s, e2), k1 = L1 / d, k2 = L2 / (L - d);
+    const map = x => (x <= d ? { e: e1, d: x * k1 } : { e: e2, d: (x - d) * k2 });
+    for (const k in s.stations) { const t = s.stations[k]; if (t.e === e) { const m = map(t.d); t.e = m.e; t.d = m.d; } }
+    for (const k in s.signals) { const t = s.signals[k]; if (t.e === e) { const m = map(t.d); t.e = m.e; t.d = m.d; } }
+    for (const k in s.consists) {
+      const c = s.consists[k], out = [];
+      for (const sg of c.path) {
+        if (sg.e !== e) { out.push(sg); continue; }
+        const lo = Math.min(sg.d0, sg.d1), hi = Math.max(sg.d0, sg.d1);
+        const parts = [];
+        if (lo < d) parts.push({ e: e1, lo: lo * k1, hi: Math.min(hi, d) * k1 });
+        if (hi > d || (hi === lo && lo >= d)) parts.push({ e: e2, lo: (Math.max(lo, d) - d) * k2, hi: (hi - d) * k2 });
+        if (sg.dir < 0) parts.reverse();
+        for (const q of parts) out.push(sg.dir > 0 ? { e: q.e, dir: 1, d0: q.lo, d1: q.hi } : { e: q.e, dir: -1, d0: q.hi, d1: q.lo });
+      }
+      c.path = out;
+      if (c.run && c.run.route) {
+        const r = [];
+        for (const st of c.run.route) {
+          if (st.e !== e) r.push(st);
+          else if (st.dir > 0) r.push({ e: e1, dir: 1 }, { e: e2, dir: 1 }); else r.push({ e: e2, dir: -1 }, { e: e1, dir: -1 });
+        }
+        c.run.route = r;
+      }
+    }
+    delete s.edges[e];
+    return n;
+  }
+  /** move a node (only when no train sits on its track); stations/signals keep their place proportionally */
+  function moveNode(s, n, x, z) {
+    const es = edgesAt(s, n);
+    for (const k in s.consists) if (s.consists[k].path.some(p => es.includes(p.e))) return false;
+    const before = {}; for (const e of es) before[e] = edgeLen(s, e);
+    s.nodes[n].x = x; s.nodes[n].z = z;
+    for (const e of es) {
+      const k = before[e] ? edgeLen(s, e) / before[e] : 1;
+      for (const id in s.stations) if (s.stations[id].e === e) s.stations[id].d *= k;
+      for (const id in s.signals) if (s.signals[id].e === e) s.signals[id].d *= k;
+    }
+    return true;
+  }
+  /** nearest point on any track to (x,z) */
+  function nearestTrack(s, x, z) {
+    let best = null;
+    for (const e in s.edges) {
+      const E = s.edges[e], A = s.nodes[E.a], B = s.nodes[E.b];
+      const vx = B.x - A.x, vz = B.z - A.z, L2 = vx * vx + vz * vz || 1;
+      const t = Math.max(0, Math.min(1, ((x - A.x) * vx + (z - A.z) * vz) / L2));
+      const px = A.x + vx * t, pz = A.z + vz * t, dist = Math.hypot(x - px, z - pz);
+      if (!best || dist < best.dist) best = { e, d: t * Math.sqrt(L2), dist, x: px, z: pz };
+    }
+    return best;
+  }
+
+  // ---------------------------------------------------------------- stations & signals
+  function addStation(s, e, d, name) {
+    const k = nid(s, 's');
+    s.stations[k] = { e, d, dir: 1, name: name || ('Station ' + k.slice(1)), approach: 'forward', onArrive: 'none', count: 0 };
+    return k;
+  }
+  function stationByName(s, name) {
+    const want = (name || '').trim().toLowerCase();
+    for (const k in s.stations) if (s.stations[k].name.trim().toLowerCase() === want) return k;
+    return null;
+  }
+  function addSignal(s, e, d) {
+    const k = nid(s, 'g');
+    // heads: 'both' | 'fwd' (trains going a->b) | 'back' (b->a); type / typeB: 'normal' | 'chain' for each side
+    s.signals[k] = { e, d, heads: 'both', type: 'normal', typeB: 'normal' };
+    return k;
+  }
+  /** the kind of signal a train travelling `dir` sees here */
+  const sigType = (g, dir) => (dir > 0 ? g.type : (g.typeB || g.type)) || 'normal';
+  /** does this signal show a light to trains travelling (e, dir)? */
+  function signalFaces(sig, dir) {
+    return sig.heads === 'both' || (sig.heads === 'fwd' && dir > 0) || (sig.heads === 'back' && dir < 0);
+  }
+
+  // signal blocks: the track cut at every signal. Each piece of edge between cuts is an "interval".
+  function computeBlocks(s) {
+    const parent = {};
+    const find = x => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+    const union = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[a] = b; };
+    const cuts = {};                      // edge -> sorted signal distances
+    for (const k in s.signals) { const g = s.signals[k]; if (s.edges[g.e]) (cuts[g.e] = cuts[g.e] || []).push(g.d); }
+    const intervals = {};                 // edge -> [{d0,d1,id}]
+    for (const e in s.edges) {
+      const L = edgeLen(s, e), c = (cuts[e] || []).slice().sort((x, y) => x - y);
+      const pts = [0, ...c.filter(d => d > 0 && d < L), L], list = [];
+      for (let i = 0; i < pts.length - 1; i++) { const id = e + '#' + i; parent[id] = id; list.push({ d0: pts[i], d1: pts[i + 1], id }); }
+      intervals[e] = list;
+    }
+    for (const n in s.nodes) {
+      const ends = [];
+      for (const e of edgesAt(s, n)) {
+        const list = intervals[e]; if (!list || !list.length) continue;
+        ends.push(s.edges[e].a === n ? list[0].id : list[list.length - 1].id);
+      }
+      for (let i = 1; i < ends.length; i++) union(ends[0], ends[i]);
+    }
+    const blockOf = {};
+    for (const e in intervals) for (const iv of intervals[e]) iv.block = find(iv.id);
+    return { intervals, blockOf };
+  }
+  function blockAt(blocks, e, d) {
+    const list = blocks.intervals[e]; if (!list) return null;
+    for (const iv of list) if (d >= iv.d0 - 1e-6 && d <= iv.d1 + 1e-6) return iv.block;
+    return list[list.length - 1].block;
+  }
+
+  // ---------------------------------------------------------------- consists (trains)
+  const vlen = v => (v.len > 0 ? v.len : LEN[v.type] || 5);
+  function vehiclesLength(vs) {
+    let L = 0; vs.forEach((v, i) => { L += vlen(v); if (i) L += GAP; }); return L;
+  }
+  const hasLoco = c => c.vehicles.some(v => v.type !== 'car');
+  const hasDoubleCab = c => c.vehicles.some(v => v.type === 'loco2');
+  const segLen = sg => Math.abs(sg.d1 - sg.d0);
+  const pathLength = p => p.reduce((a, sg) => a + segLen(sg), 0);
+
+  /** default chooser: straightest way on */
+  const straightest = (e, dir, opts) => opts[0] || null;
+
+  /** grow the head forwards; returns how far it actually got (end of track stops it) */
+  function extendHead(s, path, amount, chooser) {
+    let rem = amount;
+    while (rem > 1e-9) {
+      const h = path[path.length - 1], L = edgeLen(s, h.e);
+      const room = h.dir > 0 ? L - h.d1 : h.d1;
+      const st = Math.min(rem, room);
+      h.d1 += st * h.dir; rem -= st;
+      if (rem <= 1e-9) break;
+      const pick = chooser(h.e, h.dir, nextOptions(s, h.e, h.dir));
+      if (!pick) return amount - rem;
+      path.push({ e: pick.e, dir: pick.dir, d0: pick.dir > 0 ? 0 : edgeLen(s, pick.e), d1: pick.dir > 0 ? 0 : edgeLen(s, pick.e) });
+    }
+    return amount;
+  }
+  /** grow the tail backwards (chooser sees the reversed direction) */
+  function extendTail(s, path, amount, chooser) {
+    let rem = amount;
+    while (rem > 1e-9) {
+      const t = path[0], L = edgeLen(s, t.e);
+      const room = t.dir > 0 ? t.d0 : L - t.d0;
+      const st = Math.min(rem, room);
+      t.d0 -= st * t.dir; rem -= st;
+      if (rem <= 1e-9) break;
+      const pick = chooser(t.e, -t.dir, nextOptions(s, t.e, -t.dir));
+      if (!pick) return amount - rem;
+      const fwd = -pick.dir, Lf = edgeLen(s, pick.e), at = fwd > 0 ? Lf : 0;
+      path.unshift({ e: pick.e, dir: fwd, d0: at, d1: at });
+    }
+    return amount;
+  }
+  function trimTail(path, amount) {
+    let rem = amount;
+    while (rem > 1e-9 && path.length) {
+      const t = path[0], len = segLen(t);
+      if (len <= rem && path.length > 1) { rem -= len; path.shift(); }
+      else { const st = Math.min(rem, len); t.d0 += st * t.dir; break; }
+    }
+  }
+  function trimHead(path, amount) {
+    let rem = amount;
+    while (rem > 1e-9 && path.length) {
+      const h = path[path.length - 1], len = segLen(h);
+      if (len <= rem && path.length > 1) { rem -= len; path.pop(); }
+      else { const st = Math.min(rem, len); h.d1 -= st * h.dir; break; }
+    }
+  }
+  const clonePath = p => p.map(sg => ({ e: sg.e, dir: sg.dir, d0: sg.d0, d1: sg.d1 }));
+
+  /** the train's leading end when moving forward (head) or backward (tail), as a directed position */
+  function leadOf(c, forward) {
+    if (forward) { const h = c.path[c.path.length - 1]; return { e: h.e, dir: h.dir, d: h.d1 }; }
+    const t = c.path[0]; return { e: t.e, dir: -t.dir, d: t.d0 };
+  }
+
+  /** point at distance x from the head, measured back along the train */
+  function pointFromHead(s, path, x) {
+    let acc = 0;
+    for (let i = path.length - 1; i >= 0; i--) {
+      const sg = path[i], len = segLen(sg);
+      if (x <= acc + len + 1e-9 || i === 0) {
+        const d = sg.d1 - Math.min(len, Math.max(0, x - acc)) * sg.dir;
+        return pointAt(s, sg.e, d);
+      }
+      acc += len;
+    }
+    return { x: 0, z: 0 };
+  }
+  /** sub-path covering distances [x0, x1] from the head, tail->head order */
+  function slicePath(path, x0, x1) {
+    const out = []; let acc = 0;
+    for (let i = path.length - 1; i >= 0; i--) {
+      const sg = path[i], len = segLen(sg), a = Math.max(x0, acc), b = Math.min(x1, acc + len);
+      if (b > a + 1e-9) out.unshift({ e: sg.e, dir: sg.dir, d1: sg.d1 - (a - acc) * sg.dir, d0: sg.d1 - (b - acc) * sg.dir });
+      acc += len; if (acc >= x1) break;
+    }
+    return out;
+  }
+  function reversePath(path) {
+    return path.slice().reverse().map(sg => ({ e: sg.e, dir: -sg.dir, d0: sg.d1, d1: sg.d0 }));
+  }
+
+  /** lay a train down with its head at (e,d) facing dir; returns path or null if it doesn't fit */
+  function layBack(s, e, d, dir, length, prefer) {
+    const path = [{ e, dir, d0: d, d1: d }];
+    const chooser = (ee, dd, opts) => {
+      if (prefer) { const p = opts.find(o => prefer.has(o.e)); if (p) return p; }
+      return opts[0] || null;
+    };
+    const got = extendTail(s, path, length, chooser);
+    return got + 1e-6 >= length ? path : null;
+  }
+
+  function newConsist(s, name, vehicles) {
+    const k = nid(s, 't');
+    s.consists[k] = { id: k, name: name || ('Train ' + k.slice(1)), vehicles: vehicles || [{ type: 'loco1' }], path: [],
+      schedule: [], cyclic: true, run: null, v: 0, status: 'Parked', color: null };
+    return k;
+  }
+  /** put a train at a station: head on the marker, facing the way the station points */
+  function placeAtStation(s, cid, sid) {
+    const c = s.consists[cid], st = s.stations[sid];
+    const p = layBack(s, st.e, st.d, st.dir, vehiclesLength(c.vehicles));
+    if (!p) return false;
+    c.path = p; c.v = 0; c.run = null; c.status = 'Parked at ' + st.name;
+    return true;
+  }
+  /** re-lay after cars were added/removed, keeping the head where it is */
+  function relayout(s, cid) {
+    const c = s.consists[cid]; if (!c.path.length) return false;
+    const h = c.path[c.path.length - 1];
+    const prefer = new Set(c.path.map(p => p.e));
+    const p = layBack(s, h.e, h.d1, h.dir, vehiclesLength(c.vehicles), prefer);
+    if (!p) return false;
+    c.path = p; return true;
+  }
+  /** turn a train round (as if it had been built facing the other way) */
+  function flipConsist(s, cid) {
+    const c = s.consists[cid];
+    c.path = reversePath(c.path); c.vehicles = c.vehicles.slice().reverse();
+  }
+
+  function ends(s, c) {
+    const h = c.path[c.path.length - 1], t = c.path[0];
+    const hv = dirVec(s, h.e, h.dir), tv = dirVec(s, t.e, t.dir);
+    return {
+      front: { p: pointAt(s, h.e, h.d1), out: hv },
+      back: { p: pointAt(s, t.e, t.d0), out: { x: -tv.x, z: -tv.z } },
+    };
+  }
+
+  // ---------------------------------------------------------------- routing
+  /**
+   * Create-style route cost penalties (Navigation.search): other trains' end edges (+navigation
+   * penalty / 2: 350 for a parked train, 12 for one running), an occupied block beyond a signal
+   * (+25..200, halved for each one after), and passing through some other station (+50).
+   */
+  function routeContext(s, cid, waitSecs) {
+    const blocks = computeBlocks(s), occ = occupancy(s, blocks), endEdges = {};
+    for (const k in s.consists) {
+      if (k === cid) continue;
+      const o = s.consists[k]; if (!o.path.length) continue;
+      const pen = o.run ? 12 : 350;
+      for (const e of new Set([o.path[0].e, o.path[o.path.length - 1].e])) endEdges[e] = (endEdges[e] || 0) + pen;
+    }
+    return { cid, blocks, occ, endEdges, signalWeight: Math.max(25, Math.min(200, Math.round((waitSecs || 0) * 40))) };
+  }
+  function segmentPenalty(s, ctx, e, dir, from, to, destSid, weight) {
+    if (!ctx) return { pen: 0, weight };
+    let pen = 0;
+    const lo = Math.min(from, to), hi = Math.max(from, to);
+    for (const gk in s.signals) {
+      const g = s.signals[gk];
+      if (g.e !== e || !signalFaces(g, dir) || g.d < lo - 1e-6 || g.d > hi + 1e-6) continue;
+      const b = blockAt(ctx.blocks, e, g.d + dir * 0.01), o = ctx.occ[b];
+      if (o && [...o].some(k => k !== ctx.cid)) { pen += weight; weight = Math.max(1, Math.floor(weight / 2)); }
+    }
+    for (const sk in s.stations) {
+      const st = s.stations[sk];
+      if (sk !== destSid && st.e === e && st.d >= lo - 1e-6 && st.d <= hi + 1e-6) pen += 50;
+    }
+    return { pen, weight };
+  }
+
+  /** best way from a directed position to a station, arriving the way the station points */
+  function findRoute(s, start, sid, ctx) {
+    const st = s.stations[sid]; if (!st || !s.edges[start.e]) return null;
+    const L0 = edgeLen(s, start.e);
+    if (start.e === st.e && start.dir === st.dir) {
+      const ahead = (st.d - start.d) * start.dir;
+      if (ahead >= -0.05) return { dist: Math.max(0, ahead), cost: Math.max(0, ahead), route: [{ e: start.e, dir: start.dir }] };
+    }
+    const remStart = start.dir > 0 ? L0 - start.d : start.d;
+    const sp = segmentPenalty(s, ctx, start.e, start.dir, start.d, start.dir > 0 ? L0 : 0, sid, ctx ? ctx.signalWeight : 0);
+    const pen0 = sp.pen + (ctx && ctx.endEdges[start.e] || 0);
+    const best = {}, prev = {}, pq = [];
+    const key = (e, dir) => e + ':' + dir;
+    for (const o of nextOptions(s, start.e, start.dir)) {
+      const k = key(o.e, o.dir), cost = remStart + pen0;
+      if (best[k] === undefined || cost < best[k].cost) { best[k] = { cost, d: remStart, w: sp.weight }; prev[k] = null; pq.push({ e: o.e, dir: o.dir, cost }); }
+    }
+    let guard = 0;
+    while (pq.length && guard++ < 50000) {
+      let bi = 0; for (let i = 1; i < pq.length; i++) if (pq[i].cost < pq[bi].cost) bi = i;
+      const cur = pq.splice(bi, 1)[0], ck = key(cur.e, cur.dir), B = best[ck];
+      if (cur.cost > B.cost + 1e-9) continue;
+      const Le = edgeLen(s, cur.e), from = cur.dir > 0 ? 0 : Le;
+      const edgePen = ctx && ctx.endEdges[cur.e] || 0;
+      if (cur.e === st.e && cur.dir === st.dir) {
+        const part = cur.dir > 0 ? st.d : Le - st.d;
+        const total = B.d + part;
+        const route = []; let k = ck;
+        while (k) { const [e, dir] = k.split(':'); route.unshift({ e, dir: +dir }); k = prev[k]; }
+        route.unshift({ e: start.e, dir: start.dir });
+        return { dist: total, cost: B.cost + part + edgePen + segmentPenalty(s, ctx, cur.e, cur.dir, from, st.d, sid, B.w).pen, route };
+      }
+      const segp = segmentPenalty(s, ctx, cur.e, cur.dir, from, Le - from, sid, B.w);
+      const nd = B.d + Le, nc = B.cost + Le + edgePen + segp.pen;
+      for (const o of nextOptions(s, cur.e, cur.dir)) {
+        const k = key(o.e, o.dir);
+        if (best[k] === undefined || nc < best[k].cost - 1e-9) { best[k] = { cost: nc, d: nd, w: segp.weight }; prev[k] = ck; pq.push({ e: o.e, dir: o.dir, cost: nc }); }
+      }
+    }
+    return null;
+  }
+  /** a chooser that follows a planned route (falls back to straightest) */
+  function routeChooser(route) {
+    let i = 0;
+    return (e, dir, opts) => {
+      for (let j = i; j < route.length - 1; j++) {
+        if (route[j].e === e && route[j].dir === dir) {
+          const nx = route[j + 1], hit = opts.find(o => o.e === nx.e && o.dir === nx.dir);
+          if (hit) { i = j + 1; return hit; }
+        }
+      }
+      return opts[0] || null;
+    };
+  }
+
+  /** which ways this train may drive for a schedule step */
+  function allowedDirections(s, c, entry, sid) {
+    const st = s.stations[sid];
+    let fwd = hasLoco(c), back = hasDoubleCab(c);
+    if (entry.type === 'backin' || (st && (st.approach === 'backin' || st.approach === 'reverse'))) back = hasLoco(c);
+    if (entry.type === 'backin' || (st && st.approach === 'backin')) fwd = false;
+    return { fwd, back };
+  }
+
+  // ---------------------------------------------------------------- coupling
+  function findCoupling(s, cid, reach) {
+    const c = s.consists[cid]; if (!c || !c.path.length) return null;
+    const mine = ends(s, c); let best = null;
+    for (const oid in s.consists) {
+      if (oid === cid) continue;
+      const o = s.consists[oid]; if (!o.path.length) continue;
+      const theirs = ends(s, o);
+      for (const me of ['front', 'back']) for (const them of ['front', 'back']) {
+        const A = mine[me], B = theirs[them];
+        const dx = B.p.x - A.p.x, dz = B.p.z - A.p.z, dist = Math.hypot(dx, dz);
+        if (dist > reach) continue;
+        if (A.out.x * B.out.x + A.out.z * B.out.z > -0.5) continue;          // must point at each other
+        const along = dx * A.out.x + dz * A.out.z, lateral = Math.abs(dx * A.out.z - dz * A.out.x);
+        if (along < -1 || lateral > 1.3) continue;
+        if (!best || dist < best.dist) best = { oid, me, them, dist };
+      }
+    }
+    return best;
+  }
+  function logEvt(s, msg) { s.log.unshift({ t: s.time, msg }); if (s.log.length > 200) s.log.length = 200; }
+
+  /** couple train cid to whatever is touching it; returns message */
+  function couple(s, cid) {
+    const hit = findCoupling(s, cid, COUPLE_REACH);
+    const c = s.consists[cid];
+    if (!hit) return { ok: false, msg: c.name + ': nothing to couple to' };
+    if (hit.me === hit.them) return { ok: false, msg: c.name + ": can't couple, those cars face the other way" };
+    const o = s.consists[hit.oid];
+    const front = hit.me === 'back' ? c : o, back = hit.me === 'back' ? o : c;
+    // who keeps name + schedule: the one running a schedule, then the one with a loco, then the front
+    const keeper = (c.run || c.schedule.length) ? c : (o.run || o.schedule.length) ? o : hasLoco(front) ? front : hasLoco(back) ? back : front;
+    const vehicles = front.vehicles.concat(back.vehicles);
+    const fh = front.path[front.path.length - 1];
+    const prefer = new Set(front.path.concat(back.path).map(p => p.e));
+    const path = layBack(s, fh.e, fh.d1, fh.dir, vehiclesLength(vehicles), prefer);
+    if (!path) return { ok: false, msg: c.name + ": couldn't couple (no room on the track)" };
+    const other = keeper === c ? o : c;
+    keeper.vehicles = vehicles; keeper.path = path; keeper.v = 0;
+    delete s.consists[other.id];
+    const msg = keeper.name + ' coupled: now ' + vehicles.length + ' vehicles';
+    logEvt(s, msg);
+    return { ok: true, msg, keeper: keeper.id };
+  }
+
+  /** drop n vehicles off the end away from the loco (n <= 0: every car without a loco) */
+  function uncouple(s, cid, n) {
+    const c = s.consists[cid], vs = c.vehicles, size = vs.length;
+    if (size < 2) return { ok: false, msg: c.name + ': nothing to drop' };
+    const isLoco = v => v.type !== 'car';
+    const locoAtFront = isLoco(vs[0]) || !isLoco(vs[size - 1]);
+    if (n <= 0) {
+      n = 0;
+      for (let i = 0; i < size - 1; i++) { if (isLoco(vs[locoAtFront ? size - 1 - i : i])) break; n++; }
+    }
+    n = Math.min(n, size - 1);
+    if (n <= 0) return { ok: false, msg: c.name + ': nothing to drop' };
+    return splitConsist(s, cid, locoAtFront ? size - n : n);
+  }
+
+  /** split a train after its first `frontCount` vehicles; the part with a loco keeps name + schedule */
+  function splitConsist(s, cid, frontCount) {
+    const c = s.consists[cid], vs = c.vehicles, size = vs.length;
+    if (frontCount < 1 || frontCount >= size) return { ok: false, msg: c.name + ": can't split there" };
+    const frontV = vs.slice(0, frontCount), backV = vs.slice(frontCount);
+    const lf = vehiclesLength(frontV), L = vehiclesLength(vs);
+    const frontPath = slicePath(c.path, 0, lf), backPath = slicePath(c.path, lf + GAP, L);
+    if (!frontPath.length || !backPath.length) return { ok: false, msg: c.name + ": couldn't split" };
+    const keepFront = frontV.some(v => v.type !== 'car') || !backV.some(v => v.type !== 'car');
+    const cutId = newConsist(s, c.name + ' cars', null), cut = s.consists[cutId];
+    if (keepFront) { c.vehicles = frontV; c.path = frontPath; cut.vehicles = backV; cut.path = backPath; }
+    else { c.vehicles = backV; c.path = backPath; cut.vehicles = frontV; cut.path = frontPath; }
+    if (cut.vehicles.some(v => v.type !== 'car')) cut.name = c.name + ' (split)';
+    cut.status = 'Parked';
+    const n = cut.vehicles.length;
+    const msg = c.name + ' dropped ' + n + (n === 1 ? ' vehicle' : ' vehicles').replace('vehicle', cut.vehicles.every(v => v.type === 'car') ? 'car' : 'vehicle');
+    logEvt(s, msg);
+    return { ok: true, msg, cut: cutId };
+  }
+
+  // ---------------------------------------------------------------- simulation
+  function bodyPoints(s, skip) {
+    const pts = [];
+    for (const k in s.consists) {
+      if (k === skip) continue;
+      const c = s.consists[k]; if (!c.path.length) continue;
+      const L = pathLength(c.path);
+      for (let x = 0; x <= L + 1e-6; x += 0.8) pts.push({ p: pointFromHead(s, c.path, Math.min(x, L)), cid: k });
+    }
+    return pts;
+  }
+  function trainVelocity(s, c) {
+    if (!c.v || !c.run || !c.path.length) return { x: 0, z: 0 };
+    const lead = leadOf(c, c.run.forward), v = dirVec(s, lead.e, lead.dir);
+    return { x: v.x * c.v, z: v.z * c.v };
+  }
+
+  /** scout ahead along the planned route: nearest obstacle (another train) and the next signal facing us */
+  function scout(s, c, look, pts) {
+    const lead = leadOf(c, c.run.forward);
+    const path = [{ e: lead.e, dir: lead.dir, d0: lead.d, d1: lead.d }];
+    const chooser = routeChooser(c.run.route);
+    const STEP = 0.5;
+    let travelled = 0, prevP = pointAt(s, lead.e, lead.d), obstacle = null;
+    while (travelled < look) {
+      const got = extendHead(s, path, STEP, chooser);
+      if (got < 1e-6) break;
+      travelled += got;
+      if (obstacle) continue;
+      const h = path[path.length - 1], p = pointAt(s, h.e, h.d1);
+      const hx = p.x - prevP.x, hz = p.z - prevP.z, hl = Math.hypot(hx, hz) || 1;
+      prevP = p;
+      let at = Infinity, who = null;
+      for (const b of pts) {
+        const dx = b.p.x - p.x, dz = b.p.z - p.z;
+        if (dx * dx + dz * dz > HIT * HIT) continue;
+        const a = travelled + (dx * hx + dz * hz) / hl;
+        if (a < at) { at = a; who = b.cid; }
+      }
+      if (who) obstacle = { dist: Math.max(0, at), cid: who };
+    }
+    // first signal along the scouted track that shows a light to us (at or ahead of our front)
+    let signal = null, cum = 0;
+    for (const sg of path) {
+      for (const gk in s.signals) {
+        const g = s.signals[gk];
+        if (g.e !== sg.e || !signalFaces(g, sg.dir)) continue;
+        const ahead = (g.d - sg.d0) * sg.dir;
+        if (ahead < -0.01 || ahead > segLen(sg) + 1e-6) continue;
+        const dist = cum + Math.max(0, ahead);
+        if (!signal || dist < signal.dist) signal = { id: gk, dist, e: sg.e, d: g.d, dir: sg.dir };
+      }
+      if (signal) break;
+      cum += segLen(sg);
+    }
+    return { obstacle, signal };
+  }
+
+  /**
+   * blocks a train needs before passing this signal: the block right after it, and for a chain
+   * signal also the block after the next signal on our route - and on through every further chain
+   * signal until a normal one (Create's reserveChain)
+   */
+  function blocksPastSignal(s, c, sig, blocks) {
+    const need = [blockAt(blocks, sig.e, sig.d + sig.dir * 0.01)];
+    let g = s.signals[sig.id], at = sig, hops = 0;
+    while (sigType(g, at.dir) === 'chain' && hops++ < 20) {
+      const nx = nextSignalOnRoute(s, c, at, 600);
+      if (!nx) break;
+      need.push(blockAt(blocks, nx.e, nx.d + nx.dir * 0.01));
+      g = s.signals[nx.id]; at = nx;
+    }
+    return need;
+  }
+  /** next signal facing us along our route after the one at `from` */
+  function nextSignalOnRoute(s, c, from, maxDist) {
+    const path = [{ e: from.e, dir: from.dir, d0: from.d, d1: from.d }];
+    const chooser = routeChooser(c.run.route);
+    let walked = 0;
+    while (walked < maxDist) {
+      const h0 = path[path.length - 1], before = h0.d1, e0 = h0.e, n0 = path.length;
+      const got = extendHead(s, path, 2, chooser); if (got < 1e-6) return null; walked += got;
+      // check every segment touched in this step
+      for (let i = n0 - 1; i < path.length; i++) {
+        const h = path[i], a = (i === n0 - 1 && h.e === e0) ? before : h.d0;
+        let best = null;
+        for (const gk in s.signals) {
+          const g2 = s.signals[gk]; if (gk === from.id || g2.e !== h.e || !signalFaces(g2, h.dir)) continue;
+          const ahead = (g2.d - a) * h.dir, span = (h.d1 - a) * h.dir;
+          if (ahead > 1e-6 && ahead <= span + 1e-6 && (!best || ahead < best.ahead)) best = { ahead, id: gk, e: h.e, d: g2.d, dir: h.dir };
+        }
+        if (best) return best;
+      }
+    }
+    return null;
+  }
+
+  /** what a signal side shows: 'red' (block beyond occupied), 'yellow' (chain: further block busy), 'green' */
+  function signalAspect(s, gk, dir, blocks, occ) {
+    const g = s.signals[gk];
+    const busy = b => occ[b] && occ[b].size > 0;
+    if (busy(blockAt(blocks, g.e, g.d + dir * 0.01))) return 'red';
+    if (sigType(g, dir) !== 'chain') return 'green';
+    const fake = { run: { route: [] } };
+    let at = { id: gk, e: g.e, d: g.d, dir }, cur = g;
+    for (let hops = 0; hops < 20 && sigType(cur, at.dir) === 'chain'; hops++) {
+      const nx = nextSignalOnRoute(s, fake, at, 600); if (!nx) break;
+      if (busy(blockAt(blocks, nx.e, nx.d + nx.dir * 0.01))) return 'yellow';
+      cur = s.signals[nx.id]; at = nx;
+    }
+    return 'green';
+  }
+
+  function occupancy(s, blocks) {
+    const occ = {};
+    for (const k in s.consists) {
+      const c = s.consists[k];
+      for (const sg of c.path) {
+        for (const iv of blocks.intervals[sg.e] || []) {
+          const lo = Math.min(sg.d0, sg.d1), hi = Math.max(sg.d0, sg.d1);
+          if (hi > iv.d0 + 1e-6 && lo < iv.d1 - 1e-6) (occ[iv.block] = occ[iv.block] || new Set()).add(k);
+          else if (hi - lo < 1e-6 && lo >= iv.d0 && lo <= iv.d1) (occ[iv.block] = occ[iv.block] || new Set()).add(k);
+        }
+      }
+    }
+    return occ;
+  }
+
+  function startRun(s, cid) {
+    const c = s.consists[cid];
+    if (!c.schedule.length) { c.status = 'No schedule'; return false; }
+    if (!hasLoco(c)) { c.status = 'Needs a loco to run a schedule'; return false; }
+    c.run = { entry: 0, phase: 'plan', retry: 0, cond: 0, timer: 0, route: null, remaining: 0, forward: true, waitingSignal: false };
+    return true;
+  }
+
+  function planTrip(s, c, replan) {
+    const entry = c.schedule[c.run.entry];
+    const sid = stationByName(s, entry.station);
+    if (!sid) { c.status = 'No station called "' + entry.station + '"'; return false; }
+    const allow = allowedDirections(s, c, entry, sid);
+    const ctx = routeContext(s, c.id, replan ? c.run.waitTime : 0);
+    if (replan) {
+      // re-route mid-trip (Create does this while held at a chain signal): same direction only
+      const r = findRoute(s, leadOf(c, c.run.forward), sid, ctx);
+      if (r) {
+        c.run.route = r.route; c.run.remaining = r.dist;
+        // drop reservations we made for the old route and haven't entered
+        const cl = s._claims || {};
+        for (const b in cl) if (cl[b] === c.id && !(c._entered && c._entered[b])) delete cl[b];
+      }
+      return !!r;
+    }
+    const cands = [];
+    if (allow.fwd) { const r = findRoute(s, leadOf(c, true), sid, ctx); if (r) cands.push({ r, forward: true }); }
+    if (allow.back) { const r = findRoute(s, leadOf(c, false), sid, ctx); if (r) cands.push({ r, forward: false }); }
+    if (!cands.length) {
+      c.status = 'No path to ' + s.stations[sid].name + (allow.fwd ? '' : ' (backing in)');
+      return false;
+    }
+    cands.sort((a, b) => a.r.cost - b.r.cost);
+    const pick = cands[0];
+    Object.assign(c.run, { route: pick.r.route, remaining: pick.r.dist, forward: pick.forward, sid, phase: 'move', waitTime: 0 });
+    c.status = (pick.forward ? 'To ' : 'Backing into ') + s.stations[sid].name;
+    logEvt(s, c.name + (pick.forward ? ' departs for ' : ' backs toward ') + s.stations[sid].name);
+    return true;
+  }
+
+  function arrive(s, c) {
+    const st = s.stations[c.run.sid];
+    c.v = 0; c.run.phase = 'cond'; c.run.cond = 0; c.run.timer = 0;
+    c.status = 'At ' + st.name;
+    logEvt(s, c.name + ' arrived at ' + st.name);
+    // station-wide yard rule (like /railsounds yard couple|uncouple)
+    if (st.onArrive === 'couple') { const r = couple(s, c.id); if (r.ok) c = s.consists[r.keeper]; }
+    else if (st.onArrive === 'uncouple') { const r = uncouple(s, c.id, st.count || 0); }
+    return c;
+  }
+
+  function tickConditions(s, c, dt) {
+    const entry = c.schedule[c.run.entry], conds = entry.conds || [];
+    while (c.run.cond < conds.length) {
+      const k = conds[c.run.cond];
+      if (k.type === 'wait') {
+        c.run.timer += dt; dt = 0;
+        c.status = 'Waiting ' + Math.max(0, Math.ceil((k.secs || 0) - c.run.timer)) + 's at ' + s.stations[c.run.sid].name;
+        if (c.run.timer + 1e-9 < (k.secs || 0)) return c;
+        c.run.timer = 0; c.run.cond++;
+      } else if (k.type === 'couple') {
+        const r = couple(s, c.id);
+        if (r.ok) c = s.consists[r.keeper]; else logEvt(s, r.msg);
+        c.status = r.msg; c.run.cond++;
+      } else if (k.type === 'uncouple') {
+        const r = uncouple(s, c.id, k.n || 0); if (!r.ok) logEvt(s, r.msg);
+        c.status = r.msg; c.run.cond++;
+      } else c.run.cond++;
+    }
+    // done: next step of the schedule
+    c.run.entry = (c.run.entry + 1) % c.schedule.length;
+    if (c.run.entry === 0 && !c.cyclic) { c.run = null; c.status = 'Schedule finished'; return c; }
+    c.run.phase = 'plan'; c.run.retry = 0;
+    return c;
+  }
+
+  /** advance the whole world by dt seconds */
+  function step(s, dt) {
+    s.time += dt;
+    const cfg = s.settings, blocks = computeBlocks(s), occ = occupancy(s, blocks);
+    const claims = s._claims || (s._claims = {});
+    // forget claims of trains that no longer exist or no longer need them
+    for (const b in claims) if (!s.consists[claims[b]] || !s.consists[claims[b]].run) delete claims[b];
+    for (const cid of Object.keys(s.consists)) {
+      let c = s.consists[cid];
+      if (!c || !c.run) continue;
+      if (c.run.phase === 'plan') {
+        c.run.retry -= dt;
+        if (c.run.retry > 0) continue;
+        if (!planTrip(s, c)) { c.run.retry = 3; continue; }
+      }
+      if (c.run.phase === 'cond') { tickConditions(s, c, dt); continue; }
+      if (c.run.phase !== 'move') continue;
+
+      const look = c.v * c.v / (2 * cfg.decel) + c.v * 1.5 + 10;
+      const sc = scout(s, c, Math.min(look, c.run.remaining + 2), bodyPoints(s, c.id));
+      let limit = Math.min(cfg.maxSpeed, c.v + cfg.accel * dt, Math.sqrt(2 * cfg.decel * Math.max(0, c.run.remaining)));
+      c.run.waitingSignal = false; c.run.blocked = null;
+      // signal ahead: may we pass it?
+      if (sc.signal && sc.signal.dist < c.run.remaining) {
+        const need = blocksPastSignal(s, c, sc.signal, blocks);
+        const free = need.every(b => {
+          const o = occ[b]; const busy = o && [...o].some(k => k !== c.id);
+          return !busy && (!claims[b] || claims[b] === c.id);
+        });
+        if (free) { for (const b of need) claims[b] = c.id; c.run.waitTime = 0; }
+        else {
+          limit = Math.min(limit, Math.sqrt(2 * cfg.decel * Math.max(0, sc.signal.dist - 0.5)));
+          c.run.waitingSignal = true;
+          if (c.v < 0.05) {
+            const before = c.run.waitTime || 0;
+            c.run.waitTime = before + dt;
+            if (sigType(s.signals[sc.signal.id], sc.signal.dir) === 'chain' && Math.floor(c.run.waitTime / 5) > Math.floor(before / 5)) planTrip(s, c, true);
+          }
+        }
+      }
+      // another train on our track
+      if (sc.obstacle && sc.obstacle.dist < c.run.remaining - 0.05) {
+        const o = s.consists[sc.obstacle.cid], ov = trainVelocity(s, o);
+        const lead = leadOf(c, c.run.forward), hv = dirVec(s, lead.e, lead.dir);
+        const away = Math.max(0, ov.x * hv.x + ov.z * hv.z);
+        limit = Math.min(limit, Math.sqrt(2 * cfg.decel * Math.max(0, sc.obstacle.dist - STOP_SHORT)) + away);
+        c.run.blocked = o.name;
+        c.run.blockedDist = sc.obstacle.dist;
+        c.run.blockedMoving = Math.hypot(ov.x, ov.z) > 0.05;
+      }
+      c.v = Math.max(0, limit);
+      let move = Math.min(c.v * dt, c.run.remaining);
+      if (move > 0) {
+        const chooser = routeChooser(c.run.route);
+        if (c.run.forward) { const got = extendHead(s, c.path, move, chooser); trimTail(c.path, got); move = got; }
+        else { const got = extendTail(s, c.path, move, chooser); trimHead(c.path, got); move = got; }
+        c.run.remaining -= move;
+      }
+      const name = s.stations[c.run.sid] ? s.stations[c.run.sid].name : '?';
+      if (c.run.waitingSignal && c.v < 0.05) c.status = 'Waiting at signal for ' + name;
+      else if (c.run.blocked && c.v < 0.05) c.status = 'Stopped behind ' + c.run.blocked;
+      else c.status = (c.run.forward ? 'To ' : 'Backing into ') + name + ' (' + c.v.toFixed(1) + ' b/s)';
+      // arrived: on the marker, or eased up against parked cars just short of it (so it can couple)
+      const buffered = c.run.blocked && !c.run.blockedMoving && c.v < 0.05 &&
+        c.run.blockedDist <= STOP_SHORT + 0.3 && c.run.remaining <= ARRIVE_SLACK;
+      if (c.run.remaining <= 0.02 || buffered) c = arrive(s, c);
+    }
+    // claims are dropped once the claiming train is fully past them (no longer occupies, not heading in)
+    const occ2 = occupancy(s, blocks);
+    for (const b in claims) {
+      const k = claims[b], c = s.consists[k];
+      if (!c) { delete claims[b]; continue; }
+      const inside = occ2[b] && occ2[b].has(k);
+      if (inside) c._entered = c._entered || {}, c._entered[b] = true;
+      else if (c._entered && c._entered[b]) { delete claims[b]; delete c._entered[b]; }
+      else if (!c.run || c.run.phase !== 'move') delete claims[b];
+    }
+  }
+
+  /**
+   * drive a train by hand a little (like holding W/S on the controls). Same rules as the game:
+   * no loco = can't move; single-cab can't reverse. Stops short of other trains; with
+   * auto-couple on it couples when it eases up to cars facing the right way.
+   */
+  function nudge(s, cid, forward, amount) {
+    const c = s.consists[cid];
+    if (!c || !c.path.length) return { ok: false, msg: 'No train' };
+    if (c.run) return { ok: false, msg: c.name + ' is running its schedule - stop it first' };
+    if (!hasLoco(c)) return { ok: false, msg: c.name + ' has no loco' };
+    if (!forward && !hasDoubleCab(c)) return { ok: false, msg: c.name + " can't reverse: single-cab locos only drive forwards (use Back into Station)" };
+    const fake = { id: cid, path: c.path, run: { forward, route: [] } };
+    const sc = scout(s, fake, amount + 2, bodyPoints(s, cid));
+    let go = amount;
+    if (sc.obstacle) go = Math.min(go, Math.max(0, sc.obstacle.dist - STOP_SHORT));
+    const chooser = (e, dir, opts) => {
+      const pick = c.switches && c.switches[endNode(s, e, dir) + ':' + e];
+      return (pick && opts.find(o => o.e === pick)) || opts[0] || null;
+    };
+    let got = 0;
+    if (go > 1e-6) {
+      if (forward) { got = extendHead(s, c.path, go, chooser); trimTail(c.path, got); }
+      else { got = extendTail(s, c.path, go, chooser); trimHead(c.path, got); }
+    }
+    let msg = got < 1e-3 ? (sc.obstacle ? c.name + ': stopped - ' + s.consists[sc.obstacle.cid].name + ' in the way' : c.name + ': end of track') : null;
+    if (s.settings.autoCouple !== false && sc.obstacle && sc.obstacle.dist <= amount + STOP_SHORT + 0.05) {
+      const r = couple(s, cid);
+      if (r.ok) return { ok: true, msg: r.msg, keeper: r.keeper };
+    }
+    return { ok: got > 1e-3, msg: msg || c.name + ' moved ' + got.toFixed(1) + ' blocks' };
+  }
+
+  // ---------------------------------------------------------------- save / load
+  function serialize(s) {
+    return JSON.stringify({ v: 1, nodes: s.nodes, edges: s.edges, stations: s.stations, signals: s.signals,
+      consists: Object.fromEntries(Object.entries(s.consists).map(([k, c]) => [k, { id: c.id, name: c.name, vehicles: c.vehicles, path: c.path, schedule: c.schedule, cyclic: c.cyclic, hold: !!c.hold }])),
+      nextId: s.nextId, settings: s.settings });
+  }
+  function deserialize(json) {
+    const o = typeof json === 'string' ? JSON.parse(json) : json, s = newState();
+    for (const k of ['nodes', 'edges', 'stations', 'signals']) s[k] = o[k] || {};
+    s.nextId = o.nextId || 1; if (o.settings) Object.assign(s.settings, o.settings);
+    for (const k in (o.consists || {})) {
+      const c = o.consists[k];
+      s.consists[k] = { id: k, name: c.name, vehicles: c.vehicles || [], path: c.path || [], schedule: c.schedule || [],
+        cyclic: c.cyclic !== false, hold: !!c.hold, run: null, v: 0, status: 'Parked' };
+    }
+    return s;
+  }
+
+  const api = {
+    LEN, GAP, COUPLE_REACH, newState, addNode, addEdge, findEdge, edgesAt, edgeLen, pointAt, dirVec, nextOptions,
+    removeNode, removeEdge, addStation, stationByName, addSignal, signalFaces, sigType, signalAspect, computeBlocks, blockAt, occupancy,
+    vehiclesLength, vlen, hasLoco, hasDoubleCab, pathLength, pointFromHead, slicePath, reversePath, layBack,
+    newConsist, placeAtStation, routeContext, splitEdge, moveNode, nearestTrack, nudge, startNode, endNode, relayout, flipConsist, ends, findRoute, allowedDirections, findCoupling,
+    couple, uncouple, splitConsist, startRun, step, serialize, deserialize, leadOf, logEvt,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Core = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Example layout: a passing loop with signals, two shuttles, and a yard spur with a shunter. */
+(function (root) {
+  function buildExample(C) {
+    const s = C.newState();
+    const N = (x, z) => C.addNode(s, x, z), E = (a, b) => C.addEdge(s, a, b);
+    const sig = (e, d, heads, type, typeB) => { const g = C.addSignal(s, e, d); Object.assign(s.signals[g], { heads, type: type || 'normal', typeB: typeB || 'normal' }); return g; };
+    const st = (e, d, name, dir, extra) => { const k = C.addStation(s, e, d, name); Object.assign(s.stations[k], { dir }, extra || {}); return k; };
+    // west platforms
+    const WJ = N(40, 0), P1 = N(0, 0), P2 = N(0, 8);
+    const eP1 = E(WJ, P1), eP2 = E(WJ, P2);
+    // single line + passing loop
+    const J1 = N(80, 0), T1 = N(100, -8), T2 = N(160, -8), J2 = N(180, 0);
+    const eW = E(WJ, J1), eMain = E(J1, J2), eT1 = E(J1, T1), eTop = E(T1, T2), eT2 = E(T2, J2);
+    // east: platform line, turnout to the yard spur, lead
+    const T = N(300, 0), END = N(400, 0), Y = N(260, 24);
+    const eEastW = E(J2, T), eEastE = E(T, END), eSpur = E(T, Y);
+    // signals (Create practice: chain signals into the single line, normal ones out of the loop)
+    sig(eP1, 5, 'both', 'normal', 'chain'); sig(eP2, 5, 'both', 'normal', 'chain');
+    sig(eW, 38, 'both', 'normal', 'chain');
+    sig(eMain, 5, 'back'); sig(eTop, 5, 'back');
+    sig(eMain, 95, 'fwd'); sig(eTop, 55, 'fwd');
+    sig(eEastW, 10, 'both', 'normal', 'chain'); sig(eEastW, 110, 'both');
+    // stations
+    const W1 = st(eP1, 36, 'West 1', 1), W2 = st(eP2, 36, 'West 2', 1);
+    const Halt = st(eTop, 40, 'Loop Halt', 1);
+    const EP = st(eEastW, 100, 'East Platform', 1);
+    const Shed = st(eEastE, 30, 'Shed', 1), Lead = st(eEastE, 45, 'Lead', 1);
+    const Yard = st(eSpur, 20, 'Yard', 1, { approach: 'backin' });
+    const Drop = st(eEastE, 95, 'Drop', 1);
+    // trains
+    const ex = C.newConsist(s, 'Express', [{ type: 'loco2' }, { type: 'car' }, { type: 'car' }, { type: 'car' }]);
+    C.placeAtStation(s, ex, W1);
+    s.consists[ex].schedule = [
+      { type: 'travel', station: 'East Platform', conds: [{ type: 'wait', secs: 5 }] },
+      { type: 'travel', station: 'West 1', conds: [{ type: 'wait', secs: 5 }] }];
+    const lo = C.newConsist(s, 'Local', [{ type: 'loco2' }, { type: 'car' }, { type: 'car' }]);
+    C.placeAtStation(s, lo, Halt);
+    s.consists[lo].schedule = [
+      { type: 'travel', station: 'West 2', conds: [{ type: 'wait', secs: 5 }] },
+      { type: 'travel', station: 'Loop Halt', conds: [{ type: 'wait', secs: 5 }] }];
+    const cut = C.newConsist(s, 'Box cars', [{ type: 'car' }, { type: 'car' }, { type: 'car' }]);
+    s.consists[cut].path = C.layBack(s, eSpur, 16, -1, C.vehiclesLength(s.consists[cut].vehicles));
+    const sh = C.newConsist(s, 'Shunter', [{ type: 'loco1' }]);
+    C.placeAtStation(s, sh, Shed);
+    s.consists[sh].schedule = [
+      { type: 'travel', station: 'Lead', conds: [] },
+      { type: 'backin', station: 'Yard', conds: [{ type: 'couple' }, { type: 'wait', secs: 2 }] },
+      { type: 'travel', station: 'Drop', conds: [{ type: 'uncouple', n: 0 }] }];
+    s.consists[sh].cyclic = false;
+    return s;
+  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = buildExample; else root.buildExample = buildExample;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/*
+ * Import a layout from the Create Track Map mod's web server (default port 3876).
+ * It serves  /api/network  {tracks:[{dimension,path:[{x,y,z}...2 or 4]}], stations:[{id,name,dimension,location,angle}]}
+ *            /api/signals  {signals:[{dimension,location,forward:{type,state,angle},reverse:{...}}]}
+ *            /api/trains   {trains:[{id,name,cars:[{leading:{dimension,location},trailing:{...}}],backwards,stopped}]}
+ * Angles are atan2(x, -z) in degrees of the direction a train travels when the station/signal applies to it.
+ * The map can't tell locos from cars, so the first car of each train becomes a single-cab loco.
+ */
+(function (root) {
+  function normUrl(u) {
+    u = (u || '').trim();
+    if (!u) return null;
+    if (!/^https?:\/\//i.test(u)) u = 'http://' + u;
+    u = u.replace(/#.*$/, '').replace(/\?.*$/, '');
+    u = u.replace(/\/(index\.html)?$/i, '');
+    if (!/:\d+$/.test(u.replace(/^https?:\/\//i, '').split('/')[0])) u = u.replace(/^(https?:\/\/[^/]+)/i, '$1:3876');
+    return u;
+  }
+  const angVec = a => { const r = a * Math.PI / 180; return { x: Math.sin(r), z: -Math.cos(r) }; };
+
+  function bezier(p, t) {
+    const u = 1 - t;
+    const f = k => u * u * u * p[0][k] + 3 * u * u * t * p[1][k] + 3 * u * t * t * p[2][k] + t * t * t * p[3][k];
+    return { x: f('x'), y: f('y'), z: f('z') };
+  }
+
+  /** count dimensions and pick the one with most track (or the one asked for) */
+  function dimensions(net) {
+    const n = {};
+    for (const t of net.tracks || []) n[t.dimension] = (n[t.dimension] || 0) + 1;
+    return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ id: k, tracks: v }));
+  }
+
+  function build(C, net, sigs, trains, dim) {
+    const s = C.newState();
+    const dims = dimensions(net);
+    if (!dims.length) throw new Error('The map has no track yet');
+    dim = dim || (dims.find(d => /overworld/.test(d.id)) || dims[0]).id;
+    // nodes merged by position (and height, so bridges over other track stay apart)
+    const nodeAt = {};
+    const node = p => {
+      const k = Math.round(p.x * 2) + ',' + Math.round(p.z * 2) + ',' + Math.round(p.y / 3);
+      if (!nodeAt[k]) nodeAt[k] = C.addNode(s, Math.round(p.x * 100) / 100, Math.round(p.z * 100) / 100);
+      return nodeAt[k];
+    };
+    let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity, count = 0;
+    for (const t of net.tracks || []) {
+      if (t.dimension !== dim || !t.path || t.path.length < 2) continue;
+      let pts;
+      if (t.path.length === 4) {
+        let L = 0; for (let i = 0; i < 3; i++) L += Math.hypot(t.path[i + 1].x - t.path[i].x, t.path[i + 1].z - t.path[i].z);
+        const n = Math.max(2, Math.min(24, Math.ceil(L / 3)));
+        pts = []; for (let i = 0; i <= n; i++) pts.push(bezier(t.path, i / n));
+      } else pts = [t.path[0], t.path[t.path.length - 1]];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = node(pts[i]), b = node(pts[i + 1]);
+        if (a !== b) { C.addEdge(s, a, b); count++; }
+      }
+      for (const p of pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
+    }
+    const onTrack = (loc, ang) => {
+      const nt = C.nearestTrack(s, loc.x, loc.z);
+      if (!nt || nt.dist > 4) return null;
+      let dir = 1;
+      if (ang !== undefined && ang !== null) { const v = angVec(ang), w = C.dirVec(s, nt.e, 1); dir = v.x * w.x + v.z * w.z >= 0 ? 1 : -1; }
+      return { e: nt.e, d: nt.d, dir };
+    };
+    let skipped = 0;
+    for (const st of net.stations || []) {
+      if (st.dimension !== dim) continue;
+      const at = onTrack(st.location, st.angle); if (!at) { skipped++; continue; }
+      const k = C.addStation(s, at.e, at.d, st.name);
+      s.stations[k].dir = at.dir;
+    }
+    for (const g of (sigs && sigs.signals) || []) {
+      if (g.dimension !== dim) continue;
+      const side = g.forward || g.reverse; if (!side) continue;
+      const at = onTrack(g.location, side.angle); if (!at) { skipped++; continue; }
+      const k = C.addSignal(s, at.e, at.d), sg = s.signals[k];
+      const kind = x => (x && x.type === 'CROSS_SIGNAL' ? 'chain' : 'normal');
+      // which edge direction each side faces
+      const w = C.dirVec(s, at.e, 1), faces = x => { const v = angVec(x.angle); return v.x * w.x + v.z * w.z >= 0 ? 1 : -1; };
+      const sides = [g.forward, g.reverse].filter(Boolean);
+      const fwd = sides.find(x => faces(x) > 0), back = sides.find(x => faces(x) < 0);
+      sg.heads = fwd && back ? 'both' : fwd ? 'fwd' : 'back';
+      sg.type = kind(fwd || back); sg.typeB = kind(back || fwd);
+    }
+    // trains: car 0 is the front; lay each one on the track from its front car's leading bogey
+    for (const t of (trains && trains.trains) || []) {
+      const cars = (t.cars || []).filter(c => c.leading && c.trailing && c.leading.dimension === dim);
+      if (!cars.length) continue;
+      const lead = cars[0].leading.location, tr0 = cars[0].trailing.location;
+      const nt = C.nearestTrack(s, lead.x, lead.z); if (!nt || nt.dist > 4) { skipped++; continue; }
+      const v = { x: lead.x - tr0.x, z: lead.z - tr0.z }, w = C.dirVec(s, nt.e, 1);
+      const dir = v.x * w.x + v.z * w.z >= 0 ? 1 : -1;
+      const vehicles = cars.map((c, i) => {
+        const span = Math.hypot(c.leading.location.x - c.trailing.location.x, c.leading.location.z - c.trailing.location.z);
+        return { type: i === 0 ? 'loco1' : 'car', len: Math.max(2, Math.round((span + 2) * 2) / 2) };
+      });
+      const k = C.newConsist(s, t.name || 'Train', vehicles);
+      // head sits ~1 block ahead of the leading bogey
+      const L = C.edgeLen(s, nt.e), headD = Math.max(0, Math.min(L, nt.d + dir * 1));
+      const path = C.layBack(s, nt.e, headD, dir, C.vehiclesLength(vehicles));
+      if (path) s.consists[k].path = path; else { delete s.consists[k]; skipped++; }
+    }
+    s.importInfo = { dim, dims, edges: count, skipped, bounds: { minX, minZ, maxX, maxZ } };
+    return s;
+  }
+
+  const api = { normUrl, build, dimensions };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.TrackMapImport = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Rail Planner UI: canvas editor + simulation controls. Uses window.Core (core.js). */
+(function () {
+  'use strict';
+  const C = window.Core, Imp = window.TrackMapImport;
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
+  const KEY = 'railplanner.v1';
+
+  // ------------------------------------------------------------------ state
+  let S = null;                               // the core world
+  const view = { x: 0, z: 0, k: 5 };          // world centre + pixels per block
+  let tool = 'select', sel = null;            // sel = { kind: 'train'|'station'|'signal'|'edge'|'node', id }
+  let draft = null;                           // track tool: node we're drawing from
+  let playing = false, speed = 1, snapshot = null, acc = 0;
+  let dirty = true, undo = [], lastSave = 0, needSave = false;
+
+  const PALETTE = ['#f2b84b', '#5aa9ff', '#ff7a90', '#3ddc84', '#c38bff', '#ff9f43', '#4dd4d4', '#e8e36a', '#ff6bd6', '#9ad06a'];
+  function colorOf(c) {
+    if (!c.vehicles.some(v => v.type !== 'car')) return '#a8927a';
+    let h = 0; for (const ch of c.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return PALETTE[h % PALETTE.length];
+  }
+
+  // ------------------------------------------------------------------ persistence
+  function save(force) {
+    needSave = true;
+    const now = Date.now();
+    if (!force && now - lastSave < 1500) return;
+    try { localStorage.setItem(KEY, C.serialize(S)); lastSave = now; needSave = false; } catch (e) { /* storage unavailable */ }
+  }
+  function load() {
+    try { const j = localStorage.getItem(KEY); if (j) { S = C.deserialize(j); return true; } } catch (e) { /* ignore */ }
+    return false;
+  }
+  function pushUndo() {
+    try { undo.push(C.serialize(S)); if (undo.length > 60) undo.shift(); } catch (e) { /* ignore */ }
+  }
+  function changed() { dirty = true; save(); }
+
+  // ------------------------------------------------------------------ view helpers
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = window.devicePixelRatio || 1;
+    W = stage.clientWidth; H = stage.clientHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    dirty = true;
+  }
+  const sx = x => (x - view.x) * view.k + W / 2;
+  const sz = z => (z - view.z) * view.k + H / 2;
+  const wx = px => (px - W / 2) / view.k + view.x;
+  const wz = py => (py - H / 2) / view.k + view.z;
+
+  function fit() {
+    const ns = Object.values(S.nodes);
+    if (!ns.length) { view.x = 0; view.z = 0; view.k = 5; dirty = true; return; }
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const n of ns) { a = Math.min(a, n.x); b = Math.min(b, n.z); c = Math.max(c, n.x); d = Math.max(d, n.z); }
+    view.x = (a + c) / 2; view.z = (b + d) / 2;
+    view.k = Math.max(0.05, Math.min(40, Math.min((W - 40) / Math.max(10, c - a), (H - 80) / Math.max(10, d - b))));
+    dirty = true;
+  }
+
+  // ------------------------------------------------------------------ toast / hint
+  let toastT = 0;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  let hintT = 0;
+  function setHint() {
+    const h = $('hint'); h.innerHTML = ''; h.classList.remove('fade');
+    clearTimeout(hintT);
+    if (!(tool === 'track' && draft)) hintT = setTimeout(() => h.classList.add('fade'), 5000);
+    const txt = {
+      select: 'Tap anything to edit it · drag to pan · pinch to zoom · drag a track joint to move it',
+      track: draft ? 'Tap where the track goes next · tap the last point again to stop' : 'Tap to start a track (snaps to joints and other track)',
+      station: 'Tap a track to put a station there',
+      signal: 'Tap a track to put a signal there',
+      train: 'Tap a track to put a new train there',
+      erase: 'Tap something to delete it',
+    }[tool];
+    const span = document.createElement('span'); span.textContent = txt; h.appendChild(span);
+    if (tool === 'track' && draft) {
+      const b = document.createElement('button'); b.textContent = 'Done'; b.onclick = () => { draft = null; setHint(); dirty = true; }; h.appendChild(b);
+    }
+  }
+
+  // ------------------------------------------------------------------ drawing
+  function trackPath(e) {
+    const E = S.edges[e], A = S.nodes[E.a], B = S.nodes[E.b];
+    return [A, B];
+  }
+  function draw() {
+    const k = view.k;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = '#0e1318'; ctx.fillRect(0, 0, W, H);
+    // grid: blocks when close, chunks (16) further out
+    const grid = (step, color) => {
+      if (step * k < 7) return;
+      ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath();
+      const x0 = Math.floor(wx(0) / step) * step, z0 = Math.floor(wz(0) / step) * step;
+      for (let x = x0; x <= wx(W); x += step) { const p = Math.round(sx(x)) + .5; ctx.moveTo(p, 0); ctx.lineTo(p, H); }
+      for (let z = z0; z <= wz(H); z += step) { const p = Math.round(sz(z)) + .5; ctx.moveTo(0, p); ctx.lineTo(W, p); }
+      ctx.stroke();
+    };
+    if (S.settings.grid !== false) { grid(1, '#141b22'); grid(16, '#1c2630'); grid(256, '#26323d'); }
+
+    const blocks = C.computeBlocks(S), occ = C.occupancy(S, blocks);
+    // occupied blocks get a tint under the rails
+    const occEdges = [];
+    for (const e in blocks.intervals) for (const iv of blocks.intervals[e]) if (occ[iv.block] && occ[iv.block].size) occEdges.push({ e, iv });
+
+    // sleepers
+    if (k >= 4) {
+      ctx.strokeStyle = '#3b3128'; ctx.lineWidth = Math.max(1, k * 0.28); ctx.beginPath();
+      for (const e in S.edges) {
+        const [A, B] = trackPath(e), L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
+        const ux = (B.x - A.x) / L, uz = (B.z - A.z) / L, nx = -uz * 0.75, nz = ux * 0.75;
+        for (let d = 0.5; d < L; d += 1) {
+          const x = A.x + ux * d, z = A.z + uz * d;
+          ctx.moveTo(sx(x + nx), sz(z + nz)); ctx.lineTo(sx(x - nx), sz(z - nz));
+        }
+      }
+      ctx.stroke();
+    }
+    // occupied tint
+    ctx.lineCap = 'round';
+    if (occEdges.length) {
+      ctx.strokeStyle = 'rgba(255,93,93,.22)'; ctx.lineWidth = Math.max(6, k * 1.8); ctx.beginPath();
+      for (const { e, iv } of occEdges) { const p = C.pointAt(S, e, iv.d0), q = C.pointAt(S, e, iv.d1); ctx.moveTo(sx(p.x), sz(p.z)); ctx.lineTo(sx(q.x), sz(q.z)); }
+      ctx.stroke();
+    }
+    // rails
+    const railW = Math.max(1.6, Math.min(3, k * 0.18));
+    const selEdge = sel && sel.kind === 'edge' ? sel.id : null;
+    if (k >= 6) {
+      ctx.strokeStyle = '#9aa7b3'; ctx.lineWidth = railW; ctx.beginPath();
+      for (const e in S.edges) {
+        const [A, B] = trackPath(e), L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
+        const nx = -(B.z - A.z) / L * 0.42, nz = (B.x - A.x) / L * 0.42;
+        for (const sgn of [1, -1]) { ctx.moveTo(sx(A.x + nx * sgn), sz(A.z + nz * sgn)); ctx.lineTo(sx(B.x + nx * sgn), sz(B.z + nz * sgn)); }
+      }
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = '#8b98a5'; ctx.lineWidth = Math.max(2, k * 0.9); ctx.beginPath();
+      for (const e in S.edges) { const [A, B] = trackPath(e); ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); }
+      ctx.stroke();
+    }
+    if (selEdge && S.edges[selEdge]) {
+      const [A, B] = trackPath(selEdge);
+      ctx.strokeStyle = 'rgba(242,184,75,.55)'; ctx.lineWidth = Math.max(5, k * 1.6); ctx.beginPath();
+      ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); ctx.stroke();
+    }
+    // joints
+    if (tool === 'track' || tool === 'select' || tool === 'erase') {
+      for (const n in S.nodes) {
+        const N = S.nodes[n], deg = C.edgesAt(S, n).length;
+        if (k < 2 && deg === 2 && n !== draft) continue;
+        ctx.fillStyle = n === draft ? '#f2b84b' : deg >= 3 ? '#5aa9ff' : deg <= 1 ? '#ff9f43' : '#56636f';
+        const r = n === draft ? 6 : deg === 2 ? 2.5 : 4;
+        ctx.beginPath(); ctx.arc(sx(N.x), sz(N.z), r, 0, 7); ctx.fill();
+        if (sel && sel.kind === 'node' && sel.id === n) { ctx.strokeStyle = '#f2b84b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx(N.x), sz(N.z), 9, 0, 7); ctx.stroke(); }
+      }
+    }
+    // stations
+    ctx.font = '600 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    for (const id in S.stations) {
+      const st = S.stations[id]; if (!S.edges[st.e]) continue;
+      const p = C.pointAt(S, st.e, st.d), v = C.dirVec(S, st.e, st.dir);
+      const rx = -v.z, rz = v.x; // right-hand side of travel
+      const off = 1.9, x = p.x + rx * off, z = p.z + rz * off;
+      const isSel = sel && sel.kind === 'station' && sel.id === id;
+      const sz2 = Math.max(7, k * 1.1);
+      // platform plate
+      ctx.save(); ctx.translate(sx(x), sz(z)); ctx.rotate(Math.atan2(v.z, v.x));
+      ctx.fillStyle = isSel ? '#ffcf70' : '#f2b84b';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-sz2 * 1.3, -sz2 * 0.55, sz2 * 2.6, sz2 * 1.1, 3) : ctx.rect(-sz2 * 1.3, -sz2 * 0.55, sz2 * 2.6, sz2 * 1.1); ctx.fill();
+      // arrow: the way trains must be heading when they stop
+      ctx.fillStyle = '#1a1405'; ctx.beginPath();
+      ctx.moveTo(sz2 * 0.95, 0); ctx.lineTo(-sz2 * 0.3, -sz2 * 0.42); ctx.lineTo(-sz2 * 0.3, sz2 * 0.42); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // stop line across the track
+      ctx.strokeStyle = '#f2b84b'; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(sx(p.x + rx * 1.1), sz(p.z + rz * 1.1)); ctx.lineTo(sx(p.x - rx * 1.1), sz(p.z - rz * 1.1)); ctx.stroke();
+      if (k >= 1.2 || isSel) {
+        let label = st.name; if (st.approach === 'backin') label += ' ↩'; else if (st.approach === 'reverse') label += ' ⇄';
+        if (st.onArrive === 'couple') label += ' ⛓'; else if (st.onArrive === 'uncouple') label += ' ✂';
+        const ly = sz(z) - sz2 * 0.7 - 2;
+        ctx.lineWidth = 3; ctx.strokeStyle = '#0e1318'; ctx.strokeText(label, sx(x), ly);
+        ctx.fillStyle = '#ffe2a8'; ctx.fillText(label, sx(x), ly);
+      }
+    }
+    // signals
+    for (const id in S.signals) {
+      const g = S.signals[id]; if (!S.edges[g.e]) continue;
+      const p = C.pointAt(S, g.e, g.d), isSel = sel && sel.kind === 'signal' && sel.id === id;
+      for (const dir of [1, -1]) {
+        if (!C.signalFaces(g, dir)) continue;
+        const v = C.dirVec(S, g.e, dir), rx = -v.z, rz = v.x;
+        const asp = C.signalAspect(S, id, dir, blocks, occ);
+        const col = asp === 'red' ? '#ff5d5d' : asp === 'yellow' ? '#ffd23f' : '#3ddc84';
+        const x = p.x + rx * 1.5, z = p.z + rz * 1.5, r = Math.max(4, k * 0.55);
+        ctx.fillStyle = '#0b0f13'; ctx.strokeStyle = isSel ? '#f2b84b' : '#56636f'; ctx.lineWidth = isSel ? 2.5 : 1.5;
+        ctx.beginPath();
+        if (C.sigType(g, dir) === 'chain') { ctx.moveTo(sx(x), sz(z) - r - 2); ctx.lineTo(sx(x) + r + 2, sz(z)); ctx.lineTo(sx(x), sz(z) + r + 2); ctx.lineTo(sx(x) - r - 2, sz(z)); ctx.closePath(); }
+        else ctx.arc(sx(x), sz(z), r + 1.5, 0, 7);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(sx(x), sz(z), r * 0.7, 0, 7); ctx.fill();
+        // little tick showing which way it faces
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(sx(x + v.x * 0.2), sz(z + v.z * 0.2)); ctx.lineTo(sx(x + v.x * (0.2 + 1.2)), sz(z + v.z * (0.2 + 1.2))); ctx.stroke();
+      }
+      ctx.strokeStyle = '#c9d4de'; ctx.lineWidth = 2; ctx.beginPath();
+      const v = C.dirVec(S, g.e, 1); ctx.moveTo(sx(p.x - v.z * 0.9), sz(p.z + v.x * 0.9)); ctx.lineTo(sx(p.x + v.z * 0.9), sz(p.z - v.x * 0.9)); ctx.stroke();
+    }
+    // trains
+    for (const id in S.consists) drawTrain(S.consists[id]);
+    // draft marker
+    if (draft && S.nodes[draft]) {
+      const N = S.nodes[draft]; ctx.strokeStyle = '#f2b84b'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(sx(N.x), sz(N.z), 14, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // scale bar
+    const blocksBar = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000].find(b => b * k >= 60) || 5000;
+    ctx.fillStyle = '#8b98a5'; ctx.font = '11px system-ui'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillRect(12, H - 16, blocksBar * k, 2); ctx.fillText(blocksBar + (blocksBar === 1 ? ' block' : ' blocks'), 12, H - 22);
+  }
+
+  function drawTrain(c) {
+    if (!c.path.length) return;
+    const k = view.k, col = colorOf(c), isSel = sel && sel.kind === 'train' && sel.id === c.id;
+    const width = Math.max(5, k * 1.5);
+    let x = 0;
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+    c.vehicles.forEach((v, i) => {
+      const L = C.vlen(v), a = x + (i ? C.GAP : 0), b = a + L; x = b;
+      const pts = [];
+      for (let t = a; t <= b + 1e-6; t += Math.max(0.5, Math.min(2, 3 / k))) pts.push(C.pointFromHead(S, c.path, Math.min(t, b)));
+      pts.push(C.pointFromHead(S, c.path, b));
+      const path = () => { ctx.beginPath(); pts.forEach((p, j) => (j ? ctx.lineTo(sx(p.x), sz(p.z)) : ctx.moveTo(sx(p.x), sz(p.z)))); };
+      if (isSel) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = width + 4; path(); ctx.stroke(); }
+      ctx.strokeStyle = v.type === 'car' ? shade(col, -0.35) : col; ctx.lineWidth = width; path(); ctx.stroke();
+      if (v.type !== 'car' && k >= 1.5) {
+        // cab marks: white bar at the front end (both ends for a double-cab)
+        const cab = (at, toward) => {
+          const p = C.pointFromHead(S, c.path, at), q = C.pointFromHead(S, c.path, toward);
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = width * 0.5; ctx.beginPath();
+          ctx.moveTo(sx(p.x), sz(p.z)); ctx.lineTo(sx(q.x), sz(q.z)); ctx.stroke();
+        };
+        cab(a + 0.15, a + Math.min(1.1, L / 3));
+        if (v.type === 'loco2') cab(b - 0.15, b - Math.min(1.1, L / 3));
+      }
+    });
+    // front arrow
+    const h = C.leadOf(c, true), hp = C.pointAt(S, h.e, h.d), hv = C.dirVec(S, h.e, h.dir);
+    const r = Math.max(5, k * 0.9);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(sx(hp.x) + hv.x * r * 1.6, sz(hp.z) + hv.z * r * 1.6);
+    ctx.lineTo(sx(hp.x) - hv.z * r * 0.7, sz(hp.z) + hv.x * r * 0.7);
+    ctx.lineTo(sx(hp.x) + hv.z * r * 0.7, sz(hp.z) - hv.x * r * 0.7);
+    ctx.closePath(); ctx.fill();
+    if (k >= 2 || isSel) {
+      const mid = C.pointFromHead(S, c.path, C.pathLength(c.path) / 2);
+      ctx.font = '600 12px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      let label = c.name;
+      if (c.run && c.run.waitingSignal && c.v < 0.05) label += ' ⛔';
+      else if (c.run && c.run.blocked && c.v < 0.05) label += ' ✋';
+      ctx.lineWidth = 3; ctx.strokeStyle = '#0e1318'; ctx.strokeText(label, sx(mid.x), sz(mid.z) - width);
+      ctx.fillStyle = '#ffffff'; ctx.fillText(label, sx(mid.x), sz(mid.z) - width);
+    }
+  }
+  function shade(hex, f) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    const m = v => Math.round(f < 0 ? v * (1 + f) : v + (255 - v) * f);
+    return 'rgb(' + m(r) + ',' + m(g) + ',' + m(b) + ')';
+  }
+
+  // ------------------------------------------------------------------ hit testing
+  function hit(px, py) {
+    const x = wx(px), z = wz(py), r = 16 / view.k;
+    // trains
+    let best = null;
+    for (const id in S.consists) {
+      const c = S.consists[id]; if (!c.path.length) continue;
+      const L = C.pathLength(c.path);
+      for (let t = 0; t <= L; t += 0.7) {
+        const p = C.pointFromHead(S, c.path, t), d = Math.hypot(p.x - x, p.z - z);
+        if (d < Math.max(r, 1.2) && (!best || d < best.d)) best = { kind: 'train', id, d };
+      }
+    }
+    if (best) return best;
+    for (const id in S.signals) {
+      const g = S.signals[id]; if (!S.edges[g.e]) continue;
+      const p = C.pointAt(S, g.e, g.d);
+      for (const dir of [1, -1]) {
+        const v = C.dirVec(S, g.e, dir), q = { x: p.x - v.z * 1.5, z: p.z + v.x * 1.5 };
+        for (const o of [p, q]) { const d = Math.hypot(o.x - x, o.z - z); if (d < r && (!best || d < best.d)) best = { kind: 'signal', id, d }; }
+      }
+    }
+    for (const id in S.stations) {
+      const st = S.stations[id]; if (!S.edges[st.e]) continue;
+      const p = C.pointAt(S, st.e, st.d), v = C.dirVec(S, st.e, st.dir);
+      for (const o of [p, { x: p.x - v.z * 1.9, z: p.z + v.x * 1.9 }]) {
+        const d = Math.hypot(o.x - x, o.z - z); if (d < r * 1.3 && (!best || d < best.d)) best = { kind: 'station', id, d };
+      }
+    }
+    if (best) return best;
+    for (const n in S.nodes) {
+      const N = S.nodes[n], d = Math.hypot(N.x - x, N.z - z);
+      if (d < r && (!best || d < best.d)) best = { kind: 'node', id: n, d };
+    }
+    if (best) return best;
+    const nt = C.nearestTrack(S, x, z);
+    if (nt && nt.dist < r) return { kind: 'edge', id: nt.e, d: nt.dist, at: nt.d };
+    return null;
+  }
+
+  // ------------------------------------------------------------------ tool actions
+  function tapTrack(px, py) {
+    const x = wx(px), z = wz(py), r = 16 / view.k;
+    let node = null;
+    for (const n in S.nodes) { const N = S.nodes[n], d = Math.hypot(N.x - x, N.z - z); if (d < r && (!node || d < node.d)) node = { id: n, d }; }
+    pushUndo();
+    let target;
+    if (node) target = node.id;
+    else {
+      const nt = C.nearestTrack(S, x, z);
+      if (nt && nt.dist < r * 0.8) target = C.splitEdge(S, nt.e, Math.round(nt.d));
+      else target = C.addNode(S, Math.round(x), Math.round(z));
+    }
+    if (!draft) { draft = target; setHint(); changed(); return; }
+    if (target === draft) { draft = null; setHint(); changed(); return; }
+    const before = C.edgesAt(S, draft).slice();
+    const e = C.addEdge(S, draft, target);
+    if (e && before.length === 1) {
+      const A = S.nodes[draft], B = S.nodes[target], o = S.edges[before[0]], O = S.nodes[o.a === draft ? o.b : o.a];
+      const v1 = { x: A.x - O.x, z: A.z - O.z }, v2 = { x: B.x - A.x, z: B.z - A.z };
+      const dot = (v1.x * v2.x + v1.z * v2.z) / (Math.hypot(v1.x, v1.z) * Math.hypot(v2.x, v2.z) || 1);
+      if (dot <= 0.5) toast('Sharp corner: trains can only turn up to 60° at a joint - add a point in between');
+    }
+    draft = target; setHint(); changed();
+  }
+
+  function onTrack(px, py) {
+    const nt = C.nearestTrack(S, wx(px), wz(py));
+    if (!nt || nt.dist > 20 / view.k) { toast('Tap on a track'); return null; }
+    return nt;
+  }
+
+  function tapStation(px, py) {
+    const nt = onTrack(px, py); if (!nt) return;
+    pushUndo();
+    const id = C.addStation(S, nt.e, nt.d);
+    changed(); select({ kind: 'station', id });
+  }
+  function tapSignal(px, py) {
+    const nt = onTrack(px, py); if (!nt) return;
+    pushUndo();
+    const id = C.addSignal(S, nt.e, nt.d);
+    changed(); select({ kind: 'signal', id });
+  }
+  function tapTrain(px, py) {
+    const nt = onTrack(px, py); if (!nt) return;
+    pushUndo();
+    const id = C.newConsist(S, null, [{ type: 'loco1' }, { type: 'car' }, { type: 'car' }]);
+    const c = S.consists[id];
+    for (const dir of [1, -1]) {
+      for (let n = 3; n >= 1; n--) {
+        const vs = c.vehicles.slice(0, n);
+        const p = C.layBack(S, nt.e, nt.d, dir, C.vehiclesLength(vs));
+        if (p && !overlaps(p, id)) { c.vehicles = vs; c.path = p; changed(); select({ kind: 'train', id }); return; }
+      }
+    }
+    delete S.consists[id]; undo.pop();
+    toast('No room for a train there');
+  }
+  /** would a train on this path overlap another train? */
+  function overlaps(path, skip) {
+    const tmp = { path };
+    const L = C.pathLength(path);
+    for (const k in S.consists) {
+      if (k === skip) continue;
+      const o = S.consists[k]; if (!o.path.length) continue;
+      const Lo = C.pathLength(o.path);
+      for (let t = 0; t <= L; t += 0.5) {
+        const p = C.pointFromHead(S, tmp.path, t);
+        for (let u = 0; u <= Lo; u += 0.5) { const q = C.pointFromHead(S, o.path, u); if (Math.hypot(p.x - q.x, p.z - q.z) < 0.6) return true; }
+      }
+    }
+    return false;
+  }
+  function tapErase(px, py) {
+    const h = hit(px, py); if (!h) return;
+    pushUndo();
+    if (h.kind === 'train') delete S.consists[h.id];
+    else if (h.kind === 'station') delete S.stations[h.id];
+    else if (h.kind === 'signal') delete S.signals[h.id];
+    else if (h.kind === 'node') { if (draft === h.id) draft = null; C.removeNode(S, h.id); }
+    else if (h.kind === 'edge') {
+      const E = S.edges[h.id]; C.removeEdge(S, h.id);
+      for (const n of [E.a, E.b]) if (!C.edgesAt(S, n).length) { delete S.nodes[n]; if (draft === n) draft = null; }
+    }
+    if (sel && !exists(sel)) closeSheet();
+    changed(); toast('Deleted');
+  }
+  function exists(s) {
+    return s && ({ train: S.consists, station: S.stations, signal: S.signals, edge: S.edges, node: S.nodes }[s.kind] || {})[s.id];
+  }
+
+  // ------------------------------------------------------------------ pointer input
+  const ptrs = new Map();
+  let gesture = null;
+  cv.addEventListener('pointerdown', e => {
+    cv.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+    if (ptrs.size === 1) {
+      let dragNode = null;
+      if (tool === 'select') { const h = hit(e.offsetX, e.offsetY); if (h && h.kind === 'node') dragNode = h.id; }
+      gesture = { type: 'tap', x: e.offsetX, y: e.offsetY, vx: view.x, vz: view.z, dragNode, t: Date.now() };
+    } else if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()];
+      gesture = { type: 'pinch', d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, k: view.k, vx: view.x, vz: view.z };
+    }
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+    if (!gesture) return;
+    if (gesture.type === 'pinch' && ptrs.size >= 2) {
+      const [a, b] = [...ptrs.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const k = Math.max(0.03, Math.min(60, gesture.k * d / Math.max(10, gesture.d)));
+      // keep the world point under the starting midpoint under the fingers
+      const wx0 = (gesture.mx - W / 2) / gesture.k + gesture.vx, wz0 = (gesture.my - H / 2) / gesture.k + gesture.vz;
+      view.k = k; view.x = wx0 - (mx - W / 2) / k; view.z = wz0 - (my - H / 2) / k; dirty = true;
+      return;
+    }
+    const dx = e.offsetX - gesture.x, dy = e.offsetY - gesture.y;
+    if (gesture.type === 'tap' && Math.hypot(dx, dy) > 8) {
+      if (gesture.dragNode) {
+        pushUndo();
+        gesture.type = 'node';
+      } else gesture.type = 'pan';
+    }
+    if (gesture.type === 'pan') { view.x = gesture.vx - dx / view.k; view.z = gesture.vz - dy / view.k; dirty = true; }
+    else if (gesture.type === 'node') {
+      const ok = C.moveNode(S, gesture.dragNode, Math.round(wx(e.offsetX)), Math.round(wz(e.offsetY)));
+      if (!ok && !gesture.warned) { gesture.warned = true; toast("Can't move track that has a train on it"); }
+      dirty = true;
+    }
+  });
+  const up = e => {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.delete(e.pointerId);
+    if (gesture && gesture.type === 'tap' && ptrs.size === 0) onTap(e.offsetX, e.offsetY);
+    if (gesture && gesture.type === 'node' && ptrs.size === 0) { changed(); if (gesture.warned) undo.pop(); }
+    if (ptrs.size === 0) gesture = null;
+    else if (gesture && gesture.type === 'pinch') gesture = { type: 'done' };
+  };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); if (!ptrs.size) gesture = null; });
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const f = Math.exp(-e.deltaY * 0.0015), k = Math.max(0.03, Math.min(60, view.k * f));
+    const x0 = wx(e.offsetX), z0 = wz(e.offsetY);
+    view.k = k; view.x = x0 - (e.offsetX - W / 2) / k; view.z = z0 - (e.offsetY - H / 2) / k; dirty = true;
+  }, { passive: false });
+
+  function onTap(px, py) {
+    if (tool === 'track') return tapTrack(px, py);
+    if (tool === 'station') return tapStation(px, py);
+    if (tool === 'signal') return tapSignal(px, py);
+    if (tool === 'train') return tapTrain(px, py);
+    if (tool === 'erase') return tapErase(px, py);
+    const h = hit(px, py);
+    if (h) select(h); else { sel = null; closeSheet(); dirty = true; }
+  }
+
+  // ------------------------------------------------------------------ sheet
+  const sheet = $('sheet'), body = $('sheetBody');
+  let sheetKind = null;
+  function openSheet(title, build, kind) {
+    $('sheetTitle').textContent = title; body.innerHTML = ''; build(body);
+    sheetKind = kind || null; sheet.classList.add('open');
+  }
+  function closeSheet() { sheet.classList.remove('open'); sheetKind = null; sel = null; dirty = true; }
+  $('sheetClose').onclick = closeSheet;
+  function refresh() { if (sel && exists(sel)) select(sel, true); else if (sheetKind === 'trains') openTrains(); }
+
+  // element helpers
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const k in attrs || {}) {
+      if (k === 'on') for (const ev in attrs.on) n.addEventListener(ev, attrs.on[ev]);
+      else if (k === 'cls') n.className = attrs[k];
+      else if (k in n && k !== 'list') n[k] = attrs[k]; else n.setAttribute(k, attrs[k]);
+    }
+    for (const c of kids.flat()) if (c != null) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    return n;
+  }
+  const btn = (text, fn, cls) => el('button', { cls: cls || '', on: { click: fn } }, text);
+  function seg(options, value, fn) {
+    return el('div', { cls: 'seg' }, options.map(([v, label]) => el('button', { cls: v === value ? 'on' : '', on: { click: () => fn(v) } }, label)));
+  }
+  const sec = t => el('div', { cls: 'sec' }, t);
+  const note = t => el('div', { cls: 'note' }, t);
+  function compass(v) {
+    const a = Math.atan2(v.x, -v.z) * 180 / Math.PI; // 0 = north (-z), 90 = east (+x)
+    const names = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
+    return names[(Math.round(((a % 360) + 360) % 360 / 45)) % 8];
+  }
+
+  /** keep a world point in the part of the map the sheet doesn't cover */
+  function ensureVisible(p) {
+    if (!p) return;
+    const py = sz(p.z), px = sx(p.x), maxY = H * 0.38;
+    if (py > maxY || py < 30) view.z = p.z - (maxY * 0.6 - H / 2) / view.k;
+    if (px < 20 || px > W - 20) view.x = p.x;
+    dirty = true;
+  }
+  function whereIs(h) {
+    try {
+      if (h.kind === 'train') { const c = S.consists[h.id]; return C.pointFromHead(S, c.path, C.pathLength(c.path) / 2); }
+      if (h.kind === 'station') return C.pointAt(S, S.stations[h.id].e, S.stations[h.id].d);
+      if (h.kind === 'signal') return C.pointAt(S, S.signals[h.id].e, S.signals[h.id].d);
+      if (h.kind === 'node') return S.nodes[h.id];
+      if (h.kind === 'edge') return C.pointAt(S, h.id, h.at || C.edgeLen(S, h.id) / 2);
+    } catch (e) { return null; }
+    return null;
+  }
+  function select(h, keepScroll) {
+    const top = body.scrollTop;
+    if (!keepScroll) ensureVisible(whereIs(h));
+    sel = { kind: h.kind, id: h.id }; dirty = true;
+    if (h.kind === 'train') trainSheet(h.id);
+    else if (h.kind === 'station') stationSheet(h.id);
+    else if (h.kind === 'signal') signalSheet(h.id);
+    else if (h.kind === 'edge') edgeSheet(h.id, h.at);
+    else if (h.kind === 'node') nodeSheet(h.id);
+    if (keepScroll) body.scrollTop = top;
+  }
+
+  // ---------------- station
+  function stationSheet(id) {
+    const st = S.stations[id];
+    openSheet('Station', b => {
+      b.append(sec('Name'), el('input', { type: 'text', value: st.name, on: { change: e => renameStation(id, e.target.value) } }));
+      const v = C.dirVec(S, st.e, st.dir);
+      b.append(sec('Direction'),
+        el('div', { cls: 'row' }, el('div', { cls: 'grow' }, 'Trains stop here heading ' + compass(v)), btn('⇄ Flip', () => { pushUndo(); st.dir = -st.dir; changed(); refresh(); })),
+        note('The arrow is the way a train must be travelling when it stops. Its leading end stops on the line. A train backing in stops with its back end on the line.'));
+      b.append(sec('How trains may arrive'),
+        seg([['forward', 'Forwards only'], ['reverse', 'Either way'], ['backin', 'Must back in']], st.approach, val => { pushUndo(); st.approach = val; changed(); refresh(); }),
+        note({ forward: 'Like normal Create: single-cab trains must arrive front first.', reverse: 'Single-cab trains may back in if that\'s the shorter way (/railsounds yard reverse).', backin: 'Trains with a schedule always back in here (/railsounds yard backin). They reverse the whole trip from their last stop.' }[st.approach]));
+      b.append(sec('When a train stops here'),
+        seg([['none', 'Nothing'], ['couple', 'Couple up'], ['uncouple', 'Uncouple']], st.onArrive, val => { pushUndo(); st.onArrive = val; changed(); refresh(); }));
+      if (st.onArrive === 'uncouple') {
+        b.append(el('div', { cls: 'row' }, 'Cars to drop', el('input', { type: 'number', min: 0, value: st.count || 0, on: { change: e => { st.count = Math.max(0, parseInt(e.target.value) || 0); changed(); } } }), el('span', { cls: 'note' }, '0 = all cars')));
+      }
+      b.append(note(st.onArrive === 'none' ? 'Every train that stops here can still couple/uncouple using its own schedule conditions.' :
+        'Every train that stops here does this (like /railsounds yard ' + (st.onArrive === 'couple' ? 'couple' : 'uncouple ' + (st.count || 0)) + '). Use schedule conditions instead if only some trains should.'));
+      b.append(el('div', { cls: 'row' },
+        btn('Put a new train here', () => {
+          pushUndo();
+          const cid = C.newConsist(S, null, [{ type: 'loco1' }, { type: 'car' }]);
+          if (C.placeAtStation(S, cid, id) && !overlaps(S.consists[cid].path, cid)) { changed(); select({ kind: 'train', id: cid }); }
+          else { delete S.consists[cid]; undo.pop(); toast('No room behind this station'); }
+        }),
+        btn('Delete station', () => { pushUndo(); delete S.stations[id]; changed(); closeSheet(); }, 'danger')));
+    });
+  }
+  function renameStation(id, name) {
+    name = name.trim(); if (!name) return refresh();
+    pushUndo();
+    const old = S.stations[id].name;
+    S.stations[id].name = name;
+    let n = 0;
+    for (const k in S.consists) for (const en of S.consists[k].schedule) if (en.station.trim().toLowerCase() === old.trim().toLowerCase()) { en.station = name; n++; }
+    if (n) toast('Updated ' + n + ' schedule stop' + (n > 1 ? 's' : ''));
+    changed();
+  }
+
+  // ---------------- signal
+  function signalSheet(id) {
+    const g = S.signals[id];
+    openSheet('Signal', b => {
+      const vf = C.dirVec(S, g.e, 1), vb = C.dirVec(S, g.e, -1);
+      b.append(sec('Which way it faces'),
+        seg([['both', 'Both ways'], ['one', 'One way']], g.heads === 'both' ? 'both' : 'one', v => { pushUndo(); g.heads = v === 'both' ? 'both' : 'fwd'; changed(); refresh(); }));
+      if (g.heads !== 'both') b.append(el('div', { cls: 'row' }, el('div', { cls: 'grow' }, 'Controls trains heading ' + compass(g.heads === 'fwd' ? vf : vb)), btn('⇄ Flip', () => { pushUndo(); g.heads = g.heads === 'fwd' ? 'back' : 'fwd'; changed(); refresh(); })));
+      for (const dir of [1, -1]) {
+        if (!C.signalFaces(g, dir)) continue;
+        b.append(sec('Trains heading ' + compass(dir > 0 ? vf : vb)),
+          seg([['normal', 'Normal'], ['chain', 'Chain']], C.sigType(g, dir), v => { pushUndo(); if (dir > 0) g.type = v; else g.typeB = v; changed(); refresh(); }));
+      }
+      b.append(note('Signals split the track into blocks. A train waits at a normal signal until the block after it is empty. A chain signal also waits until the block after the next signal is clear (and through any more chain signals), so trains don\'t stop in junctions. A one-way signal still splits blocks both ways, like in Create.'));
+      b.append(el('div', { cls: 'row' }, btn('Delete signal', () => { pushUndo(); delete S.signals[id]; changed(); closeSheet(); }, 'danger')));
+    });
+  }
+
+  // ---------------- track
+  function edgeSheet(id, at) {
+    openSheet('Track', b => {
+      b.append(el('div', { cls: 'status' }, 'Length: ' + C.edgeLen(S, id).toFixed(1) + ' blocks'));
+      b.append(el('div', { cls: 'row' },
+        btn('Add station here', () => { pushUndo(); const k = C.addStation(S, id, at || C.edgeLen(S, id) / 2); changed(); select({ kind: 'station', id: k }); }),
+        btn('Add signal here', () => { pushUndo(); const k = C.addSignal(S, id, at || C.edgeLen(S, id) / 2); changed(); select({ kind: 'signal', id: k }); }),
+        btn('Add joint here', () => { pushUndo(); const n = C.splitEdge(S, id, at || C.edgeLen(S, id) / 2); changed(); select({ kind: 'node', id: n }); })));
+      b.append(el('div', { cls: 'row' }, btn('Delete track', () => {
+        pushUndo(); const E = S.edges[id]; C.removeEdge(S, id);
+        for (const n of [E.a, E.b]) if (!C.edgesAt(S, n).length) delete S.nodes[n];
+        changed(); closeSheet();
+      }, 'danger')));
+      b.append(note('Deleting track also removes stations, signals and trains on it.'));
+    });
+  }
+  function nodeSheet(id) {
+    const n = S.nodes[id], deg = C.edgesAt(S, id).length;
+    openSheet(deg >= 3 ? 'Junction' : deg <= 1 ? 'Track end' : 'Track joint', b => {
+      b.append(el('div', { cls: 'status' }, 'x ' + n.x + ', z ' + n.z + ' · ' + deg + ' track' + (deg === 1 ? '' : 's')));
+      b.append(el('div', { cls: 'row' }, 'x', el('input', { type: 'number', value: n.x, on: { change: e => move(+e.target.value, n.z) } }), 'z', el('input', { type: 'number', value: n.z, on: { change: e => move(n.x, +e.target.value) } })));
+      b.append(el('div', { cls: 'row' },
+        btn('Draw track from here', () => { setTool('track'); draft = id; setHint(); dirty = true; closeSheet(); }),
+        btn('Delete', () => { pushUndo(); C.removeNode(S, id); changed(); closeSheet(); }, 'danger')));
+      b.append(note('Trains can only turn up to 60° where tracks meet. At a junction trains take the straightest way unless their route says otherwise.'));
+    });
+    function move(x, z) { pushUndo(); if (!C.moveNode(S, id, x, z)) { undo.pop(); toast("Can't move track that has a train on it"); } changed(); refresh(); }
+  }
+
+  // ---------------- train
+  const VEH = { loco1: ['🚂', 'Loco'], loco2: ['🚂', 'Loco ⇄'], car: ['▭', 'Car'] };
+  function trainSheet(id) {
+    const c = S.consists[id];
+    openSheet(c.name, b => {
+      b.append(el('div', { cls: 'row' }, el('input', { type: 'text', cls: 'grow', value: c.name, on: { change: e => { const v = e.target.value.trim(); if (v) { pushUndo(); c.name = v; changed(); $('sheetTitle').textContent = v; } } } })));
+      b.append(el('div', { cls: 'status', id: 'liveStatus' }, statusText(c)));
+      // vehicles, front first, with a cut button between each
+      b.append(sec('Vehicles (front first)'));
+      const strip = el('div', { cls: 'strip' }, el('span', { cls: 'frontTag' }, 'FRONT'));
+      c.vehicles.forEach((v, i) => {
+        if (i) strip.append(el('button', { cls: 'cut', title: 'Uncouple here', on: { click: () => { pushUndo(); const r = C.splitConsist(S, id, i); toast(r.msg); if (!r.ok) undo.pop(); changed(); refresh(); } } }, '✂'));
+        const [ic, label] = VEH[v.type] || VEH.car;
+        strip.append(el('div', { cls: 'veh' }, el('div', { cls: 'ic' }, ic), el('div', { cls: 't' }, label + (v.len ? ' ' + v.len + 'b' : '')),
+          el('button', { cls: 'x', title: 'Remove', on: { click: () => editVehicles(id, vs => vs.splice(i, 1)) } }, '✕')));
+      });
+      b.append(strip);
+      b.append(el('div', { cls: 'row' },
+        btn('+ Car', () => editVehicles(id, vs => vs.push({ type: 'car' }))),
+        btn('+ Loco', () => editVehicles(id, vs => vs.push({ type: 'loco1' }))),
+        btn('+ Loco (2 cabs)', () => editVehicles(id, vs => vs.push({ type: 'loco2' })))));
+      b.append(note('"Loco" has one cab facing the front: it can only drive forwards. "Loco ⇄" has cabs both ways and can reverse. Tap ✂ to uncouple between two vehicles.'));
+      // drive
+      b.append(sec('Drive / shunt'));
+      const hold = (fwd) => {
+        let t = null;
+        const go = () => { const r = C.nudge(S, id, fwd, 0.5); if (r.keeper && r.keeper !== id) { stop(); select({ kind: 'train', id: r.keeper }); toast(r.msg); return; } if (!r.ok) { stop(); toast(r.msg); } else if (/coupled/.test(r.msg)) { stop(); toast(r.msg); refresh(); } dirty = true; };
+        const stop = () => { clearInterval(t); t = null; save(true); };
+        return el('button', { on: {
+          pointerdown: e => { e.preventDefault(); if (c.run) { toast('Stop the schedule first'); return; } pushUndo(); go(); t = setInterval(go, 60); },
+          pointerup: stop, pointerleave: stop, pointercancel: stop } }, fwd ? 'Forward ▶' : '◀ Back');
+      };
+      b.append(el('div', { cls: 'row' }, hold(false), hold(true),
+        btn('⛓ Couple', () => { pushUndo(); const r = C.couple(S, id); toast(r.msg); if (!r.ok) undo.pop(); changed(); if (r.ok) select({ kind: 'train', id: r.keeper }); }),
+        btn('⇄ Turn round', () => { pushUndo(); C.flipConsist(S, id); changed(); refresh(); })));
+      b.append(note('Hold to drive. With auto-couple on (menu), easing up to cars that face the same way couples them, like the mod. "Turn round" re-places the train as if it had been built facing the other way.'));
+      // schedule
+      b.append(sec('Schedule'));
+      if (!c.schedule.length) b.append(note('No schedule yet. Add stops, then press Play.'));
+      const names = Object.values(S.stations).map(s => s.name);
+      c.schedule.forEach((en, i) => b.append(entryCard(c, en, i, names)));
+      b.append(el('div', { cls: 'row' },
+        btn('+ Add stop', () => { pushUndo(); c.schedule.push({ type: 'travel', station: names[0] || '', conds: [{ type: 'wait', secs: 5 }] }); changed(); refresh(); }),
+        el('label', { cls: 'check' }, el('input', { type: 'checkbox', checked: c.cyclic, on: { change: e => { c.cyclic = e.target.checked; changed(); } } }), 'Loop')));
+      b.append(el('div', { cls: 'row' },
+        el('label', { cls: 'check' }, el('input', { type: 'checkbox', checked: !c.hold, on: { change: e => { c.hold = !e.target.checked; if (c.hold && c.run) { c.run = null; c.v = 0; c.status = 'Stopped'; } changed(); refresh(); } } }), 'Run schedule when playing')));
+      b.append(el('div', { cls: 'row' },
+        c.run ? btn('■ Stop schedule', () => { c.run = null; c.v = 0; c.status = 'Stopped'; c.hold = true; changed(); refresh(); })
+          : btn('▶ Start schedule now', () => { c.hold = false; if (C.startRun(S, id)) { if (!playing) togglePlay(); } else toast(c.status); changed(); refresh(); }, 'primary'),
+        btn('Delete train', () => { pushUndo(); delete S.consists[id]; changed(); closeSheet(); }, 'danger')));
+    });
+  }
+  function statusText(c) { return c.status || 'Parked'; }
+  function editVehicles(id, fn) {
+    const c = S.consists[id]; pushUndo();
+    const before = c.vehicles.slice(), beforePath = c.path;
+    fn(c.vehicles);
+    if (!c.vehicles.length) { delete S.consists[id]; changed(); closeSheet(); toast('Train removed'); return; }
+    if (!C.relayout(S, id) || overlaps(c.path, id)) { c.vehicles = before; c.path = beforePath; undo.pop(); toast('No room on the track behind it'); }
+    changed(); refresh();
+  }
+  function entryCard(c, en, i, names) {
+    const sel1 = el('select', { on: { change: e => { pushUndo(); en.type = e.target.value; changed(); refresh(); } } },
+      el('option', { value: 'travel', selected: en.type === 'travel' }, 'Travel to'),
+      el('option', { value: 'backin', selected: en.type === 'backin' }, 'Back into'));
+    const opts = names.slice(); if (en.station && !names.includes(en.station)) opts.push(en.station);
+    const sel2 = el('select', { on: { change: e => { pushUndo(); en.station = e.target.value; changed(); } } },
+      opts.length ? opts.map(n => el('option', { value: n, selected: n === en.station }, n)) : [el('option', { value: '' }, '(no stations yet)')]);
+    const conds = el('div', { cls: 'row wrap' });
+    (en.conds || []).forEach((k, j) => {
+      const rm = btn('✕', () => { pushUndo(); en.conds.splice(j, 1); changed(); refresh(); });
+      let chip;
+      if (k.type === 'wait') chip = el('span', { cls: 'chip' }, 'Wait', el('input', { type: 'number', min: 0, value: k.secs || 0, on: { change: e => { k.secs = Math.max(0, +e.target.value || 0); changed(); } } }), 's', rm);
+      else if (k.type === 'couple') chip = el('span', { cls: 'chip' }, '⛓ Couple up', rm);
+      else chip = el('span', { cls: 'chip' }, '✂ Uncouple', el('input', { type: 'number', min: 0, value: k.n || 0, on: { change: e => { k.n = Math.max(0, parseInt(e.target.value) || 0); changed(); } } }), rm);
+      conds.append(chip);
+    });
+    const add = el('select', { on: { change: e => {
+      const v = e.target.value; if (!v) return; pushUndo();
+      en.conds = en.conds || [];
+      en.conds.push(v === 'wait' ? { type: 'wait', secs: 5 } : v === 'couple' ? { type: 'couple' } : { type: 'uncouple', n: 0 });
+      changed(); refresh();
+    } } }, el('option', { value: '' }, '+ condition…'), el('option', { value: 'wait' }, 'Wait (seconds)'), el('option', { value: 'couple' }, 'Couple up'), el('option', { value: 'uncouple' }, 'Uncouple cars (0 = all)'));
+    add.style.width = 'auto';
+    const current = c.run && c.run.entry === i;
+    return el('div', { cls: 'card', style: current ? 'border-color: var(--accent)' : '' },
+      el('div', { cls: 'row' }, el('b', {}, (i + 1) + '.'), sel1, el('div', { cls: 'grow' }, sel2),
+        i ? btn('↑', () => { pushUndo(); const t = c.schedule[i - 1]; c.schedule[i - 1] = en; c.schedule[i] = t; changed(); refresh(); }) : null,
+        btn('✕', () => { pushUndo(); c.schedule.splice(i, 1); changed(); refresh(); })),
+      conds, el('div', { cls: 'row' }, add),
+      en.type === 'backin' ? note('Backs in for this whole trip (single-cab locos too). Steps 1→2 like a wye or lead track help it line up.') : null);
+  }
+
+  // ---------------- trains list / log / menu
+  function openTrains() {
+    openSheet('Trains', b => {
+      const ids = Object.keys(S.consists);
+      if (!ids.length) b.append(note('No trains yet. Pick the Train tool and tap a track.'));
+      const list = el('div', { cls: 'list' });
+      for (const id of ids) {
+        const c = S.consists[id];
+        list.append(el('div', { cls: 'item', on: { click: () => { const m = C.pointFromHead(S, c.path, C.pathLength(c.path) / 2); view.x = m.x; view.k = Math.max(view.k, 4); select({ kind: 'train', id }); } } },
+          el('span', { cls: 'sw', style: 'background:' + colorOf(c) }),
+          el('div', { cls: 'main' }, el('div', {}, c.name), el('div', { cls: 'sub', 'data-train': id }, c.vehicles.length + ' vehicles · ' + (c.status || 'Parked'))), el('span', { cls: 'note' }, '›')));
+      }
+      b.append(list);
+    }, 'trains');
+  }
+  function openLog() {
+    openSheet('Event log', b => {
+      if (!S.log.length) b.append(note('Nothing has happened yet. Press Play.'));
+      b.append(el('div', { cls: 'log' }, S.log.slice(0, 150).map(x => el('div', {}, el('span', {}, fmtTime(x.t)), x.msg))));
+    }, 'log');
+  }
+  function fmtTime(t) { const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); }
+
+  function openMenu() {
+    openSheet('Menu', b => {
+      // Track Map import
+      b.append(sec('Import from Create Track Map'));
+      let saved = ''; try { saved = localStorage.getItem(KEY + '.mapurl') || ''; } catch (e) { /* ignore */ }
+      const url = el('input', { type: 'url', placeholder: 'e.g. 192.168.1.20:3876', value: saved });
+      const out = el('div', {});
+      menuRefs = { url, out };
+      b.append(url, el('div', { cls: 'row' }, btn('Connect', () => fetchMap(url.value, out), 'primary')), out,
+        note('Open the map in your browser on the PC running Minecraft (the address the mod prints, usually http://<PC IP>:3876). Your phone must be on the same Wi-Fi. You can also share the link to this app from your browser.'));
+      // layouts
+      b.append(sec('Layout'));
+      b.append(el('div', { cls: 'row' },
+        btn('Load example', () => { if (confirmLose()) { pushUndo(); stopSim(); S = window.buildExample(C); changed(); fit(); closeSheet(); toast('Example loaded - press Play'); } }),
+        btn('New empty', () => { if (confirmLose()) { pushUndo(); stopSim(); S = C.newState(); changed(); fit(); closeSheet(); } }),
+        btn('Fit to screen', () => { fit(); closeSheet(); })));
+      b.append(el('div', { cls: 'row' }, btn('Export / share', exportLayout), btn('Import file / text', importLayout)));
+      // settings
+      b.append(sec('Settings'));
+      const num = (label, key, min, max, stepv) => el('div', { cls: 'row' }, el('div', { cls: 'grow' }, label),
+        el('input', { type: 'number', min, max, step: stepv, value: S.settings[key], on: { change: e => { const v = Math.max(min, Math.min(max, +e.target.value || min)); S.settings[key] = v; changed(); } } }));
+      b.append(num('Top speed (blocks/s)', 'maxSpeed', 1, 100, 1), num('Acceleration (blocks/s²)', 'accel', 0.2, 20, 0.1), num('Braking (blocks/s²)', 'decel', 0.2, 20, 0.1));
+      b.append(note('Create defaults: top speed 28, acceleration 3 (Create brakes with the same value).'));
+      b.append(el('label', { cls: 'check' }, el('input', { type: 'checkbox', checked: S.settings.autoCouple !== false, on: { change: e => { S.settings.autoCouple = e.target.checked; changed(); } } }), 'Auto-couple when driving into cars (J in game)'));
+      b.append(el('label', { cls: 'check' }, el('input', { type: 'checkbox', checked: S.settings.grid !== false, on: { change: e => { S.settings.grid = e.target.checked; changed(); } } }), 'Show grid'));
+      // help
+      b.append(sec('How it works'));
+      b.append(el('details', {}, el('summary', {}, 'Rules (same as the game)'), el('ul', {},
+        ['Every car in a train faces the way the train was built. The white arrow is the train\'s front.',
+          'Trains couple back-to-front only: the back of one train to the front of the other. Front-to-front can\'t couple - turn one round with a wye or loop.',
+          'A single-cab loco only drives forwards. A loco with cabs both ways (Loco ⇄) can drive either way.',
+          '"Back into" a station (or a station set to Must back in) makes even a single-cab train reverse for that whole trip, starting from its last stop. Create can\'t change direction mid-trip.',
+          'Stations only take trains travelling the way the arrow points. The leading end stops on the line.',
+          'Signals split track into blocks. Red = block taken. Chain signals (diamonds) look past the next signal too; yellow = the way ahead is blocked further on.',
+          'Safety net (the mod): a train brakes for anything on the track ahead, and eases up to parked cars so it can couple.',
+          'Couple up / Uncouple conditions run when the train has stopped. Uncouple N drops N cars off the end away from the loco; 0 = all cars.',
+          'Route choice copies Create: it avoids track with parked trains, busy blocks behind signals and other stations, and re-routes every few seconds while held at a chain signal.'].map(t => el('li', {}, t)))));
+      b.append(el('details', {}, el('summary', {}, 'Controls'), el('ul', {},
+        ['Track: tap to start, tap again for each bend, tap the last point to finish. Tap onto existing track to join it.',
+          'Pinch to zoom, drag to pan. In Select you can drag a joint to move it.',
+          'Tap a train to add cars, drive it, uncouple (✂) or give it a schedule.',
+          'Play runs all scheduled trains. ⟲ puts everything back to how it was before you pressed Play.'].map(t => el('li', {}, t)))));
+    }, 'menu');
+  }
+  let menuRefs = null;
+  function confirmLose() { return !Object.keys(S.nodes).length || window.confirm('Replace the current layout? (Undo can bring it back)'); }
+
+  function exportLayout() {
+    const json = C.serialize(S);
+    if (window.AndroidBridge && window.AndroidBridge.share) { try { window.AndroidBridge.share(json, 'rail-layout.json'); return; } catch (e) { /* fall back */ } }
+    openSheet('Export', b => {
+      const ta = el('textarea', { readOnly: true }); ta.value = json;
+      b.append(note('Copy this text and keep it somewhere (notes, Drive...). Paste it back with Import.'), ta,
+        el('div', { cls: 'row' }, btn('Copy', () => { ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* ignore */ } if (!ok && navigator.clipboard) navigator.clipboard.writeText(json).then(() => toast('Copied'), () => toast('Select the text and copy it')); else toast(ok ? 'Copied' : 'Select the text and copy it'); }),
+          btn('Download', () => { const a = el('a', { href: URL.createObjectURL(new Blob([json], { type: 'application/json' })), download: 'rail-layout.json' }); document.body.appendChild(a); a.click(); a.remove(); })));
+    });
+  }
+  function importLayout() {
+    openSheet('Import', b => {
+      const ta = el('textarea', { placeholder: 'Paste layout text here' });
+      const file = el('input', { type: 'file', accept: '.json,application/json,text/plain', on: { change: e => { const f = e.target.files[0]; if (f) f.text().then(t => { ta.value = t; }); } } });
+      b.append(file, ta, el('div', { cls: 'row' }, btn('Load', () => {
+        try { const s2 = C.deserialize(ta.value); pushUndo(); stopSim(); S = s2; changed(); fit(); closeSheet(); toast('Layout loaded'); } catch (e) { toast("That isn't a layout"); }
+      }, 'primary')));
+    });
+  }
+
+  // ---------------- Create Track Map
+  function httpGet(url) {
+    if (window.AndroidBridge && window.AndroidBridge.httpGet) {
+      return new Promise((res, rej) => {
+        const id = 'r' + Math.random().toString(36).slice(2);
+        window.__http = window.__http || {};
+        window.__http[id] = (ok, text) => { delete window.__http[id]; ok ? res(text) : rej(new Error(text)); };
+        window.AndroidBridge.httpGet(url, id);
+      });
+    }
+    return fetch(url, { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+  }
+  window.__httpDone = (id, ok, text) => { const f = window.__http && window.__http[id]; if (f) f(ok, text); };
+
+  function fetchMap(raw, out) {
+    const base = Imp.normUrl(raw);
+    if (!base) { toast('Enter the map address'); return; }
+    try { localStorage.setItem(KEY + '.mapurl', raw.trim()); } catch (e) { /* ignore */ }
+    out.innerHTML = ''; out.append(el('div', { cls: 'status' }, 'Connecting to ' + base + ' …'));
+    const get = p => httpGet(base + p).then(t => JSON.parse(t));
+    Promise.all([get('/api/network'), get('/api/signals').catch(() => ({ signals: [] })), get('/api/trains').catch(() => ({ trains: [] }))])
+      .then(([net, sigs, trains]) => {
+        const dims = Imp.dimensions(net);
+        out.innerHTML = '';
+        if (!dims.length) { out.append(el('div', { cls: 'status' }, 'Connected, but the map has no track yet.')); return; }
+        const pick = el('select', {}, dims.map(d => el('option', { value: d.id }, d.id.replace('minecraft:', '') + ' (' + d.tracks + ' pieces)')));
+        const withTrains = el('input', { type: 'checkbox', checked: true });
+        out.append(el('div', { cls: 'status' }, 'Connected: ' + (net.tracks || []).length + ' track pieces, ' + (net.stations || []).length + ' stations, ' + (sigs.signals || []).length + ' signals, ' + (trains.trains || []).length + ' trains.'),
+          el('div', { cls: 'row' }, el('div', { cls: 'grow' }, pick)),
+          el('label', { cls: 'check' }, withTrains, 'Bring the trains in too (first car of each becomes the loco - edit them after)'),
+          el('div', { cls: 'row' }, btn('Import this map', () => {
+            try {
+              const s2 = Imp.build(C, net, sigs, withTrains.checked ? trains : { trains: [] }, pick.value);
+              pushUndo(); stopSim(); S = s2; changed(); fit(); closeSheet();
+              const i = S.importInfo; toast('Imported ' + Object.keys(S.edges).length + ' track pieces' + (i.skipped ? ' (' + i.skipped + ' things skipped)' : ''));
+            } catch (e) { toast('Import failed: ' + e.message); }
+          }, 'primary')));
+      })
+      .catch(e => {
+        out.innerHTML = '';
+        out.append(el('div', { cls: 'status' }, "Couldn't reach the map (" + (e.message || e) + '). Check: Minecraft is running with the world loaded, the address and port are right (open it in your phone browser to test), and both are on the same Wi-Fi. A PC firewall may need to allow port 3876.'));
+      });
+  }
+  // links shared into the app from the browser
+  window.onSharedText = text => {
+    const m = String(text || '').match(/https?:\/\/[^\s]+/) || String(text || '').match(/\b\d{1,3}(\.\d{1,3}){3}(:\d+)?\b/);
+    if (!m) { toast('Shared text has no link in it'); return; }
+    try { localStorage.setItem(KEY + '.mapurl', m[0]); } catch (e) { /* ignore */ }
+    openMenu();
+    if (menuRefs) { menuRefs.url.value = m[0]; fetchMap(m[0], menuRefs.out); }
+  };
+
+  // ------------------------------------------------------------------ simulation
+  function togglePlay() {
+    playing = !playing;
+    if (playing) {
+      if (!snapshot) { snapshot = C.serialize(S); S.log = []; S.time = 0; }
+      for (const id in S.consists) { const c = S.consists[id]; if (!c.run && !c.hold && c.schedule.length) C.startRun(S, id); }
+      acc = 0; last = performance.now();
+    } else save(true);
+    updateHeader();
+  }
+  function stopSim() { playing = false; snapshot = null; updateHeader(); }
+  function resetSim() {
+    if (!snapshot) return;
+    try { S = C.deserialize(snapshot); } catch (e) { /* keep current */ }
+    snapshot = null; playing = false; sel = null; closeSheet(); updateHeader(); changed(); toast('Back to before Play');
+  }
+  function updateHeader() {
+    const p = $('play'); p.textContent = playing ? '❚❚ Pause' : '▶ Play'; p.classList.toggle('on', playing);
+    $('reset').hidden = !snapshot;
+    $('clock').textContent = snapshot ? fmtTime(S.time) : '';
+    $('speed').textContent = speed + '×';
+  }
+  $('play').onclick = togglePlay;
+  $('reset').onclick = resetSim;
+  $('speed').onclick = () => { speed = speed >= 8 ? 1 : speed * 2; updateHeader(); };
+  $('undo').onclick = () => {
+    if (!undo.length) { toast('Nothing to undo'); return; }
+    try { S = C.deserialize(undo.pop()); } catch (e) { return; }
+    draft = null; if (sel && !exists(sel)) closeSheet(); else refresh(); changed(); setHint();
+  };
+  $('trainsBtn').onclick = openTrains;
+  $('menuBtn').onclick = openMenu;
+  $('logBtn').onclick = openLog;
+  $('fit').onclick = fit;
+  function setTool(t) {
+    tool = t; draft = null;
+    for (const b of document.querySelectorAll('#tools button')) b.classList.toggle('on', b.dataset.tool === t);
+    setHint(); dirty = true;
+  }
+  for (const b of document.querySelectorAll('#tools button')) b.onclick = () => setTool(b.dataset.tool);
+
+  let last = performance.now(), liveT = 0;
+  function frame(now) {
+    const dt = Math.min(0.25, (now - last) / 1000); last = now;
+    if (playing) {
+      acc += dt * speed;
+      let n = 0;
+      while (acc >= 0.05 && n++ < 80) { C.step(S, 0.05); acc -= 0.05; }
+      if (n >= 80) acc = 0;
+      dirty = true;
+      liveT += dt;
+      if (liveT > 0.4) {
+        liveT = 0;
+        $('clock').textContent = fmtTime(S.time);
+        if (sel && sel.kind === 'train') {
+          if (!S.consists[sel.id]) { closeSheet(); }
+          else {
+            const ls = document.getElementById('liveStatus'); if (ls) ls.textContent = statusText(S.consists[sel.id]);
+            if (!gesture) { const p = whereIs(sel), px = sx(p.x), py = sz(p.z); if (px < 0 || px > W || py < 0 || py > H * 0.42) ensureVisible(p); }
+          }
+        }
+        if (sheetKind === 'trains') for (const d of body.querySelectorAll('[data-train]')) { const c = S.consists[d.dataset.train]; if (c) d.textContent = c.vehicles.length + ' vehicles · ' + (c.status || 'Parked'); }
+      }
+    }
+    if (needSave && Date.now() - lastSave > 1500 && !playing) save(true);
+    if (dirty) { dirty = false; try { draw(); } catch (e) { console.error(e); } }
+    requestAnimationFrame(frame);
+  }
+
+  // ------------------------------------------------------------------ start
+  window.addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
+  resize();
+  if (!load()) S = window.buildExample(C);
+  fit(); setHint(); updateHeader();
+  requestAnimationFrame(frame);
+  // a link shared into the app before the page was ready
+  try { const t = window.AndroidBridge && window.AndroidBridge.takeSharedText && window.AndroidBridge.takeSharedText(); if (t) window.onSharedText(t); } catch (e) { /* ignore */ }
+  window.RailPlanner = { saveNow: () => save(true), back: () => { if (sheet.classList.contains('open')) { closeSheet(); return true; } if (draft) { draft = null; setHint(); dirty = true; return true; } return false; }, get state() { return S; }, togglePlay, fetchMap, openMenu, select, view };
+})();
+
+</script>
+</body>
+</html>

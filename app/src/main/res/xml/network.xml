@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the Track Map server on your PC is plain http on your Wi-Fi -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
