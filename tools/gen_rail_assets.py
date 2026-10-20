@@ -170,13 +170,21 @@ def make_textures():
     disc(dark, 6, 6, 1.5, (70, 70, 76, 255))
     tex("lamp_dark", dark)
 
-    # signal backplate: black disc look with white rim pinstripe
+    # Signal backplate. The rim used to be a circle at radius 7.0-7.8, which sits right on the
+    # edge of the texture - UV'd onto the 4x5 head it got squashed into a clipped ellipse and
+    # read as a broken ring. A rim inset from the edge with the corners knocked off keeps its
+    # shape whatever aspect it lands on, and that is what a real backplate looks like: a dark
+    # plate a bit bigger than the lamp, with a pale outline.
     back = Image.new("RGBA", (16, 16), BLACK)
+    rim = (210, 210, 210, 255)
     for y in range(16):
         for x in range(16):
-            d = ((x + 0.5 - 8) ** 2 + (y + 0.5 - 8) ** 2) ** 0.5
-            if 7.0 <= d < 7.8:
-                back.putpixel((x, y), (210, 210, 210, 255))
+            edge = min(x, y, 15 - x, 15 - y)
+            corner = (x in (1, 14) and y in (1, 14))
+            if edge == 1 and not corner:
+                back.putpixel((x, y), rim)
+    for x, y in ((2, 1), (13, 1), (2, 14), (13, 14), (1, 2), (14, 2), (1, 13), (14, 13)):
+        back.putpixel((x, y), rim)
     tex("signal_backplate", back)
 
     # mile post: white face, black numbers stacked
@@ -701,9 +709,11 @@ def gen_crossing_signal():
             el((1.5, 5.5, 5.5), (4.5, 8.5, 6), {"all": "black", "north": ("right", (0, 0, 16, 16))}, shade=False),
             el((1.5, 8.5, 4.5), (4.5, 9, 6), {"all": "black"}),
             # crossbuck boards at +-45 degrees
-            el((0, 12.75, 6.5), (16, 14.25, 7), {"all": "pole", "north": ("boards", (0, 0, 16, 3))},
+            el((0, 12.75, 6.5), (16, 14.25, 7),
+               {"all": "pole", "north": ("boards", (0, 0, 16, 4)), "south": ("boards", (0, 0, 16, 4))},
                {"origin": [8, 13.5, 6.75], "axis": "z", "angle": 45}),
-            el((0, 12.75, 6.4), (16, 14.25, 6.5), {"all": "pole", "north": ("boards", (0, 8, 16, 11))},
+            el((0, 12.75, 6.4), (16, 14.25, 6.5),
+               {"all": "pole", "north": ("boards", (0, 0, 16, 4)), "south": ("boards", (0, 0, 16, 4))},
                {"origin": [8, 13.5, 6.45], "axis": "z", "angle": -45}),
         ]
         return e
