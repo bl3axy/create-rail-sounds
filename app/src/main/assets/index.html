@@ -13,15 +13,15 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
-  font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
 button, input, select { font: inherit; color: inherit; }
-button { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 40px; cursor: pointer; }
+button { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; min-height: 48px; cursor: pointer; }
 button:active { filter: brightness(1.25); }
 button.primary { background: var(--accent); color: #1a1405; border-color: var(--accent); font-weight: 650; }
 button.danger { color: var(--red); }
 button.ghost { background: transparent; border-color: transparent; }
 input[type=text], input[type=number], input[type=url], select, textarea {
-  background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; min-height: 40px; width: 100%; color: var(--text); }
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 48px; width: 100%; color: var(--text); font-size: 16px; }
 textarea { font: 12px/1.4 ui-monospace, monospace; min-height: 140px; resize: vertical; }
 input[type=number] { width: 84px; }
 label { color: var(--dim); font-size: 13px; }
@@ -31,7 +31,7 @@ header { display: flex; align-items: center; gap: 6px; padding: calc(6px + var(-
 header h1 { font-size: 16px; margin: 0 4px 0 2px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
 header h1 span { color: var(--accent); }
 header .sp { flex: 1; }
-header button { min-height: 38px; padding: 6px 9px; }
+header button { min-height: 46px; min-width: 46px; padding: 6px 10px; font-size: 17px; }
 @media (max-width: 460px) { header h1 { display: none; } header { gap: 5px; } }
 #play { min-width: 76px; font-weight: 700; white-space: nowrap; }
 #play.on { background: var(--green); color: #06210f; border-color: var(--green); }
@@ -39,23 +39,28 @@ header button { min-height: 38px; padding: 6px 9px; }
 
 #stage { position: relative; flex: 1; overflow: hidden; touch-action: none; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); max-width: calc(100% - 24px);
+#hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); max-width: calc(100% - 24px); font-size: 14px !important;
   background: rgba(22,29,36,.94); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 13px;
   display: flex; gap: 10px; align-items: center; pointer-events: auto; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
 #hint:empty { display: none; }
 #hint.fade { opacity: 0; pointer-events: none; transition: opacity .6s; }
-#hint button { min-height: 28px; padding: 3px 10px; border-radius: 999px; font-size: 13px; }
+#hint button { min-height: 32px; padding: 3px 12px; border-radius: 999px; font-size: 14px; }
 #fab { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-#fab button { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: rgba(29,38,47,.94); font-size: 18px; }
+#fab button { width: 52px; height: 52px; padding: 0; border-radius: 14px; background: rgba(29,38,47,.94); font-size: 22px; }
+#trackbar { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 8px; align-items: center; }
+#trackbar[hidden] { display: none; }
+#trackbar .seg { background: rgba(22,29,36,.95); }
+#trackbar .seg button { min-height: 52px; padding: 8px 16px; font-size: 15px; }
+#trackbar #tbUndo { min-height: 52px; background: rgba(29,38,47,.94); }
 #toast { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%) translateY(20px); opacity: 0; transition: .2s;
   background: #24303b; border: 1px solid var(--line); border-radius: 12px; padding: 9px 14px; font-size: 14px; max-width: calc(100% - 90px); pointer-events: none; text-align: center; }
 #toast.show { opacity: 1; transform: translateX(-50%); }
 
 nav#tools { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--panel); border-top: 1px solid var(--line);
   padding: 4px 4px calc(4px + var(--safe-b)); z-index: 5; }
-nav#tools button { background: transparent; border: none; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  font-size: 11px; color: var(--dim); padding: 6px 0; min-height: 52px; }
-nav#tools button svg { width: 24px; height: 24px; }
+nav#tools button { background: transparent; border: none; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 12.5px; color: var(--dim); padding: 8px 0; min-height: 64px; }
+nav#tools button svg { width: 28px; height: 28px; }
 nav#tools button.on { color: var(--accent); background: rgba(242,184,75,.10); }
 
 #sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 58%; background: var(--panel); border-top: 1px solid var(--line);
@@ -63,24 +68,24 @@ nav#tools button.on { color: var(--accent); background: rgba(242,184,75,.10); }
   box-shadow: 0 -10px 30px rgba(0,0,0,.45); padding-bottom: var(--safe-b); }
 #sheet.open { transform: none; }
 #sheet .top { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; }
-#sheet .top h2 { margin: 0; font-size: 17px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sheet .top h2 { margin: 0; font-size: 19px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #sheet .grab { width: 38px; height: 4px; border-radius: 4px; background: var(--line); margin: 7px auto 0; }
 #sheetBody { overflow-y: auto; padding: 4px 12px 16px; -webkit-overflow-scrolling: touch; }
 .sec { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--dim); font-weight: 650; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
 .row > .grow { flex: 1; min-width: 120px; }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex-wrap: nowrap; }
-.seg button { border: none; border-radius: 0; flex: 1; background: transparent; padding: 8px 6px; font-size: 13px; min-height: 38px; }
+.seg button { border: none; border-radius: 0; flex: 1; background: transparent; padding: 10px 6px; font-size: 15px; min-height: 48px; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on { background: var(--accent); color: #1a1405; font-weight: 650; }
 .note { color: var(--dim); font-size: 13px; margin: 4px 0; }
 .status { padding: 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; margin: 6px 0; }
-.strip { display: flex; align-items: center; overflow-x: auto; padding: 6px 2px; gap: 0; }
-.veh { display: flex; flex-direction: column; align-items: center; min-width: 64px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); position: relative; }
+.strip { display: flex; align-items: center; overflow-x: auto; padding: 14px 12px 8px 2px; gap: 0; }
+.veh { display: flex; flex-direction: column; align-items: center; min-width: 72px; padding: 10px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); position: relative; }
 .veh .t { font-size: 12px; color: var(--dim); }
 .veh .ic { font-size: 20px; line-height: 1; }
-.veh .x { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; min-height: 0; padding: 0; border-radius: 50%; font-size: 12px; background: var(--panel2); }
-.cut { min-height: 0; padding: 4px 3px; border: none; background: transparent; color: var(--dim); font-size: 15px; }
+.veh .x { position: absolute; top: -10px; right: -10px; width: 32px; height: 32px; min-height: 0; padding: 0; border-radius: 50%; font-size: 14px; background: var(--panel2); }
+.cut { min-height: 48px; min-width: 34px; padding: 4px 2px; border: none; background: transparent; color: var(--dim); font-size: 20px; }
 .frontTag { font-size: 11px; color: var(--accent); margin-right: 6px; writing-mode: vertical-rl; transform: rotate(180deg); }
 .card { border: 1px solid var(--line); border-radius: 12px; padding: 8px; margin: 8px 0; background: var(--panel2); }
 .card .row { margin: 4px 0; flex-wrap: nowrap; }
@@ -88,10 +93,10 @@ nav#tools button.on { color: var(--accent); background: rgba(242,184,75,.10); }
 .card .grow { min-width: 0; }
 .card .grow select { width: 100%; }
 .card .row.wrap { flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); font-size: 13px; }
-.chip input[type=number] { width: 64px; min-height: 30px; padding: 3px 6px; }
-.chip button { min-height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; }
-.list .item { display: flex; align-items: center; gap: 10px; padding: 10px 6px; border-bottom: 1px solid var(--line); }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 6px 5px 14px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); font-size: 15px; }
+.chip input[type=number] { width: 70px; min-height: 40px; padding: 4px 8px; }
+.chip button { min-height: 36px; min-width: 36px; padding: 0 10px; border-radius: 999px; font-size: 14px; }
+.list .item { display: flex; align-items: center; gap: 12px; padding: 14px 6px; border-bottom: 1px solid var(--line); }
 .list .item:last-child { border-bottom: none; }
 .sw { width: 14px; height: 14px; border-radius: 4px; flex: none; }
 .item .main { flex: 1; min-width: 0; }
@@ -99,7 +104,8 @@ nav#tools button.on { color: var(--accent); background: rgba(242,184,75,.10); }
 .log div { padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
 .log span { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: 8px; }
 .check { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 14px; }
-.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.check { min-height: 48px; }
+.check input { width: 26px; height: 26px; accent-color: var(--accent); }
 details { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
 details summary { cursor: pointer; font-weight: 600; }
 details p, details li { color: var(--dim); font-size: 13.5px; }
@@ -122,7 +128,12 @@ details ul { padding-left: 18px; }
   <div id="stage">
     <canvas id="cv"></canvas>
     <div id="hint"></div>
+    <div id="trackbar" hidden>
+      <div class="seg"><button data-mode="curve" class="on">⤳ Curve</button><button data-mode="straight">— Straight</button></div>
+    </div>
     <div id="fab">
+      <button id="zin" title="Zoom in">+</button>
+      <button id="zout" title="Zoom out">−</button>
       <button id="fit" title="Fit to screen">⤢</button>
       <button id="logBtn" title="Event log">≡</button>
     </div>
@@ -192,7 +203,9 @@ details ul { padding-left: 18px; }
   function addEdge(s, a, b) {
     if (a === b || !s.nodes[a] || !s.nodes[b]) return null;
     const ex = findEdge(s, a, b); if (ex) return ex;
-    const k = nid(s, 'e'); s.edges[k] = { a, b }; bump(s); return k;
+    const k = nid(s, 'e'); s.edges[k] = { a, b }; bump(s);
+    for (const n of [a, b]) if (s.nodes[n].c && edgesAt(s, n).length > 2) delete s.nodes[n].c;
+    return k;
   }
   /** edges touching node n (cached; the cache is rebuilt whenever the set of edges changes) */
   function edgesAt(s, n) {
@@ -303,6 +316,115 @@ details ul { padding-left: 18px; }
       if (!best || dist < best.dist) best = { e, d: t * Math.sqrt(L2), dist, x: px, z: pz };
     }
     return best;
+  }
+
+  // ---------------------------------------------------------------- drawing curved track
+  const unit = v => { const l = Math.hypot(v.x, v.z) || 1; return { x: v.x / l, z: v.z / l }; };
+  /**
+   * directions a new piece of track could leave (start) or arrive (end) at a spot so trains run
+   * smoothly onto the existing track there. ref = {node} or {edge, d}.
+   */
+  function joinDirections(s, ref, isEnd) {
+    const out = [];
+    if (ref.node) {
+      const N = s.nodes[ref.node];
+      for (const e of edgesAt(s, ref.node)) {
+        const E = s.edges[e], O = s.nodes[E.a === ref.node ? E.b : E.a];
+        const away = unit({ x: O.x - N.x, z: O.z - N.z });  // from the joint into that track
+        out.push(isEnd ? away : { x: -away.x, z: -away.z });
+      }
+    } else if (ref.edge) {
+      const v = dirVec(s, ref.edge, 1);
+      out.push(v, { x: -v.x, z: -v.z });
+    }
+    return out;
+  }
+  /**
+   * points along a new piece of track from P0 to P1. t0 = direction it leaves P0, t1 = direction
+   * it arrives at P1 (either may be null). Curves are cubic Beziers shaped like circular arcs (the way
+   * Create bends track), cut into ~2 block pieces. Returns {pts, ok, msg}.
+   */
+  function curvePoints(P0, P1, t0, t1) {
+    const ch = { x: P1.x - P0.x, z: P1.z - P0.z }, L = Math.hypot(ch.x, ch.z);
+    if (L < 1) return { ok: false, msg: 'Too short', pts: [] };
+    const c = unit(ch);
+    const refl = v => { const d = v.x * c.x + v.z * c.z; return { x: 2 * d * c.x - v.x, z: 2 * d * c.z - v.z }; };
+    if (!t0 && !t1) return { ok: true, pts: [P0, P1], straight: true };
+    if (!t0) t0 = refl(t1); if (!t1) t1 = refl(t0);
+    const d0 = t0.x * c.x + t0.z * c.z, d1 = t1.x * c.x + t1.z * c.z;
+    if (d0 < 0.05 || d1 < 0.05) return { ok: false, msg: 'Too sharp - drag further out to make a wider curve', pts: [] };
+    if (d0 > 0.9995 && d1 > 0.9995) return { ok: true, pts: [P0, P1], straight: true };
+    const phi = Math.acos(Math.max(-1, Math.min(1, t0.x * t1.x + t0.z * t1.z)));
+    let k;
+    if (phi < 1e-3) k = L / 3;
+    else { const r = L / (2 * Math.sin(Math.max(phi, 1e-3) / 2)); k = 4 / 3 * Math.tan(phi / 4) * r; }
+    k = Math.min(k, L * 0.9);
+    const C1 = { x: P0.x + t0.x * k, z: P0.z + t0.z * k }, C2 = { x: P1.x - t1.x * k, z: P1.z - t1.z * k };
+    const B = t => { const u = 1 - t; return { x: u * u * u * P0.x + 3 * u * u * t * C1.x + 3 * u * t * t * C2.x + t * t * t * P1.x, z: u * u * u * P0.z + 3 * u * u * t * C1.z + 3 * u * t * t * C2.z + t * t * t * P1.z }; };
+    let len = 0, prev = P0;
+    for (let i = 1; i <= 64; i++) { const q = B(i / 64); len += Math.hypot(q.x - prev.x, q.z - prev.z); prev = q; }
+    const n = Math.max(2, Math.round(len / 2));
+    const pts = [P0]; for (let i = 1; i < n; i++) pts.push(B(i / n)); pts.push(P1);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = unit({ x: pts[i].x - pts[i - 1].x, z: pts[i].z - pts[i - 1].z }), b = unit({ x: pts[i + 1].x - pts[i].x, z: pts[i + 1].z - pts[i].z });
+      if (a.x * b.x + a.z * b.z <= SMOOTH + 0.05) return { ok: false, msg: 'Too tight for trains - make the curve wider', pts };
+    }
+    return { ok: true, pts, len };
+  }
+  /** pick the join direction that best lines up with where the new track is going */
+  function bestDirection(dirs, toward) {
+    let best = null, bd = -2; const c = unit(toward);
+    for (const v of dirs) { const d = v.x * c.x + v.z * c.z; if (d > bd) { bd = d; best = v; } }
+    return best;
+  }
+  /**
+   * lay a piece of track from a to b. a/b = {x,z} plus optionally {node} or {edge,d} it starts/ends
+   * on. curved: follow the existing track's direction at either end. Returns {ok,msg,nodes}.
+   */
+  function layTrack(s, a, b, curved) {
+    const P0 = { x: a.x, z: a.z }, P1 = { x: b.x, z: b.z }, chord = { x: P1.x - P0.x, z: P1.z - P0.z };
+    if ((a.node && a.node === b.node) || Math.hypot(chord.x, chord.z) < 1) return { ok: false, msg: 'Too short' };
+    let t0 = null, t1 = null;
+    if (curved) {
+      const d0 = joinDirections(s, a, false), d1 = joinDirections(s, b, true);
+      if (d0.length) t0 = bestDirection(d0, chord);
+      if (d1.length) t1 = bestDirection(d1, chord);
+    }
+    const cp = curvePoints(P0, P1, t0, t1);
+    if (!cp.ok) return cp;
+    const ends = [];
+    for (let r of [a, b]) {
+      // the first end's split may have replaced the edge the second end was on: find it again
+      if (r.edge && !s.edges[r.edge]) { const nt = nearestTrack(s, r.x, r.z); r = nt && nt.dist < 0.5 ? { edge: nt.e, d: nt.d, x: r.x, z: r.z } : { x: r.x, z: r.z }; }
+      ends.push(r.node && s.nodes[r.node] ? r.node : r.edge ? splitEdge(s, r.edge, r.d) : addNode(s, r.x, r.z));
+    }
+    if (ends[0] === ends[1]) return { ok: false, msg: 'Too short' };
+    const ids = [ends[0]];
+    for (let i = 1; i < cp.pts.length - 1; i++) {
+      const k = addNode(s, Math.round(cp.pts[i].x * 100) / 100, Math.round(cp.pts[i].z * 100) / 100);
+      s.nodes[k].c = 1; ids.push(k);                       // inside a curve: drawn without a joint dot
+    }
+    ids.push(ends[1]);
+    for (let i = 0; i < ids.length - 1; i++) addEdge(s, ids[i], ids[i + 1]);
+    return { ok: true, nodes: ids, curved: !cp.straight, len: cp.len };
+  }
+  /** every edge of the curve/straight run this edge belongs to (through curve-inside joints) */
+  function trackRun(s, e) {
+    const run = new Set([e]), stack = [s.edges[e].a, s.edges[e].b];
+    while (stack.length) {
+      const n = stack.pop(); if (!s.nodes[n] || !s.nodes[n].c) continue;
+      for (const f of edgesAt(s, n)) if (!run.has(f)) { run.add(f); const F = s.edges[f]; stack.push(F.a === n ? F.b : F.a); }
+    }
+    return [...run];
+  }
+  /** delete a whole curve/straight run, and joints left with no track */
+  function removeRun(s, e) {
+    const run = trackRun(s, e), touched = new Set();
+    for (const f of run) { const F = s.edges[f]; if (!F) continue; touched.add(F.a); touched.add(F.b); removeEdge(s, f); }
+    for (const n of touched) if (s.nodes[n] && (!edgesAt(s, n).length || s.nodes[n].c && edgesAt(s, n).length < 2)) {
+      if (!edgesAt(s, n).length) delete s.nodes[n]; else delete s.nodes[n].c;
+    }
+    return run.length;
   }
 
   // ---------------------------------------------------------------- stations & signals
@@ -1073,7 +1195,7 @@ details ul { padding-left: 18px; }
     LEN, GAP, COUPLE_REACH, newState, addNode, addEdge, findEdge, edgesAt, edgeLen, pointAt, dirVec, nextOptions,
     removeNode, removeEdge, addStation, stationByName, addSignal, indexSignals, signalFaces, sigType, signalAspect, computeBlocks, blockAt, occupancy,
     vehiclesLength, vlen, hasLoco, hasDoubleCab, pathLength, pointFromHead, slicePath, reversePath, layBack,
-    newConsist, placeAtStation, routeContext, splitEdge, moveNode, nearestTrack, nudge, startNode, endNode, relayout, flipConsist, ends, findRoute, allowedDirections, findCoupling,
+    newConsist, placeAtStation, routeContext, layTrack, curvePoints, joinDirections, bestDirection, trackRun, removeRun, splitEdge, moveNode, nearestTrack, nudge, startNode, endNode, relayout, flipConsist, ends, findRoute, allowedDirections, findCoupling,
     couple, uncouple, splitConsist, startRun, step, serialize, deserialize, leadOf, logEvt,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Core = api;
@@ -1191,8 +1313,10 @@ details ul { padding-left: 18px; }
         const n = Math.max(2, Math.min(24, Math.ceil(L / 3)));
         pts = []; for (let i = 0; i <= n; i++) pts.push(bezier(t.path, i / n));
       } else pts = [t.path[0], t.path[t.path.length - 1]];
+      const ids = pts.map(node);
+      for (let i = 1; i < ids.length - 1; i++) if (C.edgesAt(s, ids[i]).length === 0) s.nodes[ids[i]].c = 1; // inside a curve
       for (let i = 0; i < pts.length - 1; i++) {
-        const a = node(pts[i]), b = node(pts[i + 1]);
+        const a = ids[i], b = ids[i + 1];
         if (a !== b) { C.addEdge(s, a, b); count++; }
       }
       for (const p of pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
@@ -1259,6 +1383,7 @@ details ul { padding-left: 18px; }
   const $ = id => document.getElementById(id);
   const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
   const KEY = 'railplanner.v1';
+  const HIT_PX = 26;                          // how close (screen px) a finger has to be to grab something
 
   // ------------------------------------------------------------------ state
   let S = null;                               // the core world
@@ -1306,7 +1431,7 @@ details ul { padding-left: 18px; }
 
   function fit() {
     const ns = Object.values(S.nodes);
-    if (!ns.length) { view.x = 0; view.z = 0; view.k = 5; dirty = true; return; }
+    if (!ns.length) { view.x = 0; view.z = 0; view.k = 6; dirty = true; return; }
     let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
     for (const n of ns) { a = Math.min(a, n.x); b = Math.min(b, n.z); c = Math.max(c, n.x); d = Math.max(d, n.z); }
     view.x = (a + c) / 2; view.z = (b + d) / 2;
@@ -1324,19 +1449,17 @@ details ul { padding-left: 18px; }
   function setHint() {
     const h = $('hint'); h.innerHTML = ''; h.classList.remove('fade');
     clearTimeout(hintT);
-    if (!(tool === 'track' && draft)) hintT = setTimeout(() => h.classList.add('fade'), 5000);
+    hintT = setTimeout(() => h.classList.add('fade'), 6000);
     const txt = {
       select: 'Tap anything to edit it · drag to pan · pinch to zoom · drag a track joint to move it',
-      track: draft ? 'Tap where the track goes next · tap the last point again to stop' : 'Tap to start a track (snaps to joints and other track)',
+      track: 'Drag to draw track. Start on a track end and it curves smoothly out of it. Two fingers move the map.',
       station: 'Tap a track to put a station there',
       signal: 'Tap a track to put a signal there',
       train: 'Tap a track to put a new train there',
       erase: 'Tap something to delete it',
     }[tool];
     const span = document.createElement('span'); span.textContent = txt; h.appendChild(span);
-    if (tool === 'track' && draft) {
-      const b = document.createElement('button'); b.textContent = 'Done'; b.onclick = () => { draft = null; setHint(); dirty = true; }; h.appendChild(b);
-    }
+
   }
 
   // ------------------------------------------------------------------ drawing
@@ -1379,7 +1502,7 @@ details ul { padding-left: 18px; }
     }
     // occupied tint
     ctx.lineCap = 'round';
-    if (occEdges.length) {
+    if (occEdges.length && Object.keys(S.signals).length) { // with no signals the whole network is one block: don't paint it all
       ctx.strokeStyle = 'rgba(255,93,93,.22)'; ctx.lineWidth = Math.max(6, k * 1.8); ctx.beginPath();
       for (const { e, iv } of occEdges) { const p = C.pointAt(S, e, iv.d0), q = C.pointAt(S, e, iv.d1); ctx.moveTo(sx(p.x), sz(p.z)); ctx.lineTo(sx(q.x), sz(q.z)); }
       ctx.stroke();
@@ -1388,7 +1511,7 @@ details ul { padding-left: 18px; }
     const railW = Math.max(1.6, Math.min(3, k * 0.18));
     const selEdge = sel && sel.kind === 'edge' ? sel.id : null;
     if (k >= 6) {
-      ctx.strokeStyle = '#9aa7b3'; ctx.lineWidth = railW; ctx.beginPath();
+      ctx.strokeStyle = '#9aa7b3'; ctx.lineWidth = railW; ctx.lineCap = 'round'; ctx.beginPath();
       for (const e in S.edges) {
         const [A, B] = trackPath(e), L = Math.hypot(B.x - A.x, B.z - A.z); if (!L) continue;
         const nx = -(B.z - A.z) / L * 0.42, nz = (B.x - A.x) / L * 0.42;
@@ -1401,30 +1524,32 @@ details ul { padding-left: 18px; }
       ctx.stroke();
     }
     if (selEdge && S.edges[selEdge]) {
-      const [A, B] = trackPath(selEdge);
-      ctx.strokeStyle = 'rgba(242,184,75,.55)'; ctx.lineWidth = Math.max(5, k * 1.6); ctx.beginPath();
-      ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); ctx.stroke();
+      ctx.strokeStyle = 'rgba(242,184,75,.55)'; ctx.lineWidth = Math.max(8, k * 1.6); ctx.lineCap = 'round'; ctx.beginPath();
+      for (const f of C.trackRun(S, selEdge)) { const [A, B] = trackPath(f); ctx.moveTo(sx(A.x), sz(A.z)); ctx.lineTo(sx(B.x), sz(B.z)); }
+      ctx.stroke();
     }
-    // joints
+    // joints (ends orange, switches blue); points inside curves aren't shown
     if (tool === 'track' || tool === 'select' || tool === 'erase') {
+      const big = tool === 'track';
       for (const n in S.nodes) {
-        const N = S.nodes[n], deg = C.edgesAt(S, n).length;
-        if (k < 2 && deg === 2 && n !== draft) continue;
-        ctx.fillStyle = n === draft ? '#f2b84b' : deg >= 3 ? '#5aa9ff' : deg <= 1 ? '#ff9f43' : '#56636f';
-        const r = n === draft ? 6 : deg === 2 ? 2.5 : 4;
+        const N = S.nodes[n]; if (N.c) continue;
+        const deg = C.edgesAt(S, n).length;
+        if (deg === 2 && (k < 3 || !big)) continue;
+        ctx.fillStyle = deg >= 3 ? '#5aa9ff' : deg <= 1 ? '#ff9f43' : '#56636f';
+        const r = (deg === 2 ? 3 : 5) * (big ? 1.4 : 1);
         ctx.beginPath(); ctx.arc(sx(N.x), sz(N.z), r, 0, 7); ctx.fill();
         if (sel && sel.kind === 'node' && sel.id === n) { ctx.strokeStyle = '#f2b84b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx(N.x), sz(N.z), 9, 0, 7); ctx.stroke(); }
       }
     }
     // stations
-    ctx.font = '600 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.font = '600 14px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     for (const id in S.stations) {
       const st = S.stations[id]; if (!S.edges[st.e]) continue;
       const p = C.pointAt(S, st.e, st.d), v = C.dirVec(S, st.e, st.dir);
       const rx = -v.z, rz = v.x; // right-hand side of travel
       const off = 1.9, x = p.x + rx * off, z = p.z + rz * off;
       const isSel = sel && sel.kind === 'station' && sel.id === id;
-      const sz2 = Math.max(7, k * 1.1);
+      const sz2 = Math.max(11, k * 1.1);
       // platform plate
       ctx.save(); ctx.translate(sx(x), sz(z)); ctx.rotate(Math.atan2(v.z, v.x));
       ctx.fillStyle = isSel ? '#ffcf70' : '#f2b84b';
@@ -1453,7 +1578,7 @@ details ul { padding-left: 18px; }
         const v = C.dirVec(S, g.e, dir), rx = -v.z, rz = v.x;
         const asp = C.signalAspect(S, id, dir, blocks, occ);
         const col = asp === 'red' ? '#ff5d5d' : asp === 'yellow' ? '#ffd23f' : '#3ddc84';
-        const x = p.x + rx * 1.5, z = p.z + rz * 1.5, r = Math.max(4, k * 0.55);
+        const x = p.x + rx * 1.5, z = p.z + rz * 1.5, r = Math.max(6, k * 0.55);
         ctx.fillStyle = '#0b0f13'; ctx.strokeStyle = isSel ? '#f2b84b' : '#56636f'; ctx.lineWidth = isSel ? 2.5 : 1.5;
         ctx.beginPath();
         if (C.sigType(g, dir) === 'chain') { ctx.moveTo(sx(x), sz(z) - r - 2); ctx.lineTo(sx(x) + r + 2, sz(z)); ctx.lineTo(sx(x), sz(z) + r + 2); ctx.lineTo(sx(x) - r - 2, sz(z)); ctx.closePath(); }
@@ -1469,10 +1594,20 @@ details ul { padding-left: 18px; }
     }
     // trains
     for (const id in S.consists) drawTrain(S.consists[id]);
-    // draft marker
-    if (draft && S.nodes[draft]) {
-      const N = S.nodes[draft]; ctx.strokeStyle = '#f2b84b'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(sx(N.x), sz(N.z), 14, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    // track being drawn
+    if (gesture && gesture.type === 'draw') {
+      const a = gesture.start;
+      if (a && !a.bad) { ctx.fillStyle = '#f2b84b'; ctx.beginPath(); ctx.arc(sx(a.x), sz(a.z), 8, 0, 7); ctx.fill(); }
+      const pv = gesture.preview;
+      if (pv && pv.pts && pv.pts.length > 1) {
+        ctx.strokeStyle = pv.ok ? 'rgba(61,220,132,.9)' : 'rgba(255,93,93,.9)'; ctx.lineWidth = Math.max(4, k * 0.9); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.setLineDash([10, 8]); ctx.beginPath(); pv.pts.forEach((p, i) => (i ? ctx.lineTo(sx(p.x), sz(p.z)) : ctx.moveTo(sx(p.x), sz(p.z)))); ctx.stroke(); ctx.setLineDash([]);
+        const e = gesture.end; ctx.fillStyle = pv.ok ? '#3ddc84' : '#ff5d5d'; ctx.beginPath(); ctx.arc(sx(e.x), sz(e.z), 8, 0, 7); ctx.fill();
+        // length / reason above the finger
+        const len = pv.ok ? (pv.len || Math.hypot(e.x - a.x, e.z - a.z)) : 0;
+        const label = pv.ok ? Math.round(len) + ' blocks' + (pv.straight ? '' : ' (curve)') : (pv.msg || '');
+        if (label) { ctx.font = '600 15px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineWidth = 4; ctx.strokeStyle = '#0e1318'; ctx.strokeText(label, sx(e.x), sz(e.z) - 18); ctx.fillStyle = pv.ok ? '#d6ffe6' : '#ffd0d0'; ctx.fillText(label, sx(e.x), sz(e.z) - 18); }
+      }
     }
     // scale bar
     const blocksBar = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000].find(b => b * k >= 60) || 5000;
@@ -1483,7 +1618,7 @@ details ul { padding-left: 18px; }
   function drawTrain(c) {
     if (!c.path.length) return;
     const k = view.k, col = colorOf(c), isSel = sel && sel.kind === 'train' && sel.id === c.id;
-    const width = Math.max(5, k * 1.5);
+    const width = Math.max(8, k * 1.5);
     let x = 0;
     ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
     c.vehicles.forEach((v, i) => {
@@ -1516,7 +1651,7 @@ details ul { padding-left: 18px; }
     ctx.closePath(); ctx.fill();
     if (k >= 2 || isSel) {
       const mid = C.pointFromHead(S, c.path, C.pathLength(c.path) / 2);
-      ctx.font = '600 12px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.font = '600 14px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
       let label = c.name;
       if (c.run && c.run.waitingSignal && c.v < 0.05) label += ' ⛔';
       else if (c.run && c.run.blocked && c.v < 0.05) label += ' ✋';
@@ -1532,7 +1667,7 @@ details ul { padding-left: 18px; }
 
   // ------------------------------------------------------------------ hit testing
   function hit(px, py) {
-    const x = wx(px), z = wz(py), r = 16 / view.k;
+    const x = wx(px), z = wz(py), r = HIT_PX / view.k;
     // trains
     let best = null;
     for (const id in S.consists) {
@@ -1561,8 +1696,9 @@ details ul { padding-left: 18px; }
     }
     if (best) return best;
     for (const n in S.nodes) {
+      if (S.nodes[n].c) continue; // points inside a curve aren't joints you edit
       const N = S.nodes[n], d = Math.hypot(N.x - x, N.z - z);
-      if (d < r && (!best || d < best.d)) best = { kind: 'node', id: n, d };
+      if (d < r * 0.8 && (!best || d < best.d)) best = { kind: 'node', id: n, d };
     }
     if (best) return best;
     const nt = C.nearestTrack(S, x, z);
@@ -1571,34 +1707,54 @@ details ul { padding-left: 18px; }
   }
 
   // ------------------------------------------------------------------ tool actions
-  function tapTrack(px, py) {
-    const x = wx(px), z = wz(py), r = 16 / view.k;
+  // ---- drawing track: drag from where it starts to where it ends
+  let curveMode = true;
+  /** what's under the finger for drawing: an existing joint, a point on straight track, or open ground */
+  function resolveSpot(px, py) {
+    const x = wx(px), z = wz(py), r = HIT_PX / view.k;
     let node = null;
-    for (const n in S.nodes) { const N = S.nodes[n], d = Math.hypot(N.x - x, N.z - z); if (d < r && (!node || d < node.d)) node = { id: n, d }; }
+    for (const n in S.nodes) { if (S.nodes[n].c) continue; const N = S.nodes[n], d = Math.hypot(N.x - x, N.z - z); if (d < r && (!node || d < node.d)) node = { id: n, d }; }
+    if (node) return { node: node.id, x: S.nodes[node.id].x, z: S.nodes[node.id].z };
+    const nt = C.nearestTrack(S, x, z);
+    if (nt && nt.dist < r * 0.8) {
+      const E = S.edges[nt.e];
+      if (S.nodes[E.a].c || S.nodes[E.b].c) return { bad: "Can't make a switch in the middle of a curve (Create can't either)" };
+      const L = C.edgeLen(S, nt.e), d = Math.max(0, Math.min(L, Math.round(nt.d)));
+      if (d < 1) return { node: E.a, x: S.nodes[E.a].x, z: S.nodes[E.a].z };
+      if (d > L - 1) return { node: E.b, x: S.nodes[E.b].x, z: S.nodes[E.b].z };
+      const p = C.pointAt(S, nt.e, d);
+      return { edge: nt.e, d, x: p.x, z: p.z };
+    }
+    const g = view.k < 1.5 ? 4 : 1; // whole blocks; coarser when zoomed far out
+    return { x: Math.round(x / g) * g, z: Math.round(z / g) * g };
+  }
+  function previewTrack(a, b) {
+    if (a.bad) return { ok: false, msg: a.bad, pts: [] };
+    if (b.bad) return { ok: false, msg: b.bad, pts: [a, b] };
+    if (a.node && a.node === b.node) return { ok: false, msg: '', pts: [] };
+    const chord = { x: b.x - a.x, z: b.z - a.z };
+    let t0 = null, t1 = null;
+    if (curveMode) {
+      const d0 = C.joinDirections(S, a, false), d1 = C.joinDirections(S, b, true);
+      if (d0.length) t0 = C.bestDirection(d0, chord);
+      if (d1.length) t1 = C.bestDirection(d1, chord);
+    }
+    const r = C.curvePoints(a, b, t0, t1);
+    if (!r.pts.length) r.pts = [a, b];
+    return r;
+  }
+  function commitTrack(a, b) {
+    const pv = previewTrack(a, b);
+    if (!pv.ok) { if (pv.msg) toast(pv.msg); return; }
     pushUndo();
-    let target;
-    if (node) target = node.id;
-    else {
-      const nt = C.nearestTrack(S, x, z);
-      if (nt && nt.dist < r * 0.8) target = C.splitEdge(S, nt.e, Math.round(nt.d));
-      else target = C.addNode(S, Math.round(x), Math.round(z));
-    }
-    if (!draft) { draft = target; setHint(); changed(); return; }
-    if (target === draft) { draft = null; setHint(); changed(); return; }
-    const before = C.edgesAt(S, draft).slice();
-    const e = C.addEdge(S, draft, target);
-    if (e && before.length === 1) {
-      const A = S.nodes[draft], B = S.nodes[target], o = S.edges[before[0]], O = S.nodes[o.a === draft ? o.b : o.a];
-      const v1 = { x: A.x - O.x, z: A.z - O.z }, v2 = { x: B.x - A.x, z: B.z - A.z };
-      const dot = (v1.x * v2.x + v1.z * v2.z) / (Math.hypot(v1.x, v1.z) * Math.hypot(v2.x, v2.z) || 1);
-      if (dot <= 0.5) toast('Sharp corner: trains can only turn up to 60° at a joint - add a point in between');
-    }
-    draft = target; setHint(); changed();
+    const r = C.layTrack(S, a, b, curveMode);
+    if (!r.ok) { undo.pop(); toast(r.msg || "Couldn't place that"); return; }
+    changed();
   }
 
   function onTrack(px, py) {
     const nt = C.nearestTrack(S, wx(px), wz(py));
-    if (!nt || nt.dist > 20 / view.k) { toast('Tap on a track'); return null; }
+    if (!nt || nt.dist > (HIT_PX + 8) / view.k) { toast('Tap on a track'); return null; }
     return nt;
   }
 
@@ -1652,8 +1808,7 @@ details ul { padding-left: 18px; }
     else if (h.kind === 'signal') delete S.signals[h.id];
     else if (h.kind === 'node') { if (draft === h.id) draft = null; C.removeNode(S, h.id); }
     else if (h.kind === 'edge') {
-      const E = S.edges[h.id]; C.removeEdge(S, h.id);
-      for (const n of [E.a, E.b]) if (!C.edgesAt(S, n).length) { delete S.nodes[n]; if (draft === n) draft = null; }
+      C.removeRun(S, h.id);
     }
     if (sel && !exists(sel)) closeSheet();
     changed(); toast('Deleted');
@@ -1668,7 +1823,10 @@ details ul { padding-left: 18px; }
   cv.addEventListener('pointerdown', e => {
     cv.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
-    if (ptrs.size === 1) {
+    if (ptrs.size === 1 && tool === 'track') {
+      gesture = { type: 'draw', x: e.offsetX, y: e.offsetY, start: resolveSpot(e.offsetX, e.offsetY), end: null, moved: false };
+      dirty = true;
+    } else if (ptrs.size === 1) {
       let dragNode = null;
       if (tool === 'select') { const h = hit(e.offsetX, e.offsetY); if (h && h.kind === 'node') dragNode = h.id; }
       gesture = { type: 'tap', x: e.offsetX, y: e.offsetY, vx: view.x, vz: view.z, dragNode, t: Date.now() };
@@ -1691,6 +1849,11 @@ details ul { padding-left: 18px; }
       return;
     }
     const dx = e.offsetX - gesture.x, dy = e.offsetY - gesture.y;
+    if (gesture.type === 'draw') {
+      if (Math.hypot(dx, dy) > 10) gesture.moved = true;
+      if (gesture.moved) { gesture.end = resolveSpot(e.offsetX, e.offsetY); gesture.preview = previewTrack(gesture.start, gesture.end); dirty = true; }
+      return;
+    }
     if (gesture.type === 'tap' && Math.hypot(dx, dy) > 8) {
       if (gesture.dragNode) {
         pushUndo();
@@ -1708,6 +1871,11 @@ details ul { padding-left: 18px; }
     if (!ptrs.has(e.pointerId)) return;
     ptrs.delete(e.pointerId);
     if (gesture && gesture.type === 'tap' && ptrs.size === 0) onTap(e.offsetX, e.offsetY);
+    if (gesture && gesture.type === 'draw' && ptrs.size === 0) {
+      if (gesture.moved && gesture.end) commitTrack(gesture.start, gesture.end);
+      else toast('Drag from where the track starts to where it ends');
+      dirty = true;
+    }
     if (gesture && gesture.type === 'node' && ptrs.size === 0) { changed(); if (gesture.warned) undo.pop(); }
     if (ptrs.size === 0) gesture = null;
     else if (gesture && gesture.type === 'pinch') gesture = { type: 'done' };
@@ -1722,7 +1890,6 @@ details ul { padding-left: 18px; }
   }, { passive: false });
 
   function onTap(px, py) {
-    if (tool === 'track') return tapTrack(px, py);
     if (tool === 'station') return tapStation(px, py);
     if (tool === 'signal') return tapSignal(px, py);
     if (tool === 'train') return tapTrain(px, py);
@@ -1735,7 +1902,7 @@ details ul { padding-left: 18px; }
   const sheet = $('sheet'), body = $('sheetBody');
   let sheetKind = null;
   function openSheet(title, build, kind) {
-    $('sheetTitle').textContent = title; body.innerHTML = ''; build(body);
+    $('sheetTitle').textContent = title; body.innerHTML = ''; body.scrollTop = 0; build(body);
     sheetKind = kind || null; sheet.classList.add('open');
   }
   function closeSheet() { sheet.classList.remove('open'); sheetKind = null; sel = null; dirty = true; }
@@ -1855,18 +2022,17 @@ details ul { padding-left: 18px; }
 
   // ---------------- track
   function edgeSheet(id, at) {
-    openSheet('Track', b => {
-      b.append(el('div', { cls: 'status' }, 'Length: ' + C.edgeLen(S, id).toFixed(1) + ' blocks'));
+    const run = C.trackRun(S, id), len = run.reduce((t, e) => t + C.edgeLen(S, e), 0);
+    const E = S.edges[id], curvy = run.length > 1 || S.nodes[E.a].c || S.nodes[E.b].c;
+    const here = at == null ? C.edgeLen(S, id) / 2 : at;
+    openSheet(curvy ? 'Curved track' : 'Track', b => {
+      b.append(el('div', { cls: 'status' }, 'Length: ' + len.toFixed(1) + ' blocks'));
       b.append(el('div', { cls: 'row' },
-        btn('Add station here', () => { pushUndo(); const k = C.addStation(S, id, at || C.edgeLen(S, id) / 2); changed(); select({ kind: 'station', id: k }); }),
-        btn('Add signal here', () => { pushUndo(); const k = C.addSignal(S, id, at || C.edgeLen(S, id) / 2); changed(); select({ kind: 'signal', id: k }); }),
-        btn('Add joint here', () => { pushUndo(); const n = C.splitEdge(S, id, at || C.edgeLen(S, id) / 2); changed(); select({ kind: 'node', id: n }); })));
-      b.append(el('div', { cls: 'row' }, btn('Delete track', () => {
-        pushUndo(); const E = S.edges[id]; C.removeEdge(S, id);
-        for (const n of [E.a, E.b]) if (!C.edgesAt(S, n).length) delete S.nodes[n];
-        changed(); closeSheet();
-      }, 'danger')));
-      b.append(note('Deleting track also removes stations, signals and trains on it.'));
+        btn('Add station here', () => { pushUndo(); const k = C.addStation(S, id, here); changed(); select({ kind: 'station', id: k }); }),
+        btn('Add signal here', () => { pushUndo(); const k = C.addSignal(S, id, here); changed(); select({ kind: 'signal', id: k }); })));
+      if (!curvy) b.append(el('div', { cls: 'row' }, btn('Add a joint here', () => { pushUndo(); const n = C.splitEdge(S, id, here); changed(); select({ kind: 'node', id: n }); })));
+      b.append(el('div', { cls: 'row' }, btn(curvy ? 'Delete this curve' : 'Delete this track', () => { pushUndo(); C.removeRun(S, id); changed(); closeSheet(); }, 'danger')));
+      b.append(note('Deleting track also removes stations, signals and trains on it. Undo (↶) brings it back.'));
     });
   }
   function nodeSheet(id) {
@@ -1875,7 +2041,7 @@ details ul { padding-left: 18px; }
       b.append(el('div', { cls: 'status' }, 'x ' + n.x + ', z ' + n.z + ' · ' + deg + ' track' + (deg === 1 ? '' : 's')));
       b.append(el('div', { cls: 'row' }, 'x', el('input', { type: 'number', value: n.x, on: { change: e => move(+e.target.value, n.z) } }), 'z', el('input', { type: 'number', value: n.z, on: { change: e => move(n.x, +e.target.value) } })));
       b.append(el('div', { cls: 'row' },
-        btn('Draw track from here', () => { setTool('track'); draft = id; setHint(); dirty = true; closeSheet(); }),
+        btn('Draw track from here', () => { setTool('track'); closeSheet(); toast('Now drag from this joint to where the track should go'); }),
         btn('Delete', () => { pushUndo(); C.removeNode(S, id); changed(); closeSheet(); }, 'danger')));
       b.append(note('Trains can only turn up to 60° where tracks meet. At a junction trains take the straightest way unless their route says otherwise.'));
     });
@@ -2151,8 +2317,16 @@ details ul { padding-left: 18px; }
   $('menuBtn').onclick = openMenu;
   $('logBtn').onclick = openLog;
   $('fit').onclick = fit;
+  const zoomBy = f => { view.k = Math.max(0.03, Math.min(60, view.k * f)); dirty = true; };
+  $('zin').onclick = () => zoomBy(1.5);
+  $('zout').onclick = () => zoomBy(1 / 1.5);
+  for (const b of document.querySelectorAll('#trackbar [data-mode]')) b.onclick = () => {
+    curveMode = b.dataset.mode === 'curve';
+    for (const o of document.querySelectorAll('#trackbar [data-mode]')) o.classList.toggle('on', o === b);
+  };
   function setTool(t) {
     tool = t; draft = null;
+    $('trackbar').hidden = t !== 'track';
     for (const b of document.querySelectorAll('#tools button')) b.classList.toggle('on', b.dataset.tool === t);
     setHint(); dirty = true;
   }
