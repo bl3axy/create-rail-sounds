@@ -163,6 +163,16 @@ public class RailConfig {
         /** volume of the first idle loop, as a fraction of idleVolume, while it fades in
          *  under the tail of the start clip */
         public float startFadeVolume = 0.6f;
+        /** the engine note at the lowest notch, i.e. just rolling. Minecraft only accepts
+         *  playback pitch between 0.5 and 2.0 and anything outside that is clamped */
+        public float enginePitchMin = 0.85f;
+        /** the engine note at full speed */
+        public float enginePitchMax = 1.35f;
+        /** a diesel-electric holds one fixed engine speed per notch, so its note steps between
+         *  this many settings as the train speeds up instead of sliding about. That's where the
+         *  recorded clip's own rev range stops mattering - the notches come from playback pitch.
+         *  Steam ignores this and climbs smoothly, because a chuff rate tracks the wheels */
+        public int dieselNotches = 8;
 
         // ---- loco bell (the one on the engine, not at a crossing) ----
         /** ring the bell with the bell key (B). Off until you press it */

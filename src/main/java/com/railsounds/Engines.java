@@ -54,6 +54,8 @@ public final class Engines {
     private static final Map<UUID, Boolean> WAS_MOVING = new HashMap<>();
     /** train id -> ticks before it may play the notch-up layer again */
     private static final Map<UUID, Integer> NOTCH_COOLDOWN = new HashMap<>();
+    /** train id -> the notch its running loop is currently sounding at */
+    private static final Map<UUID, Integer> STEP = new HashMap<>();
 
     private static final double MOVING = 0.005;
 
@@ -147,7 +149,10 @@ public final class Engines {
     public static void tick(MinecraftServer server) {
         RailConfig.Values c = RailConfig.V;
         if (!c.engineSounds) {
-            if (!IDLE_TIMER.isEmpty()) forget();
+            // every map, not just the idle one: turning engine sounds off while a train was
+            // moving used to leave the run/notch/step state behind
+            if (!(IDLE_TIMER.isEmpty() && RUN_TIMER.isEmpty() && STEP.isEmpty()
+                && WAS_MOVING.isEmpty() && NOTCH_COOLDOWN.isEmpty() && FADING_IN.isEmpty())) forget();
             return;
         }
         if (Create.RAILWAYS == null || Create.RAILWAYS.trains == null) return;
@@ -165,17 +170,27 @@ public final class Engines {
 
             if (moving) {
                 IDLE_TIMER.remove(train.id);
-                if (!wasMoving) notchUp(train, c);
-                loop(train, c, RUN_TIMER, steam(train) ? "steam_run" : "diesel_run",
-                    c.engineVolume, c.runClipTicks, c.engineHearingRange);
+                int step = stepOf(train, c);
+                Integer before = STEP.put(train.id, step);
+                float pitch = pitchFor(step, c, train);
+                // The new notch is picked up when the loop next comes round, NOT straight away.
+                // Restarting it here would leave the old four-second clip still playing on the
+                // client at the old pitch - vanilla can only stop a sound by name, which would
+                // also cut every other loco within earshot. Waiting for the boundary sounds
+                // right anyway: a real engine takes a few seconds to settle into a notch, and
+                // the notch-up layer below is the immediate cue that it changed.
+                if (!wasMoving || (before != null && step > before)) notchUp(train, c, pitch);
+                loop(train, RUN_TIMER, steam(train) ? "steam_run" : "diesel_run",
+                    c.engineVolume, pitch, c.runClipTicks, c.engineHearingRange);
             } else {
                 RUN_TIMER.remove(train.id);
+                STEP.remove(train.id);
                 if (!c.idleWhenStopped) {
                     IDLE_TIMER.remove(train.id);
                     continue;
                 }
-                loop(train, c, IDLE_TIMER, steam(train) ? "steam_idle" : "diesel_idle",
-                    c.idleVolume, c.idleClipTicks, c.idleHearingRange);
+                loop(train, IDLE_TIMER, steam(train) ? "steam_idle" : "diesel_idle",
+                    c.idleVolume, 1.0f, c.idleClipTicks, c.idleHearingRange);
             }
         }
 
@@ -185,6 +200,7 @@ public final class Engines {
             RUN_TIMER.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
             WAS_MOVING.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
             NOTCH_COOLDOWN.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
+            STEP.keySet().removeIf(id -> !Create.RAILWAYS.trains.containsKey(id));
         }
         NOTCH_COOLDOWN.replaceAll((id, t) -> t - 1);
         NOTCH_COOLDOWN.values().removeIf(t -> t <= 0);
@@ -194,9 +210,39 @@ public final class Engines {
         return TrainTypes.STEAM.equals(TrainTypes.get(train));
     }
 
+    /** a steam engine's chuff rate follows the wheels, so give it fine steps rather than notches */
+    private static final int STEAM_STEPS = 16;
+
+    private static int steps(Train train, RailConfig.Values c) {
+        return steam(train) ? STEAM_STEPS : Math.max(1, Math.min(32, c.dieselNotches));
+    }
+
+    /**
+     * Which notch the train is working in, 0 up to steps-1, from how much of the top speed it
+     * is doing. maxSpeed() is Create's configured ceiling in blocks/tick - the higher powered
+     * figure for a fuelled train - and it isn't scaled by the throttle, so easing off drops the
+     * notch the way it should instead of pinning it at full.
+     */
+    private static int stepOf(Train train, RailConfig.Values c) {
+        int n = steps(train, c);
+        if (n <= 1) return 0;
+        float top = train.maxSpeed();
+        if (!(top > 0.001f)) top = 1.0f;
+        double frac = Math.min(1.0, Math.abs(train.speed) / top);
+        return Math.max(0, Math.min(n - 1, (int) Math.round(frac * (n - 1))));
+    }
+
+    /** playback pitch for a notch. Minecraft clamps to 0.5-2.0, so this does too */
+    private static float pitchFor(int step, RailConfig.Values c, Train train) {
+        int n = steps(train, c);
+        float lo = c.enginePitchMin, hi = c.enginePitchMax;
+        float p = n <= 1 ? lo : lo + (hi - lo) * ((float) step / (n - 1));
+        return Math.max(0.5f, Math.min(2.0f, p));
+    }
+
     /** replay a looping clip when its timer runs out */
-    private static void loop(Train train, RailConfig.Values c, Map<UUID, Integer> timer,
-                             String sound, float volume, int clipTicks, int range) {
+    private static void loop(Train train, Map<UUID, Integer> timer,
+                             String sound, float volume, float pitch, int clipTicks, int range) {
         int left = timer.getOrDefault(train.id, 0);
         if (left > 0) {
             timer.put(train.id, left - 1);
@@ -207,17 +253,17 @@ public final class Engines {
             timer.remove(train.id);
             return;
         }
-        SoundPlayer.play(spot.level, spot.pos, sound, enter(train.id, volume), 1.0f, range);
+        SoundPlayer.play(spot.level, spot.pos, sound, enter(train.id, volume), pitch, range);
         timer.put(train.id, Math.max(1, clipTicks));
     }
 
-    /** the engine digging in as it pulls away, played once over the running loop */
-    private static void notchUp(Train train, RailConfig.Values c) {
+    /** the engine digging in as it pulls away or takes another notch, over the running loop */
+    private static void notchUp(Train train, RailConfig.Values c, float pitch) {
         if (NOTCH_COOLDOWN.containsKey(train.id)) return;
         Spot spot = spotOf(train);
         if (spot == null) return;
         SoundPlayer.play(spot.level, spot.pos, steam(train) ? "steam_notch" : "diesel_notch",
-            c.engineVolume, 1.0f, c.engineHearingRange);
+            c.engineVolume, pitch, c.engineHearingRange);
         NOTCH_COOLDOWN.put(train.id, Math.max(20, c.notchCooldownTicks));
     }
 
@@ -226,6 +272,7 @@ public final class Engines {
         RUN_TIMER.remove(id);
         WAS_MOVING.remove(id);
         FADING_IN.remove(id);
+        STEP.remove(id);
     }
 
     private static void forget() {
@@ -234,6 +281,7 @@ public final class Engines {
         WAS_MOVING.clear();
         NOTCH_COOLDOWN.clear();
         FADING_IN.clear();
+        STEP.clear();
     }
 
     // ---- persistence -------------------------------------------------------------------
