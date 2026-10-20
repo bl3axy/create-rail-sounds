@@ -146,6 +146,83 @@ def phase_a():
         rcon.cmd(c)
     time.sleep(2)
 
+    # --- every sound name the pack declares must be playable ---
+    # /railsounds test builds the sound packet, so a name the command rejects is a name the
+    # mod could never play either. Cheap, and it covers all of them rather than one.
+    try:
+        import json as _json
+        with open("server-resourcepack/assets/railsounds/sounds.json") as fh:
+            declared = sorted(_json.load(fh))
+    except Exception as e:                                   # pack not beside us - skip
+        declared = []
+        print("could not read sounds.json for the test sweep:", e, flush=True)
+    for name in declared:
+        out = rcon.cmd(f"railsounds test {name}") or ""
+        if "Unknown" in out or "error" in out.lower() or "Exception" in out:
+            failures.append(f"/railsounds test {name} was rejected: {out.strip()[:120]}")
+    if declared:
+        print(f"played all {len(declared)} declared sounds through /railsounds test", flush=True)
+
+    # --- the debug readout ---
+    # It calls into the engine and bell state for every train. There are no trains here, but
+    # the no-train path is exactly where a null slips through, and this code is new.
+    dbg = rcon.cmd("railsounds debug") or ""
+    if "Exception" in dbg or "error" in dbg.lower():
+        failures.append("railsounds debug blew up: " + dbg.strip()[:160])
+
+    # --- commands given bad input must fail politely, not throw ---
+    for c in ("railsounds crossing remove no_such_crossing",
+              "railsounds crossing signal no_such_crossing 0 -59 0",
+              "railsounds crossing nosignal no_such_crossing",
+              "railsounds yard clear NoSuchStation",
+              "railsounds yard uncouple 64 NoSuchStation",
+              "railsounds test no_such_sound_at_all",
+              "railsounds fixtrains",
+              "diesel", "steam"):
+        out = rcon.cmd(c) or ""
+        if "Exception" in out or "Unexpected error" in out:
+            failures.append(f"'{c}' threw instead of failing politely: {out.strip()[:160]}")
+    time.sleep(1)
+
+    # --- crossing add/remove by hand, with a radius that isn't the default ---
+    rcon.cmd(f"forceload add {ORIGIN_X - 40} {ORIGIN_Z - 40} {ORIGIN_X + 40} {ORIGIN_Z + 40}")
+    rcon.cmd(f"execute positioned {ORIGIN_X} {Y} {ORIGIN_Z + 20} run "
+             f"railsounds crossing add manual_test 20")
+    listed = rcon.cmd("railsounds crossing list") or ""
+    if "manual_test" not in listed:
+        failures.append("crossing add did not take: " + listed.strip()[:160])
+    elif "r=20" not in listed.replace(" ", ""):
+        failures.append("crossing add ignored the radius it was given: " + listed.strip()[:160])
+    rcon.cmd("railsounds crossing remove manual_test")
+    listed = rcon.cmd("railsounds crossing list") or ""
+    if "manual_test" in listed:
+        failures.append("crossing remove left it behind: " + listed.strip()[:160])
+
+    # --- all four facings of a block with a rotated hitbox ---
+    # RailShapes rotates the pixel boxes per facing and only one of the four was ever placed.
+    for i, facing in enumerate(("north", "east", "south", "west")):
+        fx = ORIGIN_X + i * 2
+        fz = ORIGIN_Z + 8
+        rcon.cmd(f"setblock {fx} {Y} {fz} railsounds:switch_stand[facing={facing}] replace")
+        rcon.cmd(f"execute if block {fx} {Y} {fz} railsounds:switch_stand[facing={facing}] "
+                 f"run say RSTEST_FACING {facing}")
+    time.sleep(2)
+    for i in range(4):
+        rcon.cmd(f"setblock {ORIGIN_X + i * 2} {Y} {ORIGIN_Z + 8} minecraft:air replace")
+
+    # --- a comparator reading a Cargo Sensor ---
+    # No train, so the answer is 0, but it exercises the comparator path rather than leaving
+    # it to be discovered in a world.
+    cx, cz = ORIGIN_X + 10, ORIGIN_Z + 8
+    rcon.cmd(f"setblock {cx} {Y} {cz} railsounds:cargo_sensor replace")
+    rcon.cmd(f"setblock {cx + 1} {Y} {cz} minecraft:comparator[facing=west] replace")
+    time.sleep(2)
+    rcon.cmd(f"execute if block {cx + 1} {Y} {cz} minecraft:comparator "
+             f"run say RSTEST_COMPARATOR ok")
+    rcon.cmd(f"setblock {cx} {Y} {cz} minecraft:air replace")
+    rcon.cmd(f"setblock {cx + 1} {Y} {cz} minecraft:air replace")
+    time.sleep(2)
+
     # --- break everything (exercises the removal hooks and the crossing/link cleanup) ---
     for _, x in placed:
         rcon.cmd(f"setblock {x} {Y} {ORIGIN_Z} minecraft:air replace")

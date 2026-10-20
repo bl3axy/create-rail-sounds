@@ -18,6 +18,8 @@ jobs:
       - run: python3 tools/check_migrations.py
       - run: python3 tools/check_sounds.py
       - run: python3 tools/check_mixins.py
+      - run: python3 tools/check_notching.py
+      - run: pip install --quiet numpy && python3 tools/check_audio.py
       - run: chmod +x gradlew && set -o pipefail && ./gradlew build --stacktrace 2>&1 | tee build.log
       - name: Boot a test server and place every block in-game
         run: |
@@ -78,7 +80,10 @@ jobs:
           echo "blocks still present after ticking: $PRESENT / $EXPECTED"
           for MARK in "RSTEST_SURVIVED car_retarder" "RSTEST_SURVIVED crossing_signal" \
                       "RSTEST_SURVIVED cargo_sensor" "RSTEST_SURVIVED searchlight_signal" \
-                      "RSTEST_TICKING retarder" "RSTEST_UNPOWERED retarder"; do
+                      "RSTEST_TICKING retarder" "RSTEST_UNPOWERED retarder" \
+                      "RSTEST_FACING north" "RSTEST_FACING east" \
+                      "RSTEST_FACING south" "RSTEST_FACING west" \
+                      "RSTEST_COMPARATOR ok"; do
             if ! grep -q "$MARK" server-log.txt; then
               echo "restart check failed: $MARK never reported"
               exit 1
