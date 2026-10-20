@@ -149,19 +149,25 @@ def phase_a():
     # --- every sound name the pack declares must be playable ---
     # /railsounds test builds the sound packet, so a name the command rejects is a name the
     # mod could never play either. Cheap, and it covers all of them rather than one.
+    # Not a skip if the pack can't be read: a check that quietly does nothing is worse than
+    # no check, because the build still goes green and nobody looks again.
+    import json as _json
     try:
-        import json as _json
         with open("server-resourcepack/assets/railsounds/sounds.json") as fh:
             declared = sorted(_json.load(fh))
-    except Exception as e:                                   # pack not beside us - skip
+    except Exception as e:
+        failures.append("could not read sounds.json for the test sweep: %s" % e)
         declared = []
-        print("could not read sounds.json for the test sweep:", e, flush=True)
+    if not declared:
+        failures.append("the sound sweep had nothing to play - it would have passed vacuously")
     for name in declared:
         out = rcon.cmd(f"railsounds test {name}") or ""
         if "Unknown" in out or "error" in out.lower() or "Exception" in out:
             failures.append(f"/railsounds test {name} was rejected: {out.strip()[:120]}")
-    if declared:
-        print(f"played all {len(declared)} declared sounds through /railsounds test", flush=True)
+    print(f"played all {len(declared)} declared sounds through /railsounds test", flush=True)
+    # leave proof in the SERVER log, so CI can tell this ran from a real count rather than
+    # from the step merely not failing
+    rcon.cmd(f"say RSTEST_SOUNDS {len(declared)}")
 
     # --- the debug readout ---
     # It calls into the engine and bell state for every train. There are no trains here, but
@@ -169,6 +175,10 @@ def phase_a():
     dbg = rcon.cmd("railsounds debug") or ""
     if "Exception" in dbg or "error" in dbg.lower():
         failures.append("railsounds debug blew up: " + dbg.strip()[:160])
+    elif not dbg.strip():
+        failures.append("railsounds debug said nothing at all - it should report 'No trains.'")
+    else:
+        rcon.cmd("say RSTEST_DEBUG ok")
 
     # --- commands given bad input must fail politely, not throw ---
     for c in ("railsounds crossing remove no_such_crossing",

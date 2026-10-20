@@ -83,7 +83,7 @@ jobs:
                       "RSTEST_TICKING retarder" "RSTEST_UNPOWERED retarder" \
                       "RSTEST_FACING north" "RSTEST_FACING east" \
                       "RSTEST_FACING south" "RSTEST_FACING west" \
-                      "RSTEST_COMPARATOR ok"; do
+                      "RSTEST_COMPARATOR ok" "RSTEST_DEBUG ok"; do
             if ! grep -q "$MARK" server-log.txt; then
               echo "restart check failed: $MARK never reported"
               exit 1
@@ -106,6 +106,15 @@ jobs:
           if [ "$BOUND" != "$BOOTS" ]; then
             echo "display sources failed to bind on at least one boot"
             grep -n "display sources" server-log.txt || true
+            exit 1
+          fi
+          # the sound sweep must have played every declared sound - a count, not just a marker,
+          # so a sweep that quietly found nothing can't pass as a sweep that worked
+          DECLARED=$(python3 -c "import json;print(len(json.load(open('server-resourcepack/assets/railsounds/sounds.json'))))")
+          SWEPT=$(grep -oE "RSTEST_SOUNDS [0-9]+" server-log.txt | tail -1 | awk '{print $2}')
+          echo "sound sweep played ${SWEPT:-0} of $DECLARED declared sounds"
+          if [ "${SWEPT:-0}" != "$DECLARED" ]; then
+            echo "the sound sweep did not play every declared sound"
             exit 1
           fi
           echo "restart checks: blocks survived, crossing + link files persisted, ticks still running"
