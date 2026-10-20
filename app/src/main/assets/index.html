@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0e1318">
-<title>Rail Planner</title>
+<title>3xtons Rail Planner</title>
 <style>
 :root {
   --bg: #0e1318; --panel: #161d24; --panel2: #1d262f; --line: #2a3540; --text: #e6edf3; --dim: #8b98a5;
@@ -115,7 +115,7 @@ details ul { padding-left: 18px; }
 <body>
 <div id="app">
   <header>
-    <h1>Rail<span>Planner</span></h1>
+    <h1>3xtons <span>Rail Planner</span></h1>
     <button id="play" title="Play / pause">▶ Play</button>
     <button id="speed" title="Simulation speed">1×</button>
     <button id="reset" title="Back to before you pressed Play" hidden>⟲</button>
@@ -183,7 +183,7 @@ details ul { padding-left: 18px; }
     return {
       nodes: {}, edges: {}, stations: {}, signals: {}, consists: {},
       nextId: 1,
-      settings: { maxSpeed: 28, accel: 3, decel: 3, autoCouple: true }, // Create defaults: top speed 28 b/s, acceleration 3 b/s2
+      settings: { maxSpeed: 28, turnSpeed: 14, accel: 3, decel: 3, autoCouple: true }, // Create defaults: top speed 28 b/s, acceleration 3 b/s2
       log: [], time: 0,
     };
   }
@@ -253,7 +253,10 @@ details ul { padding-left: 18px; }
     for (const k in s.stations) if (s.stations[k].e === e) delete s.stations[k];
     for (const k in s.signals) if (s.signals[k].e === e) delete s.signals[k];
     for (const k in s.consists) if (s.consists[k].path.some(p => p.e === e)) delete s.consists[k];
+    const E = s.edges[e];
     delete s.edges[e]; bump(s);
+    // a curve point left with fewer than two tracks is a normal track end again (so you can extend it)
+    if (E) for (const n of [E.a, E.b]) if (s.nodes[n] && s.nodes[n].c && edgesAt(s, n).length < 2) delete s.nodes[n].c;
   }
 
   /** cut edge e at distance d with a new node; stations, signals and trains on it move over */
@@ -757,15 +760,21 @@ details ul { padding-left: 18px; }
   function logEvt(s, msg) { s.log.unshift({ t: s.time, msg }); if (s.log.length > 200) s.log.length = 200; }
 
   /** couple train cid to whatever is touching it; returns message */
-  function couple(s, cid) {
+  // messages are the mod's own wording
+  const COUPLE_MAX = 3; // blocks/s (coupleMaxSpeed 0.15 b/tick)
+  function couple(s, cid, opts) {
     const hit = findCoupling(s, cid, COUPLE_REACH);
     const c = s.consists[cid];
-    if (!hit) return { ok: false, msg: c.name + ': nothing to couple to' };
-    if (hit.me === hit.them) return { ok: false, msg: c.name + ": can't couple, those cars face the other way" };
+    if (!hit) return { ok: false, msg: c.name + ': Nothing close enough to couple to (get within 1.5 blocks)' };
+    if (hit.me === hit.them) return { ok: false, msg: c.name + ": Can't couple: those cars face the other way round (Create can't flip a car)" };
     const o = s.consists[hit.oid];
+    if ((c.v || 0) > COUPLE_MAX || (o.v || 0) > COUPLE_MAX) return { ok: false, msg: c.name + ': Too fast to couple - slow down first' };
+    // auto-couple only grabs parked cars, never another loco (two powered trains don't grab each other)
+    if (opts && opts.auto && hasLoco(o) && hasLoco(c)) return { ok: false, msg: c.name + ': stopped against ' + o.name + ' (auto-couple only takes cars without a loco - press Couple)' };
     const front = hit.me === 'back' ? c : o, back = hit.me === 'back' ? o : c;
-    // who keeps name + schedule: the one running a schedule, then the one with a loco, then the front
-    const keeper = (c.run || c.schedule.length) ? c : (o.run || o.schedule.length) ? o : hasLoco(front) ? front : hasLoco(back) ? back : front;
+    // like the mod: the train doing the coupling keeps its name; whichever one has a schedule keeps that
+    const keeper = c;
+    if (!c.schedule.length && o.schedule.length) { c.schedule = o.schedule; c.cyclic = o.cyclic; c.run = o.run; c.hold = o.hold; }
     const vehicles = front.vehicles.concat(back.vehicles);
     const fh = front.path[front.path.length - 1];
     const prefer = new Set(front.path.concat(back.path).map(p => p.e));
@@ -774,7 +783,7 @@ details ul { padding-left: 18px; }
     const other = keeper === c ? o : c;
     keeper.vehicles = vehicles; keeper.path = path; keeper.v = 0;
     delete s.consists[other.id];
-    const msg = keeper.name + ' coupled: now ' + vehicles.length + ' vehicles';
+    const msg = 'Coupled - ' + keeper.name + ' is now ' + vehicles.length + ' cars';
     logEvt(s, msg);
     return { ok: true, msg, keeper: keeper.id };
   }
@@ -782,7 +791,8 @@ details ul { padding-left: 18px; }
   /** drop n vehicles off the end away from the loco (n <= 0: every car without a loco) */
   function uncouple(s, cid, n) {
     const c = s.consists[cid], vs = c.vehicles, size = vs.length;
-    if (size < 2) return { ok: false, msg: c.name + ': nothing to drop' };
+    if (size < 2) return { ok: false, msg: c.name + ': Nothing to uncouple' };
+    if ((c.v || 0) > COUPLE_MAX) return { ok: false, msg: c.name + ': Too fast to pull the pin (max 3.0 b/s)' };
     const isLoco = v => v.type !== 'car';
     const locoAtFront = isLoco(vs[0]) || !isLoco(vs[size - 1]);
     if (n <= 0) {
@@ -790,18 +800,18 @@ details ul { padding-left: 18px; }
       for (let i = 0; i < size - 1; i++) { if (isLoco(vs[locoAtFront ? size - 1 - i : i])) break; n++; }
     }
     n = Math.min(n, size - 1);
-    if (n <= 0) return { ok: false, msg: c.name + ': nothing to drop' };
+    if (n <= 0) return { ok: false, msg: c.name + ': Nothing to uncouple' };
     return splitConsist(s, cid, locoAtFront ? size - n : n);
   }
 
   /** split a train after its first `frontCount` vehicles; the part with a loco keeps name + schedule */
   function splitConsist(s, cid, frontCount) {
     const c = s.consists[cid], vs = c.vehicles, size = vs.length;
-    if (frontCount < 1 || frontCount >= size) return { ok: false, msg: c.name + ": can't split there" };
+    if (frontCount < 1 || frontCount >= size) return { ok: false, msg: c.name + ': Couldn\'t uncouple there' };
     const frontV = vs.slice(0, frontCount), backV = vs.slice(frontCount);
     const lf = vehiclesLength(frontV), L = vehiclesLength(vs);
     const frontPath = slicePath(c.path, 0, lf), backPath = slicePath(c.path, lf + GAP, L);
-    if (!frontPath.length || !backPath.length) return { ok: false, msg: c.name + ": couldn't split" };
+    if (!frontPath.length || !backPath.length) return { ok: false, msg: c.name + ': Couldn\'t uncouple there' };
     const keepFront = frontV.some(v => v.type !== 'car') || !backV.some(v => v.type !== 'car');
     const cutId = newConsist(s, c.name + ' cars', null), cut = s.consists[cutId];
     if (keepFront) { c.vehicles = frontV; c.path = frontPath; cut.vehicles = backV; cut.path = backPath; }
@@ -809,7 +819,7 @@ details ul { padding-left: 18px; }
     if (cut.vehicles.some(v => v.type !== 'car')) cut.name = c.name + ' (split)';
     cut.status = 'Parked';
     const n = cut.vehicles.length;
-    const msg = c.name + ' dropped ' + n + (n === 1 ? ' vehicle' : ' vehicles').replace('vehicle', cut.vehicles.every(v => v.type === 'car') ? 'car' : 'vehicle');
+    const msg = c.name + ': Uncoupled ' + n + (n === 1 ? ' car' : ' cars');
     logEvt(s, msg);
     return { ok: true, msg, cut: cutId };
   }
@@ -836,10 +846,19 @@ details ul { padding-left: 18px; }
     const lead = leadOf(c, c.run.forward);
     const path = [{ e: lead.e, dir: lead.dir, d0: lead.d, d1: lead.d }];
     const chooser = routeChooser(c.run.route);
-    let travelled = 0, prevP = pointAt(s, lead.e, lead.d), obstacle = null, stepLen = 0.5;
+    let travelled = 0, prevP = pointAt(s, lead.e, lead.d), obstacle = null, stepLen = 0.5, curveDist = null;
+    { const E = s.edges[lead.e]; if (s.nodes[E.a].c || s.nodes[E.b].c) curveDist = 0; } // already on a curve
     while (travelled < look) {
+      const before = path.length;
       const got = extendHead(s, path, Math.min(stepLen, look - travelled + 0.01), chooser);
       if (got < 1e-6) break;
+      if (curveDist == null && path.length > before) {
+        // crossed onto another piece of track: is it a bend?
+        for (let i = before; i < path.length; i++) {
+          const a = dirVec(s, path[i - 1].e, path[i - 1].dir), b = dirVec(s, path[i].e, path[i].dir), E = s.edges[path[i].e];
+          if (a.x * b.x + a.z * b.z < 0.9986 || s.nodes[E.a].c || s.nodes[E.b].c) { curveDist = Math.max(0, travelled); break; }
+        }
+      }
       travelled += got;
       if (obstacle) { stepLen = 8; continue; }
       const h = path[path.length - 1], p = pointAt(s, h.e, h.d1);
@@ -871,7 +890,7 @@ details ul { padding-left: 18px; }
       if (signal) break;
       cum += segLen(sg);
     }
-    return { obstacle, signal };
+    return { obstacle, signal, curveDist };
   }
 
   /**
@@ -947,7 +966,7 @@ details ul { padding-left: 18px; }
   function startRun(s, cid) {
     const c = s.consists[cid];
     if (!c.schedule.length) { c.status = 'No schedule'; return false; }
-    if (!hasLoco(c)) { c.status = 'Needs a loco to run a schedule'; return false; }
+    if (!hasLoco(c)) { c.status = 'Attach at least one forward-facing Train Controls block (a loco)'; return false; }
     c.run = { entry: 0, phase: 'plan', retry: 0, cond: 0, timer: 0, route: null, remaining: 0, forward: true, waitingSignal: false };
     return true;
   }
@@ -956,7 +975,7 @@ details ul { padding-left: 18px; }
     const entry = c.schedule[c.run.entry];
     if (!entry) return false;
     const sid = stationByName(s, entry.station);
-    if (!sid) { c.status = 'No station called "' + entry.station + '"'; return false; }
+    if (!sid) { setStatus(s, c, "No station on graph matches '" + entry.station + "'"); return false; }
     const allow = allowedDirections(s, c, entry, sid);
     const ctx = routeContext(s, c.id, replan ? c.run.waitTime : 0);
     if (replan) {
@@ -974,7 +993,9 @@ details ul { padding-left: 18px; }
     if (allow.fwd) { const r = findRoute(s, leadOf(c, true), sid, ctx); if (r) cands.push({ r, forward: true }); }
     if (allow.back) { const r = findRoute(s, leadOf(c, false), sid, ctx); if (r) cands.push({ r, forward: false }); }
     if (!cands.length) {
-      c.status = 'No path to ' + s.stations[sid].name + (allow.fwd ? '' : ' (backing in)');
+      // Create's two failures: a route exists but only the other way round, or none at all
+      const otherWay = (!allow.fwd && hasLoco(c) && findRoute(s, leadOf(c, true), sid)) || (!allow.back && findRoute(s, leadOf(c, false), sid));
+      setStatus(s, c, otherWay ? 'Path requires a driver facing the opposite direction' : 'No suitable path to the next Scheduled destination could be found');
       return false;
     }
     cands.sort((a, b) => a.r.cost - b.r.cost);
@@ -986,14 +1007,19 @@ details ul { padding-left: 18px; }
     return true;
   }
 
+  /** set a train's status; a new problem also goes in the log (once) */
+  function setStatus(s, c, msg) {
+    if (c.status !== msg) logEvt(s, c.name + ': ' + msg);
+    c.status = msg;
+  }
+
   function arrive(s, c) {
     const st = s.stations[c.run.sid];
     c.v = 0; c.run.phase = 'cond'; c.run.cond = 0; c.run.timer = 0;
     c.status = 'At ' + st.name;
     if (!c.run.quiet) logEvt(s, c.name + ' arrived at ' + st.name);
-    // station-wide yard rule (like /railsounds yard couple|uncouple)
-    if (st.onArrive === 'couple') { const r = couple(s, c.id); if (r.ok) c = s.consists[r.keeper]; }
-    else if (st.onArrive === 'uncouple') { const r = uncouple(s, c.id, st.count || 0); }
+    // station-wide yard rule (like /railsounds yard couple|uncouple): runs ~1 s after arriving (yardRuleDelayTicks 20)
+    c.run.yardDue = st.onArrive === 'couple' || st.onArrive === 'uncouple' ? s.time + 1 : null;
     return c;
   }
 
@@ -1006,6 +1032,13 @@ details ul { padding-left: 18px; }
   function tickConditions(s, c, dt) {
     const entry = c.schedule[c.run.entry];
     if (!entry || !s.stations[c.run.sid]) { c.run.entry = 0; c.run.phase = 'plan'; c.run.retry = 0.5; return c; }
+    if (c.run.yardDue != null) {
+      if (s.time + 1e-9 < c.run.yardDue) return c;
+      c.run.yardDue = null;
+      const st = s.stations[c.run.sid];
+      if (st.onArrive === 'couple') { const r = couple(s, c.id); if (r.ok) c = s.consists[r.keeper]; else logEvt(s, r.msg); }
+      else if (st.onArrive === 'uncouple') { const r = uncouple(s, c.id, st.count || 0); if (!r.ok) logEvt(s, r.msg); }
+    }
     const conds = entry.conds || [];
     while (c.run.cond < conds.length) {
       const k = conds[c.run.cond];
@@ -1081,6 +1114,9 @@ details ul { padding-left: 18px; }
       }
       const sc = scout(s, c, range, near);
       let limit = Math.min(cfg.maxSpeed, c.v + cfg.accel * dt, Math.sqrt(2 * cfg.decel * Math.max(0, c.run.remaining)));
+      // Create slows trains for curves (trainTurningTopSpeed, default 14 b/s), braking ahead of them
+      const turn = cfg.turnSpeed || 14;
+      if (sc.curveDist != null) limit = Math.min(limit, Math.sqrt(turn * turn + 2 * cfg.decel * Math.max(0, sc.curveDist)));
       c.run.waitingSignal = false; c.run.blocked = null;
       // signal ahead: may we pass it?
       if (sc.signal && sc.signal.dist < c.run.remaining) {
@@ -1165,10 +1201,13 @@ details ul { padding-left: 18px; }
       if (forward) { got = extendHead(s, c.path, go, chooser); trimTail(c.path, got); }
       else { got = extendTail(s, c.path, go, chooser); trimHead(c.path, got); }
     }
-    let msg = got < 1e-3 ? (sc.obstacle ? c.name + ': stopped - ' + s.consists[sc.obstacle.cid].name + ' in the way' : c.name + ': end of track') : null;
-    if (s.settings.autoCouple !== false && sc.obstacle && sc.obstacle.dist <= amount + STOP_SHORT + 0.05) {
-      const r = couple(s, cid);
-      if (r.ok) return { ok: true, msg: r.msg, keeper: r.keeper };
+    let msg = got < 1e-3 ? (sc.obstacle ? c.name + ': stopped against ' + s.consists[sc.obstacle.cid].name + ' (buffers)' : c.name + ': A Carriage has reached the end of its Track') : null;
+    if (sc.obstacle && sc.obstacle.dist <= amount + STOP_SHORT + 0.05) {
+      if (s.settings.autoCouple !== false) {
+        const r = couple(s, cid, { auto: true });
+        if (r.ok) return { ok: true, msg: r.msg, keeper: r.keeper };
+        if (got < 1e-3) msg = r.msg;
+      } else if (got < 1e-3) msg = c.name + ': stopped against ' + s.consists[sc.obstacle.cid].name + ' - auto-couple is OFF, press Couple';
     }
     return { ok: got > 1e-3, msg: msg || c.name + ' moved ' + got.toFixed(1) + ' blocks' };
   }
@@ -1203,38 +1242,45 @@ details ul { padding-left: 18px; }
 
 </script>
 <script>
-/* Example layout: a passing loop with signals, two shuttles, and a yard spur with a shunter. */
+/* Example layout: a passing loop with curved legs and signals, two shuttles, and a curved yard spur with a shunter. */
 (function (root) {
   function buildExample(C) {
     const s = C.newState();
     const N = (x, z) => C.addNode(s, x, z), E = (a, b) => C.addEdge(s, a, b);
-    const sig = (e, d, heads, type, typeB) => { const g = C.addSignal(s, e, d); Object.assign(s.signals[g], { heads, type: type || 'normal', typeB: typeB || 'normal' }); return g; };
+    const curve = (a, b) => C.layTrack(s, a, b, true).nodes;
+    const at = (x, z) => { const t = C.nearestTrack(s, x, z); return [t.e, t.d]; };
+    const edgeBetween = (a, b) => C.findEdge(s, a, b);
+    const sig = (x, z, heads, type, typeB) => { const [e, d] = at(x, z); const g = C.addSignal(s, e, d); Object.assign(s.signals[g], { heads, type: type || 'normal', typeB: typeB || 'normal' }); return g; };
     const st = (e, d, name, dir, extra) => { const k = C.addStation(s, e, d, name); Object.assign(s.stations[k], { dir }, extra || {}); return k; };
     // west platforms
     const WJ = N(40, 0), P1 = N(0, 0), P2 = N(0, 8);
     const eP1 = E(WJ, P1), eP2 = E(WJ, P2);
-    // single line + passing loop
-    const J1 = N(80, 0), T1 = N(100, -8), T2 = N(160, -8), J2 = N(180, 0);
-    const eW = E(WJ, J1), eMain = E(J1, J2), eT1 = E(J1, T1), eTop = E(T1, T2), eT2 = E(T2, J2);
-    // east: platform line, turnout to the yard spur, lead
-    const T = N(300, 0), END = N(400, 0), Y = N(260, 24);
-    const eEastW = E(J2, T), eEastE = E(T, END), eSpur = E(T, Y);
+    // single line + passing loop (curved legs out to a parallel track)
+    const J1 = N(80, 0), J2 = N(180, 0), T1 = N(110, -10), T2 = N(150, -10);
+    E(WJ, J1); E(J1, J2); E(T1, T2);
+    // east: platform line, turnout to the curved yard spur, lead
+    const T = N(300, 0), END = N(400, 0);
+    const eEastW = E(J2, T), eEastE = E(T, END);
+    curve({ node: J1, x: 80, z: 0 }, { node: T1, x: 110, z: -10 });
+    curve({ node: T2, x: 150, z: -10 }, { node: J2, x: 180, z: 0 });
+    const spur = curve({ node: T, x: 300, z: 0 }, { x: 250, z: 26 });
     // signals (Create practice: chain signals into the single line, normal ones out of the loop)
-    sig(eP1, 5, 'both', 'normal', 'chain'); sig(eP2, 5, 'both', 'normal', 'chain');
-    sig(eW, 38, 'both', 'normal', 'chain');
-    sig(eMain, 5, 'back'); sig(eTop, 5, 'back');
-    sig(eMain, 95, 'fwd'); sig(eTop, 55, 'fwd');
-    sig(eEastW, 10, 'both', 'normal', 'chain'); sig(eEastW, 110, 'both');
+    const ps = (e, d) => { const g = C.addSignal(s, e, d); Object.assign(s.signals[g], { heads: 'both', type: 'normal', typeB: 'chain' }); };
+    ps(eP1, 5); ps(eP2, 5);
+    sig(78, 0, 'both', 'normal', 'chain');
+    sig(85, 0, 'back'); sig(115, -10, 'back');
+    sig(175, 0, 'fwd'); sig(145, -10, 'fwd');
+    sig(190, 0, 'both', 'normal', 'chain'); sig(290, 0, 'both');
     // stations
-    const W1 = st(eP1, 36, 'West 1', 1), W2 = st(eP2, 36, 'West 2', 1);
-    const Halt = st(eTop, 40, 'Loop Halt', 1);
-    const EP = st(eEastW, 100, 'East Platform', 1);
-    const Shed = st(eEastE, 30, 'Shed', 1), Lead = st(eEastE, 45, 'Lead', 1);
-    const Yard = st(eSpur, 20, 'Yard', 1, { approach: 'backin' });
-    const Drop = st(eEastE, 95, 'Drop', 1);
+    st(eP1, 36, 'West 1', 1); st(eP2, 36, 'West 2', 1);
+    const top = edgeBetween(T1, T2); const Halt = st(top, 20, 'Loop Halt', 1);
+    st(eEastW, 100, 'East Platform', 1);
+    const Shed = st(eEastE, 30, 'Shed', 1); st(eEastE, 45, 'Lead', 1);
+    st(edgeBetween(spur[14], spur[15]), 0.5, 'Yard', 1, { approach: 'backin' });
+    st(eEastE, 95, 'Drop', 1);
     // trains
     const ex = C.newConsist(s, 'Express', [{ type: 'loco2' }, { type: 'car' }, { type: 'car' }, { type: 'car' }]);
-    C.placeAtStation(s, ex, W1);
+    C.placeAtStation(s, ex, C.stationByName(s, 'West 1'));
     s.consists[ex].schedule = [
       { type: 'travel', station: 'East Platform', conds: [{ type: 'wait', secs: 5 }] },
       { type: 'travel', station: 'West 1', conds: [{ type: 'wait', secs: 5 }] }];
@@ -1244,7 +1290,8 @@ details ul { padding-left: 18px; }
       { type: 'travel', station: 'West 2', conds: [{ type: 'wait', secs: 5 }] },
       { type: 'travel', station: 'Loop Halt', conds: [{ type: 'wait', secs: 5 }] }];
     const cut = C.newConsist(s, 'Box cars', [{ type: 'car' }, { type: 'car' }, { type: 'car' }]);
-    s.consists[cut].path = C.layBack(s, eSpur, 16, -1, C.vehiclesLength(s.consists[cut].vehicles));
+    const ce = edgeBetween(spur[13], spur[14]);
+    s.consists[cut].path = C.layBack(s, ce, 0, -1, C.vehiclesLength(s.consists[cut].vehicles));
     const sh = C.newConsist(s, 'Shunter', [{ type: 'loco1' }]);
     C.placeAtStation(s, sh, Shed);
     s.consists[sh].schedule = [
@@ -2074,7 +2121,7 @@ details ul { padding-left: 18px; }
       b.append(sec('Drive / shunt'));
       const hold = (fwd) => {
         let t = null;
-        const go = () => { const r = C.nudge(S, id, fwd, 0.5); if (r.keeper && r.keeper !== id) { stop(); select({ kind: 'train', id: r.keeper }); toast(r.msg); return; } if (!r.ok) { stop(); toast(r.msg); } else if (/coupled/.test(r.msg)) { stop(); toast(r.msg); refresh(); } dirty = true; };
+        const go = () => { const r = C.nudge(S, id, fwd, 0.5); if (r.keeper && r.keeper !== id) { stop(); select({ kind: 'train', id: r.keeper }); toast(r.msg); return; } if (!r.ok) { stop(); toast(r.msg); } else if (/^Coupled - /.test(r.msg)) { stop(); toast(r.msg); refresh(); } dirty = true; };
         const stop = () => { clearInterval(t); t = null; save(true); };
         return el('button', { on: {
           pointerdown: e => { e.preventDefault(); if (c.run) { toast('Stop the schedule first'); return; } pushUndo(); go(); t = setInterval(go, 60); },
@@ -2165,7 +2212,7 @@ details ul { padding-left: 18px; }
   function fmtTime(t) { const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); }
 
   function openMenu() {
-    openSheet('Menu', b => {
+    openSheet('3xtons Rail Planner', b => {
       // Track Map import
       b.append(sec('Import from Create Track Map'));
       let saved = ''; try { saved = localStorage.getItem(KEY + '.mapurl') || ''; } catch (e) { /* ignore */ }
@@ -2185,8 +2232,8 @@ details ul { padding-left: 18px; }
       b.append(sec('Settings'));
       const num = (label, key, min, max, stepv) => el('div', { cls: 'row' }, el('div', { cls: 'grow' }, label),
         el('input', { type: 'number', min, max, step: stepv, value: S.settings[key], on: { change: e => { const v = Math.max(min, Math.min(max, +e.target.value || min)); S.settings[key] = v; changed(); } } }));
-      b.append(num('Top speed (blocks/s)', 'maxSpeed', 1, 100, 1), num('Acceleration (blocks/s²)', 'accel', 0.2, 20, 0.1), num('Braking (blocks/s²)', 'decel', 0.2, 20, 0.1));
-      b.append(note('Create defaults: top speed 28, acceleration 3 (Create brakes with the same value).'));
+      b.append(num('Top speed (blocks/s)', 'maxSpeed', 1, 100, 1), num('Top speed on curves (blocks/s)', 'turnSpeed', 1, 100, 1), num('Acceleration (blocks/s²)', 'accel', 0.2, 20, 0.1), num('Braking (blocks/s²)', 'decel', 0.2, 20, 0.1));
+      b.append(note('Create defaults: top speed 28, curves 14, acceleration 3 (Create brakes with the same value). Match these to your server config if you changed them.'));
       b.append(el('label', { cls: 'check' }, el('input', { type: 'checkbox', checked: S.settings.autoCouple !== false, on: { change: e => { S.settings.autoCouple = e.target.checked; changed(); } } }), 'Auto-couple when driving into cars (J in game)'));
       b.append(el('label', { cls: 'check' }, el('input', { type: 'checkbox', checked: S.settings.grid !== false, on: { change: e => { S.settings.grid = e.target.checked; changed(); } } }), 'Show grid'));
       // help
@@ -2200,9 +2247,22 @@ details ul { padding-left: 18px; }
           'Signals split track into blocks. Red = block taken. Chain signals (diamonds) look past the next signal too; yellow = the way ahead is blocked further on.',
           'Safety net (the mod): a train brakes for anything on the track ahead, and eases up to parked cars so it can couple.',
           'Couple up / Uncouple conditions run when the train has stopped. Uncouple N drops N cars off the end away from the loco; 0 = all cars.',
-          'Route choice copies Create: it avoids track with parked trains, busy blocks behind signals and other stations, and re-routes every few seconds while held at a chain signal.'].map(t => el('li', {}, t)))));
+          'Route choice copies Create: it avoids track with parked trains, busy blocks behind signals and other stations, and re-routes every few seconds while held at a chain signal.',
+          'Auto-couple (on by default, J in game) only grabs parked cars when you drive into them, never another loco - use Couple for that. Trains on a schedule never grab cars mid-route.',
+          'The train doing the coupling keeps its name; whichever train has a schedule keeps it.',
+          'Coupling and uncoupling only work at 3 blocks/s or slower.',
+          'Trains slow to 14 blocks/s on curves and can\'t take a joint sharper than 60°. You can\'t put a switch in the middle of a curve.',
+          'A station yard rule (Couple up / Uncouple) runs about 1 second after the train stops, for every train that stops there.'].map(t => el('li', {}, t)))));
+      b.append(el('details', {}, el('summary', {}, 'Messages you\'ll see (same as the game)'), el('ul', {},
+        ["No station on graph matches '<name>' - the schedule names a station that doesn't exist (check spelling).",
+          'No suitable path to the next Scheduled destination could be found - no track goes there, or the station arrow points the way trains can\'t arrive from.',
+          'Path requires a driver facing the opposite direction - there is a way, but only backwards. Single-cab loco: use Back into, set the station to Either way / Must back in, or turn the loco round on a wye or loop.',
+          'Attach at least one forward-facing Train Controls block - cars on their own can\'t run a schedule; they need a loco.',
+          'A Carriage has reached the end of its Track - you drove off the end.',
+          'Nothing close enough to couple to (get within 1.5 blocks) / Too fast to couple / Can\'t couple: those cars face the other way round - the mod\'s coupling messages.',
+          'Waiting at signal / Stopped behind <train> - held by a signal, or by the safety net.'].map(t => el('li', {}, t)))));
       b.append(el('details', {}, el('summary', {}, 'Controls'), el('ul', {},
-        ['Track: tap to start, tap again for each bend, tap the last point to finish. Tap onto existing track to join it.',
+        ['Track: drag from where it starts to where it ends. Start on a track end and it curves smoothly out of it; end on track and it joins smoothly. Start in the middle of a straight to make a switch. Curve / Straight at the bottom left.',
           'Pinch to zoom, drag to pan. In Select you can drag a joint to move it.',
           'Tap a train to add cars, drive it, uncouple (✂) or give it a schedule.',
           'Play runs all scheduled trains. ⟲ puts everything back to how it was before you pressed Play.'].map(t => el('li', {}, t)))));
