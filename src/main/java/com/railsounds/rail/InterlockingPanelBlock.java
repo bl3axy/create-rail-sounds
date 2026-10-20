@@ -88,7 +88,7 @@ public class InterlockingPanelBlock extends FacingRailBlock {
                 player.sendOverlayMessage(Component.literal("Needs Steam 'n' Rails track switches").withStyle(ChatFormatting.RED));
                 return InteractionResult.SUCCESS;
             }
-            LINKING.put(player.getUUID(), new Pending(TowerLinks.key(level, pos), pos, lever, level.getGameTime() + LINK_WINDOW));
+            LINKING.put(player.getUUID(), new Pending(TowerLinks.key(level, pos), pos.immutable(), lever, level.getGameTime() + LINK_WINDOW));
             player.sendOverlayMessage(Component.literal(label + "now sneak-right-click a Steam 'n' Rails switch block (sneak-click this lever again to unlink)")
                 .withStyle(ChatFormatting.AQUA));
             return InteractionResult.SUCCESS;

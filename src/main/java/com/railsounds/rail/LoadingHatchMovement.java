@@ -52,7 +52,7 @@ public class LoadingHatchMovement extends MovementBehaviour {
         for (ItemEntity ie : items) {
             ItemStack stack = ie.getItem();
             if (stack.isEmpty()) continue;
-            int moved = cargo.insert(stack.copy());
+            int moved = cargo.insert(stack.copy(), stack.getCount(), null);
             if (moved <= 0) continue;
             if (moved >= stack.getCount()) {
                 ie.discard();
@@ -90,7 +90,7 @@ public class LoadingHatchMovement extends MovementBehaviour {
             if (s.isEmpty()) continue;
             if (source instanceof WorldlyContainer wc && !wc.canTakeItemThroughFace(slot, s, Direction.DOWN)) continue;
             int want = Math.min(budget, s.getCount());
-            int moved = cargo.insert(s.copyWithCount(want));
+            int moved = cargo.insert(s.copyWithCount(want), want, null);
             if (moved <= 0) continue;
             source.removeItem(slot, moved);
             budget -= moved;
