@@ -70,7 +70,10 @@ public class RailCommands {
                     ok(ctx, "No trains.");
                     return 0;
                 }
-                for (Train t : Create.RAILWAYS.trains.values()) ok(ctx, TrainSoundTracker.describe(t));
+                for (Train t : Create.RAILWAYS.trains.values()) {
+                    ok(ctx, TrainSoundTracker.describe(t) + " | " + Engines.describe(t)
+                        + (Bells.isRinging(t) ? " | bell ringing" : ""));
+                }
                 return 1;
             }))
             .then(Commands.literal("yard")

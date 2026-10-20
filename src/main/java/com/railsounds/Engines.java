@@ -232,6 +232,18 @@ public final class Engines {
         return Math.max(0, Math.min(n - 1, (int) Math.round(frac * (n - 1))));
     }
 
+    /** one line for /railsounds debug: whether the engine is lit and what notch it's working in */
+    public static String describe(Train train) {
+        if (train == null) return "";
+        if (!isRunning(train)) return "engine off";
+        RailConfig.Values c = RailConfig.V;
+        if (!c.engineSounds) return "engine on (engine sounds disabled)";
+        if (Math.abs(train.speed) <= MOVING) return "engine on, idling";
+        int step = stepOf(train, c);
+        return String.format("engine on, notch %d/%d at pitch %.2f",
+            step + 1, steps(train, c), pitchFor(step, c, train));
+    }
+
     /** playback pitch for a notch. Minecraft clamps to 0.5-2.0, so this does too */
     private static float pitchFor(int step, RailConfig.Values c, Train train) {
         int n = steps(train, c);

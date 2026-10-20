@@ -34,6 +34,35 @@ public class RailSounds implements ModInitializer {
     public static final Logger LOG = LoggerFactory.getLogger("RailSounds");
     private static long lastErrorLog;
 
+    /**
+     * Run one per-tick job. Nothing here is worth crashing a server over, so a failure is
+     * logged and the next job still runs; the throttle is shared so a fault that repeats every
+     * tick writes one stack trace a minute instead of twelve hundred.
+     */
+    private static void safely(String what, Runnable job) {
+        try {
+            job.run();
+        } catch (Throwable t) {
+            long now = System.currentTimeMillis();
+            if (now - lastErrorLog > 60_000) {
+                lastErrorLog = now;
+                LOG.error("[railsounds] " + what + " tick failed (further errors hidden for 60s)", t);
+            }
+        }
+    }
+
+    /**
+     * Same idea for the start and stop hooks, but never throttled: these run once, and if two
+     * of them fail I want to see both, not the first one only.
+     */
+    private static void guarded(String what, Runnable job) {
+        try {
+            job.run();
+        } catch (Throwable t) {
+            LOG.error("[railsounds] " + what + " failed", t);
+        }
+    }
+
     @Override
     public void onInitialize() {
         RailConfig.load();
@@ -64,65 +93,56 @@ public class RailSounds implements ModInitializer {
         });
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            TrainSoundTracker.reset();
-            TrainTypes.load(server);
-            Shunting.reset();
-            YardRules.load(server);
-            Engines.load(server);
-            Bells.load(server);
-            com.railsounds.rail.TowerLinks.load(server);
-            com.railsounds.rail.SpeedZones.reset();
+            // guarded one by one: a corrupt save file for one feature shouldn't stop the rest
+            // of them loading, which is what happened when these ran as one block
+            guarded("reset", TrainSoundTracker::reset);
+            guarded("train types load", () -> TrainTypes.load(server));
+            guarded("shunting reset", Shunting::reset);
+            guarded("yard rules load", () -> YardRules.load(server));
+            guarded("engine state load", () -> Engines.load(server));
+            guarded("bell state load", () -> Bells.load(server));
+            guarded("tower links load", () -> com.railsounds.rail.TowerLinks.load(server));
+            guarded("speed zones reset", com.railsounds.rail.SpeedZones::reset);
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-            SoundPlayer.clear();
-            Crossings.onServerStop();
-            TrainSoundTracker.reset();
-            Horns.reset();
-            TrainTypes.unload();
-            Shunting.reset();
-            YardRules.unload();
-            Engines.unload();
-            Bells.unload();
-            com.railsounds.rail.TowerLinks.unload();
-            com.railsounds.rail.SpeedZones.reset();
-            com.railsounds.rail.SearchlightSignalBlock.clearCache();
-            com.railsounds.rail.DefectDetectorBlock.clearCache();
-            com.railsounds.rail.InterlockingPanelBlock.clearCache();
-            com.railsounds.rail.CrossingGateBlock.clearCache();
-            com.railsounds.rail.RouteSensorBlock.clearCache();
-            com.railsounds.rail.RailItems.clearCache();
+            // every one of these has to run even if an earlier one throws. In singleplayer the
+            // same JVM goes straight into the next world, so anything left behind here is state
+            // from the old world leaking into the new one.
+            guarded("sound queue clear", SoundPlayer::clear);
+            guarded("crossings save", Crossings::onServerStop);
+            guarded("tracker reset", TrainSoundTracker::reset);
+            guarded("horns reset", Horns::reset);
+            guarded("train types unload", TrainTypes::unload);
+            guarded("shunting reset", Shunting::reset);
+            guarded("yard rules unload", YardRules::unload);
+            guarded("engine state unload", Engines::unload);
+            guarded("bell state unload", Bells::unload);
+            guarded("tower links unload", com.railsounds.rail.TowerLinks::unload);
+            guarded("speed zones reset", com.railsounds.rail.SpeedZones::reset);
+            guarded("block caches clear", () -> {
+                com.railsounds.rail.SearchlightSignalBlock.clearCache();
+                com.railsounds.rail.DefectDetectorBlock.clearCache();
+                com.railsounds.rail.InterlockingPanelBlock.clearCache();
+                com.railsounds.rail.CrossingGateBlock.clearCache();
+                com.railsounds.rail.RouteSensorBlock.clearCache();
+                com.railsounds.rail.RailItems.clearCache();
+            });
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            try {
-                Shunting.tick(server);
-            } catch (Throwable t) {
-                LOG.error("[railsounds] shunting tick failed", t);
-            }
-            try {
-                Engines.tick(server);
-                Bells.tick(server);
-            } catch (Throwable t) {
-                LOG.error("[railsounds] engine sound tick failed", t);
-            }
-            try {
-                com.railsounds.rail.SpeedZones.tick(server);
-            } catch (Throwable t) {
-                LOG.error("[railsounds] speed limit tick failed", t);
-            }
-            try {
+            // One feature falling over mustn't take the others down with it, and it mustn't
+            // write 20 stack traces a second either, so each gets its own guard and they all
+            // share the same throttle.
+            safely("shunting", () -> Shunting.tick(server));
+            safely("engine sounds", () -> Engines.tick(server));
+            safely("loco bell", () -> Bells.tick(server));
+            safely("speed limits", () -> com.railsounds.rail.SpeedZones.tick(server));
+            safely("train sounds", () -> {
                 TrainSoundTracker.tick(server);
                 Crossings.tick(server);
                 SoundPlayer.tickScheduled(server);
                 Horns.tick(server);
                 if (server.getTickCount() % 1200 == 600) TrainTypes.cleanup();
-            } catch (Throwable t) {
-                // never crash the server over a sound, and don't flood the log 20x a second either
-                long now = System.currentTimeMillis();
-                if (now - lastErrorLog > 60_000) {
-                    lastErrorLog = now;
-                    LOG.error("RailSounds tick failed (further errors hidden for 60s)", t);
-                }
-            }
+            });
         });
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) -> {
             RailCommands.register(dispatcher);
