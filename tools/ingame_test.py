@@ -220,6 +220,27 @@ def phase_a():
     for i in range(4):
         rcon.cmd(f"setblock {ORIGIN_X + i * 2} {Y} {ORIGIN_Z + 8} minecraft:air replace")
 
+    # --- a Crossing Gate must actually come down on redstone ---
+    # Reported as not working. The arm waits LOWER_DELAY x RATE ticks of "lights" before it
+    # starts moving and then steps 0 -> 1 -> 2, so this gives it well over that and checks the
+    # angle it ACTUALLY reached, then that it goes back up again.
+    gx, gz = ORIGIN_X + 14, ORIGIN_Z + 8
+    rcon.cmd(f"setblock {gx} {Y} {gz} railsounds:crossing_gate replace")
+    time.sleep(1)
+    rcon.cmd(f"execute if block {gx} {Y} {gz} railsounds:crossing_gate[angle=0] "
+             f"run say RSTEST_GATE start_up")
+    rcon.cmd(f"setblock {gx + 1} {Y} {gz} minecraft:redstone_block replace")
+    time.sleep(10)                       # 6 x RATE(10) = 60 ticks to reach angle 2, plus slack
+    for a in (0, 1, 2):
+        rcon.cmd(f"execute if block {gx} {Y} {gz} railsounds:crossing_gate[angle={a}] "
+                 f"run say RSTEST_GATE powered_angle_{a}")
+    rcon.cmd(f"setblock {gx + 1} {Y} {gz} minecraft:air replace")
+    time.sleep(8)
+    for a in (0, 1, 2):
+        rcon.cmd(f"execute if block {gx} {Y} {gz} railsounds:crossing_gate[angle={a}] "
+                 f"run say RSTEST_GATE released_angle_{a}")
+    rcon.cmd(f"setblock {gx} {Y} {gz} minecraft:air replace")
+
     # --- a comparator reading a Cargo Sensor ---
     # No train, so the answer is 0, but it exercises the comparator path rather than leaving
     # it to be discovered in a world.

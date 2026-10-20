@@ -117,6 +117,11 @@ jobs:
             echo "the sound sweep did not play every declared sound"
             exit 1
           fi
+          # what angle did the gate actually reach on redstone?
+          echo "--- crossing gate on redstone ---"
+          grep -oE "RSTEST_GATE [a-z0-9_]+" server-log.txt | sort -u || true
+          grep -q "RSTEST_GATE powered_angle_2" server-log.txt || { echo "the crossing gate did NOT come down on redstone"; exit 1; }
+          grep -q "RSTEST_GATE released_angle_0" server-log.txt || { echo "the crossing gate did not go back up"; exit 1; }
           echo "restart checks: blocks survived, crossing + link files persisted, ticks still running"
           if [ "$PRESENT" != "$EXPECTED" ]; then
             echo "some blocks vanished or changed state while ticking"
