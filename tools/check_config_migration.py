@@ -10,11 +10,21 @@ Gson ever stopped using the no-arg constructor - the mod would go silent and not
 Usage: python3 tools/check_config_migration.py run/config/railsounds.json
 """
 import json
+import re
 import sys
 
 path = sys.argv[1] if len(sys.argv) > 1 else "run/config/railsounds.json"
 c = json.load(open(path))
 bad = []
+
+# The newest version comes from the source, never a number typed in here - this check was
+# hardcoded to 4 and went stale the moment a v5 step was added, failing a build that was fine.
+SRC = "src/main/java/com/railsounds/RailConfig.java"
+steps = [int(n) for n in re.findall(r"v\.configVersion = (\d+);", open(SRC).read())]
+if not steps:
+    print("  FAIL could not read the migration chain out of " + SRC)
+    sys.exit(1)
+NEWEST = max(steps)
 
 
 def want(key, expected):
@@ -30,13 +40,15 @@ def want(key, expected):
 
 
 # migrations must have applied to values still sitting on their old defaults
-want("configVersion", 4)
+want("configVersion", NEWEST)
 want("engineSounds", True)      # v3
 want("clackVolume", 0.65)       # v4
 want("couplerVolume", 0.85)     # v4
 want("idleVolume", 0.25)        # v4
 want("uncoupleMaxSpeed", 0.75)  # v2
 want("cutCoastFactor", 0.06)    # v2
+want("startClipTicks", 150)     # v5
+want("locoBellClipTicks", 55)   # v6
 
 # a value the player changed by hand must NOT be touched
 want("brakeVolume", 0.9)
