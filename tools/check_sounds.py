@@ -25,7 +25,7 @@ import os
 import re
 import sys
 
-PACK = "server-resourcepack/assets/railsounds"
+PACK = "src/main/resources/assets/railsounds"
 SRC = "src/main/java/com/railsounds"
 
 fail = []

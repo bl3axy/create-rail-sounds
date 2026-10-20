@@ -153,7 +153,7 @@ def phase_a():
     # no check, because the build still goes green and nobody looks again.
     import json as _json
     try:
-        with open("server-resourcepack/assets/railsounds/sounds.json") as fh:
+        with open("src/main/resources/assets/railsounds/sounds.json") as fh:
             declared = sorted(_json.load(fh))
     except Exception as e:
         failures.append("could not read sounds.json for the test sweep: %s" % e)

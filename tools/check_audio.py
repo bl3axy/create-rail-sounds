@@ -27,7 +27,7 @@ except ImportError:
     print("  skip audio checks (no numpy)")
     sys.exit(0)
 
-PACK = sys.argv[1] if len(sys.argv) > 1 else "server-resourcepack/assets/railsounds"
+PACK = sys.argv[1] if len(sys.argv) > 1 else "src/main/resources/assets/railsounds"
 SOUNDS = os.path.join(PACK, "sounds")
 
 # the ones the mod replays back to back; their wrap has to be inaudible

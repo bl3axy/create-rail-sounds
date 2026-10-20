@@ -7,18 +7,25 @@ cargo sensors, and the yard gear you need to do proper shunting.
 Built for **Minecraft 26.2 (Fabric)** against **Create Fly 6.0.9**. Some of the shunting features
 want **Steam 'n' Rails** installed as well; everything else works without it.
 
-**You don't need the mod on your client to hear the sounds.** They come from the server resource
-pack. Install the mod on your client too and you get the keybinds, the long seamless horn hold,
-and the proper fade when you let go of the horn.
+**You don't need the mod on your client to hear the sounds** — that's what the resource pack is
+for. Install the mod on your client too and you get the sounds without any pack, plus the
+keybinds, the long seamless horn hold, and the proper fade when you let go of the horn.
 
 ---
 
 ## What's in the box
 
-- `create-rail-sounds-2.4.0.jar` — the mod. Drop it in `mods/` on the server.
-- `railsounds-resourcepack.zip` — the sounds. Put it in `resourcepacks/` on the server and set
-  `resource-pack=` in `server.properties`, or just hand it to people to install themselves.
+- `create-rail-sounds-26.2-2.6.0.jar` — the mod, **with all the sounds built in**. Drop it in
+  `mods/`. Anyone who has the mod on their client hears everything with no resource pack at all.
+- `railsounds-resourcepack.zip` — the same sounds, for clients that *don't* have the mod. Put it
+  in `resourcepacks/` on the server and set `resource-pack=` in `server.properties`, or hand it
+  to people directly. It also carries the Create train-sound overrides, which can only live in a
+  pack.
 - This README.
+
+**Which do you need?** If everyone on your server has the mod installed, just the jar. If people
+join without it — which is the normal case, since the mod is server-side — serve the pack too.
+Both carry identical audio; the pack is built from the jar's own files so they can't drift.
 
 ---
 

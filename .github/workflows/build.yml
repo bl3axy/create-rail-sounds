@@ -110,7 +110,7 @@ jobs:
           fi
           # the sound sweep must have played every declared sound - a count, not just a marker,
           # so a sweep that quietly found nothing can't pass as a sweep that worked
-          DECLARED=$(python3 -c "import json;print(len(json.load(open('server-resourcepack/assets/railsounds/sounds.json'))))")
+          DECLARED=$(python3 -c "import json;print(len(json.load(open('src/main/resources/assets/railsounds/sounds.json'))))")
           SWEPT=$(grep -oE "RSTEST_SOUNDS [0-9]+" server-log.txt | tail -1 | awk '{print $2}')
           echo "sound sweep played ${SWEPT:-0} of $DECLARED declared sounds"
           if [ "${SWEPT:-0}" != "$DECLARED" ]; then
@@ -138,7 +138,17 @@ jobs:
           git add -A && git commit -qm "Log ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" buildlog
       - name: Zip resource pack
-        run: cd server-resourcepack && zip -qr ../create-rail-sounds-resourcepack.zip . -x README.txt
+        # Our own sounds live in the mod's resources and are copied in from there, so the jar
+        # and the pack can never carry different audio. Only Create's overrides are pack-only:
+        # shipping assets/create/** inside our jar would fight Create for the same paths.
+        run: |
+          rm -rf packbuild && mkdir -p packbuild/assets/railsounds
+          cp -r server-resourcepack/pack.mcmeta packbuild/
+          cp -r server-resourcepack/assets/create packbuild/assets/
+          cp -r src/main/resources/assets/railsounds/sounds packbuild/assets/railsounds/
+          cp src/main/resources/assets/railsounds/sounds.json packbuild/assets/railsounds/
+          cd packbuild && zip -qr ../create-rail-sounds-resourcepack.zip .
+          cd .. && echo "pack contains $(unzip -l create-rail-sounds-resourcepack.zip | grep -c '\.ogg') sound files"
       - uses: actions/upload-artifact@v4
         with:
           name: create-rail-sounds
