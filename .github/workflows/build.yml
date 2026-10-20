@@ -16,17 +16,6 @@ jobs:
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
       - run: chmod +x gradlew && set -o pipefail && ./gradlew build --stacktrace 2>&1 | tee build.log
-      - name: Publish logs on failure
-        if: failure()
-        run: |
-          mkdir logout
-          cp build.log server-log.txt unexpected.txt ingame-test.txt server-run.txt logout/ 2>/dev/null || true
-          cd logout
-          git init -q -b buildlog
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add -A && git commit -qm "Log ${GITHUB_SHA::7}"
-          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" buildlog
       - name: Boot a test server and place every block in-game
         run: |
           mkdir -p run && echo "eula=true" > run/eula.txt
@@ -49,6 +38,17 @@ jobs:
           cat unexpected.txt
           if [ -s unexpected.txt ]; then echo "server log has unexpected errors"; exit 1; fi
           if [ "$TEST_RC" != "0" ]; then echo "in-game test failed"; exit 1; fi
+      - name: Publish logs on failure
+        if: failure()
+        run: |
+          mkdir logout
+          cp build.log server-log.txt unexpected.txt ingame-test.txt server-run.txt logout/ 2>/dev/null || true
+          cd logout
+          git init -q -b buildlog
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Log ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" buildlog
       - name: Zip resource pack
         run: cd server-resourcepack && zip -qr ../create-rail-sounds-resourcepack.zip . -x README.txt
       - uses: actions/upload-artifact@v4
