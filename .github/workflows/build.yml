@@ -16,10 +16,12 @@ jobs:
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
       - run: chmod +x gradlew && set -o pipefail && ./gradlew build --stacktrace 2>&1 | tee build.log
-      - name: Publish build log on failure
+      - name: Publish logs on failure
         if: failure()
         run: |
-          mkdir logout && cp build.log logout/ && cd logout
+          mkdir logout
+          cp build.log server-log.txt unexpected.txt ingame-test.txt server-run.txt logout/ 2>/dev/null || true
+          cd logout
           git init -q -b buildlog
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
@@ -32,8 +34,8 @@ jobs:
           (timeout 600 ./gradlew runServer --args="nogui" > server-run.txt 2>&1 || true) &
           GRADLE_PID=$!
           set +e
-          python3 tools/ingame_test.py 127.0.0.1 25575 railsounds
-          TEST_RC=$?
+          python3 tools/ingame_test.py 127.0.0.1 25575 railsounds 2>&1 | tee ingame-test.txt
+          TEST_RC=${PIPESTATUS[0]}
           set -e
           wait $GRADLE_PID 2>/dev/null || true
           cp run/logs/latest.log server-log.txt 2>/dev/null || cp server-run.txt server-log.txt
