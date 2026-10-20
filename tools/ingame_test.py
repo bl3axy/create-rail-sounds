@@ -79,7 +79,6 @@ def main():
         return 1
 
     failures = []
-    rcon.cmd("gamerule sendCommandFeedback false")
     rcon.cmd(f"forceload add {ORIGIN_X - 4} {ORIGIN_Z - 4} {ORIGIN_X + len(ids) * 2 + 4} {ORIGIN_Z + 8}")
     time.sleep(2)
 
@@ -100,12 +99,10 @@ def main():
     time.sleep(12)
 
     # --- every block should still be there and still be itself ---
+    # `say` lands in the server log whatever the locale, so the workflow can verify the count
+    # without parsing localised command replies.
     for bid, x in placed:
-        out = rcon.cmd(f"execute if block {x} {Y} {ORIGIN_Z} railsounds:{bid} run data get block {x} {Y} {ORIGIN_Z}")
-        # a block with no BlockEntity answers "no block entity"; the point is the `if block` matched,
-        # so an empty answer means the state changed out from under us or never placed
-        if out is None or ("railsounds" not in out and "block entity" not in out.lower() and out.strip() == ""):
-            failures.append(f"{bid} missing or replaced after ticking")
+        rcon.cmd(f"execute if block {x} {Y} {ORIGIN_Z} railsounds:{bid} run say RSTEST_PRESENT {bid}")
 
     # --- redstone-powered variants: power a few of the blocks that react to it ---
     for bid in ("car_retarder", "switch_machine", "crossing_signal", "crossing_gate"):
@@ -118,6 +115,12 @@ def main():
             x = ORIGIN_X + ids.index(bid) * 2
             rcon.cmd(f"setblock {x} {Y + 1} {ORIGIN_Z} minecraft:air replace")
     time.sleep(4)
+
+    # the two Crossing Signals should have made exactly one shared crossing between them
+    during = rcon.cmd("railsounds crossing list") or ""
+    print("crossings while placed:", during.strip()[:200], flush=True)
+    if "signal_" not in during:
+        failures.append("placing a Crossing Signal did not create a crossing: " + during.strip()[:200])
 
     # --- commands that work from the console ---
     for c in ("railsounds crossing list", "railsounds yard list", "railsounds reload",
@@ -138,6 +141,8 @@ def main():
     # crossings made by the signal blocks should be gone again
     left = rcon.cmd("railsounds crossing list") or ""
     print("after cleanup, crossings:", left.strip()[:200], flush=True)
+    if "signal_" in left:
+        failures.append("a Crossing Signal's crossing outlived the block: " + left.strip()[:200])
 
     rcon.cmd(f"forceload remove all")
     rcon.cmd("save-all")
