@@ -1,0 +1,6 @@
+testing 30 blocks
+ticking...
+crossings while placed: signal_14_-59_0: 14 -59 0 r=35 minecraft:overworldsignal_0_-59_4: 0 -59 4 r=35 minecraft:overworld
+played all 16 declared sounds through /railsounds test
+after cleanup, crossings: No crossings yet. Stand on one and run /railsounds crossing add <name>
+placed, ticked, powered and removed 30 blocks with no failures

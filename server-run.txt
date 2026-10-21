@@ -1,0 +1,294 @@
+
+> Configure project :
+Fabric Loom: 1.18.4
+
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :generateLog4jConfig
+> Task :generateDLIConfig
+> Task :configureLaunch
+
+> Task :runServer
+[03:31:10] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.2 with Fabric Loader 0.19.5
+[03:31:10] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[03:31:10] [main/INFO] (FabricLoader) Loading 45 mods:
+	- create 6.0.9-1
+	- fabric-advancement-api-v1 1.0.0+58719a3b9e
+	- fabric-api 0.161.0+26.2
+	- fabric-api-base 2.0.4+ece063239e
+	- fabric-api-lookup-api-v1 2.0.18+11e1c9a39e
+	- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	- fabric-block-api-v1 3.1.0+53515aab9e
+	- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	- fabric-command-api-v2 3.1.0+00cb03469e
+	- fabric-content-registries-v0 11.3.2+37b1aa249e
+	- fabric-convention-tags-v2 4.7.1+1f023a9e9e
+	- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	- fabric-creative-tab-api-v1 5.0.15+6468574f9e
+	- fabric-data-attachment-api-v1 2.2.19+515ac5339e
+	- fabric-data-generation-api-v1 25.6.0+c0da0b829e
+	- fabric-debug-api-v1 1.0.2+c792624d9e
+	- fabric-dimensions-v1 5.1.12+515ac5339e
+	- fabric-entity-events-v1 5.0.5+06488ac19e
+	- fabric-events-interaction-v0 5.2.8+515ac5339e
+	- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	- fabric-gametest-api-v1 4.0.22+4a7fa0819e
+	- fabric-item-api-v1 14.5.0+c68f6cbe9e
+	- fabric-lifecycle-events-v1 4.1.4+29b6eb019e
+	- fabric-loot-api-v3 3.0.17+06488ac19e
+	- fabric-menu-api-v1 2.0.17+086d547a9e
+	- fabric-message-api-v1 7.0.8+bb2ed3f79e
+	- fabric-networking-api-v1 6.3.4+2989c6a09e
+	- fabric-object-builder-api-v1 24.1.1+6fcd5f039e
+	- fabric-particles-v1 5.0.19+d1756aa99e
+	- fabric-permission-api-v1 1.0.5+e442d8d09e
+	- fabric-recipe-api-v1 9.0.22+11e1c9a39e
+	- fabric-registry-sync-v0 7.1.1+c7bd5b8e9e
+	- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	- fabric-resource-loader-v1 2.0.13+9edec1269e
+	- fabric-serialization-api-v1 2.0.4+11a26f319e
+	- fabric-tag-api-v1 2.1.4+515ac5339e
+	- fabric-transfer-api-v1 8.0.13+11dbb7d79e
+	- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.5
+	- java 25
+	- minecraft 26.2
+	- mixinextras 0.5.5
+	- railsounds 2.7.0
+[03:31:10] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
+[03:31:11] [main/WARN] (FabricLoader/Mixin) Error loading class: com/railwayteam/railways/content/coupling/TrainUtils (java.lang.ClassNotFoundException: com/railwayteam/railways/content/coupling/TrainUtils)
+[03:31:11] [main/WARN] (FabricLoader/Mixin) @Mixin target com.railwayteam.railways.content.coupling.TrainUtils was not found railsounds.mixins.json:SplitTrainNameMixin from mod railsounds
+[03:31:11] [main/WARN] (FabricLoader/Mixin) Error loading class: com/railwayteam/railways/content/coupling/coupler/TrackCouplerBlockEntity (java.lang.ClassNotFoundException: com/railwayteam/railways/content/coupling/coupler/TrackCouplerBlockEntity)
+[03:31:11] [main/WARN] (FabricLoader/Mixin) @Mixin target com.railwayteam.railways.content.coupling.coupler.TrackCouplerBlockEntity was not found railsounds.mixins.json:CouplerAlignmentMixin from mod railsounds
+[03:31:11] [main/WARN] (FabricLoader/Mixin) @Mixin target com.railwayteam.railways.content.coupling.TrainUtils was not found railsounds.mixins.json:CombineSpacingMixin from mod railsounds
+[03:31:11] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[03:31:19] [main/INFO] (RailSounds) [railsounds] 31 railroad blocks registered
+[03:31:19] [main/INFO] (RailSounds) Create Rail Sounds loaded
+[03:31:20] [main/INFO] (RailSounds) [railsounds] sensor display sources bound
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: Failed to read config file: /home/runner/work/create-rail-sounds/create-rail-sounds/run/./config/create/server.json
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: java.nio.file.NoSuchFileException: ./config/create/server.json
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/sun.nio.fs.UnixException.translateToIOException(UnixException.java:92)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:106)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:111)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/sun.nio.fs.UnixFileSystemProvider.newFileChannel(UnixFileSystemProvider.java:213)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/sun.nio.fs.UnixFileSystemProvider.newByteChannel(UnixFileSystemProvider.java:244)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/java.nio.file.Files.newByteChannel(Files.java:357)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/java.nio.file.Files.newByteChannel(Files.java:399)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/java.nio.file.spi.FileSystemProvider.newInputStream(FileSystemProvider.java:371)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at java.base/java.nio.file.Files.newInputStream(Files.java:154)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//org.apache.commons.io.FileUtils.lambda$readFileToString$14(FileUtils.java:2768)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//org.apache.commons.io.IOUtils.toString(IOUtils.java:3204)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//org.apache.commons.io.IOUtils.toString(IOUtils.java:3179)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//org.apache.commons.io.FileUtils.readFileToString(FileUtils.java:2768)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//com.zurrtum.create.catnip.config.Builder.read(Builder.java:136)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//com.zurrtum.create.catnip.config.Builder.<init>(Builder.java:36)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//com.zurrtum.create.catnip.config.Builder.create(Builder.java:49)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//com.zurrtum.create.catnip.config.Builder.create(Builder.java:44)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//com.zurrtum.create.infrastructure.config.AllConfigs.register(AllConfigs.java:28)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//com.zurrtum.create.Create.onInitialize(Create.java:62)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at net.fabricmc.loader.impl.FabricLoaderImpl.invokeEntrypoints(FabricLoaderImpl.java:409)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at net.fabricmc.loader.impl.game.minecraft.Hooks.startServer(Hooks.java:63)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at knot//net.minecraft.server.Main.main(Main.java:114)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at net.fabricmc.loader.impl.launch.knot.KnotServer.main(KnotServer.java:23)
+[03:31:20] [main/INFO] (Minecraft) [STDERR]: 	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86)
+[03:31:20] [main/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[03:31:21] [Worker-Main-1/INFO] (Minecraft) No existing world data, creating new world
+[03:31:21] [Worker-Main-1/ERROR] (Minecraft) No key layers in MapLike[{}]
+[03:31:23] [main/INFO] (Minecraft) Loaded 3528 recipes
+[03:31:23] [main/INFO] (Minecraft) Loaded 2838 advancements
+[03:31:23] [main/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 66 new biomes in 1.410 ms
+[03:31:23] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.2
+[03:31:23] [Server thread/INFO] (Minecraft) Loading properties
+[03:31:23] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[03:31:23] [Server thread/INFO] (Minecraft) Generating keypair
+[03:31:23] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[03:31:23] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[03:31:23] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[03:31:23] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[03:31:23] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[03:31:23] [Server thread/INFO] (Minecraft) Preparing level "world"
+[03:31:23] [Server thread/INFO] (Minecraft) Selecting global world spawn...
+[03:31:24] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[03:31:24] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[03:31:24] [Server thread/INFO] (Minecraft) Time elapsed: 429 ms
+[03:31:24] [Server thread/INFO] (Minecraft) Done (0.596s)! For help, type "help"
+[03:31:24] [Server thread/INFO] (Minecraft) Starting remote control listener
+[03:31:24] [Server thread/INFO] (Minecraft) Thread RCON Listener started
+[03:31:24] [Server thread/INFO] (Minecraft) RCON running on 0.0.0.0:25575
+[03:31:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[03:31:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[03:31:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[03:31:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[03:31:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[03:31:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[03:31:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[03:31:24] [Server thread/WARN] (TranslationConventionLogWarnings) 
+	Dev warning - Untranslated Item Tags detected. Please translate your item tags so other mods such as recipe viewers can properly display your tag's name.
+	The format desired is tag.item.<namespace>.<path> for the translation key with slashes in path turned into periods.
+	To disable this message, set this system property in your runs: `-Dfabric-tag-conventions-v2.missingTagTranslationWarning=SILENCED`.
+	To see individual untranslated item tags found, set the system property to `-Dfabric-tag-conventions-v2.missingTagTranslationWarning=VERBOSE`.
+	Default is `SHORT`.
+
+[03:31:26] [RCON Listener #1/INFO] (Minecraft) Thread RCON Client /127.0.0.1 started
+[03:31:26] [Server thread/INFO] (Minecraft) [Rcon: Marked 12 chunks in minecraft:overworld from [-1, -1] to [4, 0] to be force loaded]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 2, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 4, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 6, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 8, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 10, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 12, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 14, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 16, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 18, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 20, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 22, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 24, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 26, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 28, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 30, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 32, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 34, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 36, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 38, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 40, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 42, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 44, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 46, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 48, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 50, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 52, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 54, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 56, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 58, -59, 0]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 4]
+[03:31:28] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 1, -59, 4]
+[03:31:28] [Server thread/WARN] (RailSounds) [railsounds] Steam 'n' Rails switches not found - switch stands and the interlocking panel won't throw switches (java.lang.ClassNotFoundException: com.railwayteam.railways.content.switches.TrackSwitchBlockEntity)
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT battery_box
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT buffer_stop
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT car_counter
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT car_retarder
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT cargo_sensor
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT crossbuck
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT crossing_gate
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT crossing_signal
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT defect_detector
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT derail
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT interlocking_panel
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT loading_hatch
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT mile_post
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT phone_box
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT rail_rack
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT relay_case
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT route_sensor
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT searchlight_signal
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT signal_mast
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT speed_sign
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT spike_keg
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT switch_machine
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT switch_stand
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT telegraph_pole
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT tie_pile
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT wheel_stop
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT wheelset
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT whistle_post
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT yard_light
+[03:31:40] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_PRESENT yard_limit_sign
+[03:31:40] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 6, -58, 0]
+[03:31:40] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 42, -58, 0]
+[03:31:40] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 14, -58, 0]
+[03:31:40] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 12, -58, 0]
+[03:31:46] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 6, -58, 0]
+[03:31:46] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 42, -58, 0]
+[03:31:46] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 14, -58, 0]
+[03:31:46] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 12, -58, 0]
+[03:31:52] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_SOUNDS 16
+[03:31:52] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_DEBUG ok
+[03:31:52] [Server thread/INFO] (Minecraft) [Rcon: Fixed 0 coupling gap(s) and freed 0 stuck train(s) across 0 train(s). Rejoin so your game picks up the fixes.]
+[03:31:53] [Server thread/INFO] (Minecraft) [Rcon: Marked 28 chunks in minecraft:overworld from [-3, -3] to [2, 2] to be force loaded]
+[03:31:53] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 8]
+[03:31:53] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_FACING north
+[03:31:53] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 2, -59, 8]
+[03:31:53] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_FACING east
+[03:31:53] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 4, -59, 8]
+[03:31:53] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_FACING south
+[03:31:53] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 6, -59, 8]
+[03:31:53] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_FACING west
+[03:31:55] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 8]
+[03:31:55] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 2, -59, 8]
+[03:31:55] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 4, -59, 8]
+[03:31:55] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 6, -59, 8]
+[03:31:55] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 14, -59, 8]
+[03:31:56] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_GATE start_up
+[03:31:56] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 15, -59, 8]
+[03:32:06] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_GATE powered_angle_2
+[03:32:06] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 15, -59, 8]
+[03:32:14] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_GATE released_angle_0
+[03:32:14] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 14, -59, 8]
+[03:32:14] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 10, -59, 8]
+[03:32:14] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 11, -59, 8]
+[03:32:16] [Server thread/INFO] (Minecraft) [Not Secure] [Rcon] RSTEST_COMPARATOR ok
+[03:32:16] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 10, -59, 8]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 2, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 4, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 6, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 8, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 10, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 12, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 14, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 16, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 18, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 20, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 22, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 24, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 26, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 28, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 30, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 32, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 34, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 36, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 38, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 40, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 42, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 44, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 46, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 48, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 50, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 52, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 54, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 56, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 58, -59, 0]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 4]
+[03:32:18] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 1, -59, 4]
+[03:32:24] [Server thread/INFO] (Minecraft) Server empty for 60 seconds, pausing
+[03:32:24] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 0, -59, 10]
+[03:32:24] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 4, -59, 10]
+[03:32:24] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 8, -59, 10]
+[03:32:24] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 9, -59, 10]
+[03:32:24] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 12, -59, 10]
+[03:32:24] [Server thread/INFO] (Minecraft) [Rcon: Changed the block at 12, -58, 10]
+[03:32:32] [Server thread/INFO] (Minecraft) [Rcon: Saved the game]
+[03:32:34] [Server thread/INFO] (Minecraft) [Rcon: Stopping the server]
+[03:32:34] [RCON Client /127.0.0.1 #2/INFO] (Minecraft) Thread RCON Client /127.0.0.1 shutting down
+[03:32:34] [Server thread/INFO] (Minecraft) Stopping server
+[03:32:34] [Server thread/INFO] (Minecraft) Saving players
+[03:32:34] [Server thread/INFO] (Minecraft) Saving worlds
+[03:32:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[03:32:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[03:32:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[03:32:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[03:32:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[03:32:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[03:32:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[03:32:35] [Server thread/INFO] (Minecraft) Thread RCON Listener stopped
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_8-1792553468789.json
+
+BUILD SUCCESSFUL in 1m 27s
+5 actionable tasks: 3 executed, 2 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
