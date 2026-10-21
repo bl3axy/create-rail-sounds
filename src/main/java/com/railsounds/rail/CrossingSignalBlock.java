@@ -134,4 +134,20 @@ public class CrossingSignalBlock extends FacingRailBlock {
         // only a real train turns the output on, never redstone coming in - so it can't latch itself
         return state.getValue(TRAIN) ? 15 : 0;
     }
+
+    /**
+     * React to redstone the moment it changes instead of waiting for the next poll.
+     *
+     * These blocks look at their neighbours on a scheduled tick every few ticks, so powering
+     * one could sit there doing nothing for up to that long before it even noticed - which
+     * reads as "it didn't work" and makes you let go of the lever. Scheduling a tick here
+     * costs nothing and makes them all behave the same way.
+     */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block,
+                                   net.minecraft.world.level.redstone.Orientation orientation, boolean moved) {
+        super.neighborChanged(state, level, pos, block, orientation, moved);
+        if (level instanceof ServerLevel sl) sl.scheduleTick(pos, this, 1);
+    }
+
 }

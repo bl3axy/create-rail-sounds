@@ -5,6 +5,7 @@ images), block models, blockstates, item definitions, loot tables, recipes, mini
 the English names. Run from the repo root:  python3 tools/gen_rail_assets.py
 Re-running overwrites what it made; hand edits to those files will be lost.
 """
+import copy
 import json
 import os
 import random
@@ -515,7 +516,12 @@ def deconflict(elements):
     Elements that merely touch are left alone - that's ordinary adjacency.
     Rotated elements are skipped: a rotation moves the plane, so the raw coordinates don't
     tell us whether they really clash, and nudging could make it worse.
+
+    Works on a copy. Every caller currently builds a fresh list, but if one ever passed the
+    same list to two models, mutating in place would nudge it twice and the second model would
+    come out subtly wrong - the kind of thing nobody would spot.
     """
+    elements = copy.deepcopy(elements)
     for _ in range(8):                      # a nudge can expose a new pair; settle by iterating
         moved = False
         for i in range(len(elements)):
