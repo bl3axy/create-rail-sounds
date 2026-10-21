@@ -34,7 +34,7 @@ SOUNDS = os.path.join(PACK, "sounds")
 LOOPING = ("diesel_idle", "diesel_run", "loco_bell", "crossing_bell", "clack")
 # played at engineVolume, then the idle takes over at idleVolume - these must match
 START, IDLE = "diesel_start", "diesel_idle"
-START_VOL, IDLE_VOL = 0.70, 0.25
+START_VOL, IDLE_VOL = 0.50, 0.15
 
 fail = []
 

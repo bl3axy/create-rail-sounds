@@ -45,6 +45,23 @@ public final class Bells {
     /** train id -> ticks until the clip needs replaying */
     private static final Map<UUID, Integer> TIMER = new HashMap<>();
 
+    /** riders hear the bell centred on themselves, like the engine - see SoundPlayer.playRiderAware */
+    private static java.util.Set<UUID> riders(Train train) {
+        if (train == null || train.carriages == null) return java.util.Set.of();
+        java.util.Set<UUID> out = null;
+        for (var car : train.carriages) {
+            CarriageContraptionEntity e = car.anyAvailableEntity();
+            if (e == null || e.isRemoved()) continue;
+            for (net.minecraft.world.entity.Entity p : e.getPassengers()) {
+                if (p instanceof ServerPlayer) {
+                    if (out == null) out = new HashSet<>();
+                    out.add(p.getUUID());
+                }
+            }
+        }
+        return out == null ? java.util.Set.of() : out;
+    }
+
     public static boolean isRinging(Train train) {
         return train != null && ringing.contains(train.id.toString());
     }
@@ -107,7 +124,8 @@ public final class Bells {
                 TIMER.remove(train.id);
                 continue;
             }
-            SoundPlayer.play(at.level(), at.pos(), "loco_bell", c.locoBellVolume, 1.0f, c.locoBellHearingRange);
+            SoundPlayer.playRiderAware(at.level(), at.pos(), "loco_bell", c.locoBellVolume, 1.0f,
+                c.locoBellHearingRange, riders(train));
             TIMER.put(train.id, Math.max(1, c.locoBellClipTicks));
         }
 

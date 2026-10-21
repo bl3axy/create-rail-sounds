@@ -113,7 +113,8 @@ public final class Engines {
         if (spot == null) return;
         if (steam(train)) return;   // no steam engine clips in the pack
         String sound = "diesel_start";
-        SoundPlayer.play(spot.level, spot.pos, sound, c.engineVolume, 1.0f, c.engineHearingRange);
+        SoundPlayer.playRiderAware(spot.level, spot.pos, sound, c.engineVolume, 1.0f,
+            c.engineHearingRange, ridersOf(train));
         int hold = Math.max(0, c.startClipTicks - Math.max(0, c.startFadeTicks));
         IDLE_TIMER.put(train.id, hold);
         RUN_TIMER.put(train.id, hold);
@@ -131,6 +132,30 @@ public final class Engines {
     }
 
     private record Spot(ServerLevel level, Vec3 pos) {}
+
+    /**
+     * Everyone currently riding this train.
+     *
+     * They get the engine centred on themselves rather than on the locomotive: a
+     * world-positioned sound is panned against the camera, so looking around in the cab swung
+     * the engine ear to ear and third person (F5) put the camera several blocks off the train
+     * and made it lurch. See SoundPlayer.playRiderAware.
+     */
+    private static java.util.Set<UUID> ridersOf(Train train) {
+        if (train == null || train.carriages == null) return java.util.Set.of();
+        java.util.Set<UUID> out = null;
+        for (Carriage car : train.carriages) {
+            CarriageContraptionEntity e = car.anyAvailableEntity();
+            if (e == null || e.isRemoved()) continue;
+            for (net.minecraft.world.entity.Entity p : e.getPassengers()) {
+                if (p instanceof ServerPlayer) {
+                    if (out == null) out = new HashSet<>();
+                    out.add(p.getUUID());
+                }
+            }
+        }
+        return out == null ? java.util.Set.of() : out;
+    }
 
     /** where to play a train's engine from: its first carriage that's actually loaded */
     private static Spot spotOf(Train train) {
@@ -268,7 +293,8 @@ public final class Engines {
             timer.remove(train.id);
             return;
         }
-        SoundPlayer.play(spot.level, spot.pos, sound, enter(train.id, volume), pitch, range);
+        SoundPlayer.playRiderAware(spot.level, spot.pos, sound, enter(train.id, volume), pitch,
+            range, ridersOf(train));
         timer.put(train.id, Math.max(1, clipTicks));
     }
 
@@ -277,8 +303,8 @@ public final class Engines {
         if (NOTCH_COOLDOWN.containsKey(train.id)) return;
         Spot spot = spotOf(train);
         if (spot == null) return;
-        SoundPlayer.play(spot.level, spot.pos, "diesel_notch",
-            c.engineVolume, pitch, c.engineHearingRange);
+        SoundPlayer.playRiderAware(spot.level, spot.pos, "diesel_notch",
+            c.engineVolume, pitch, c.engineHearingRange, ridersOf(train));
         NOTCH_COOLDOWN.put(train.id, Math.max(20, c.notchCooldownTicks));
     }
 

@@ -46,6 +46,33 @@ public class SoundPlayer {
         }
     }
 
+    /**
+     * Like {@link #play}, but anyone riding the thing making the noise hears it centred on
+     * themselves instead of at a point in the world.
+     *
+     * A world-positioned sound is panned and attenuated against the CAMERA, not the player, so
+     * sitting in a cab and looking around swings the engine from ear to ear, and in third person
+     * (F5) the camera sits several blocks away and the whole thing lurches. Neither is what you'd
+     * hear with your hand on the throttle. Sending a rider the packet at their own position makes
+     * it steady and central however they're looking; everyone outside still hears it from the
+     * locomotive, which is the point for them.
+     */
+    public static void playRiderAware(ServerLevel level, Vec3 pos, String sound, float volume,
+                                      float pitch, int range, java.util.Set<java.util.UUID> riders) {
+        if (volume <= 0.01f) return;
+        Holder<SoundEvent> h = holder(sound, range);
+        double r2 = (double) range * range;
+        long seed = ThreadLocalRandom.current().nextLong();
+        for (ServerPlayer p : level.getServer().getPlayerList().getPlayers()) {
+            if (p.level() != level) continue;
+            boolean riding = riders != null && riders.contains(p.getUUID());
+            if (!riding && p.position().distanceToSqr(pos) > r2) continue;
+            Vec3 at = riding ? p.position() : pos;
+            p.connection.send(new ClientboundSoundPacket(h, SoundSource.NEUTRAL,
+                at.x, at.y, at.z, volume, pitch, seed));
+        }
+    }
+
     /** stop a sound for players near a spot (vanilla can only stop by name, so it's every copy of it they hear) */
     public static void stop(ServerLevel level, Vec3 pos, String sound, int range) {
         ClientboundStopSoundPacket pkt = new ClientboundStopSoundPacket(

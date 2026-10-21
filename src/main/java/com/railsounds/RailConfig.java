@@ -145,10 +145,10 @@ public class RailConfig {
         public boolean idleWhenStopped = true;
         /** length of your diesel_idle.ogg / steam_idle.ogg in ticks (20 = 1 second) */
         public int idleClipTicks = 80;
-        public float idleVolume = 0.25f;
+        public float idleVolume = 0.15f;
         public int idleHearingRange = 24;
         /** startup sound and the engine note while moving. Louder than idle on purpose */
-        public float engineVolume = 0.7f;
+        public float engineVolume = 0.5f;
         public int engineHearingRange = 48;
         /** length of diesel_run.ogg / steam_run.ogg in ticks; the engine note while moving */
         public int runClipTicks = 80;
@@ -229,6 +229,12 @@ public class RailConfig {
             // v6: the real bell is four strikes over 2.75s, not the 2s placeholder
             if (v.locoBellClipTicks == 40) v.locoBellClipTicks = 55;
             v.configVersion = 6;
+        }
+        if (v.configVersion < 7) {
+            // v7: the diesel sat too loud over everything else. Only move the old defaults
+            if (eq(v.engineVolume, 0.7f)) v.engineVolume = 0.5f;
+            if (eq(v.idleVolume, 0.25f)) v.idleVolume = 0.15f;
+            v.configVersion = 7;
         }
     }
 

@@ -487,11 +487,72 @@ def el(frm, to, faces, rot=None, shade=True):
     return e
 
 
+_SIDES = {"west": ("x", 0), "east": ("x", 1), "down": ("y", 0),
+          "up": ("y", 1), "north": ("z", 0), "south": ("z", 1)}
+_AXES = ("x", "y", "z")
+_NUDGE = 0.02
+
+
+def _overlap(a0, a1, b0, b1):
+    lo, hi = max(min(a0, a1), min(b0, b1)), min(max(a0, a1), max(b0, b1))
+    return max(0.0, hi - lo)
+
+
+def deconflict(elements):
+    """
+    Pull apart element faces that sit at exactly the same depth.
+
+    Two surfaces at an identical coordinate give the renderer no way to decide which is in
+    front, so the pixels swap as the camera moves - in game that reads as the texture
+    flickering. The searchlight signal's backplate did it most obviously, but the same thing
+    was quietly happening on the wheelset, the switch stand, the crossing gate and others.
+
+    Rather than hand-tune coordinates in every model and have the next one reintroduce it,
+    every model goes through this: wherever two elements draw the same face on the same plane
+    AND overlap there, the later element is moved a hair along that axis. 0.02 of a
+    block-pixel is far too small to see and is enough to settle the depth test.
+
+    Elements that merely touch are left alone - that's ordinary adjacency.
+    Rotated elements are skipped: a rotation moves the plane, so the raw coordinates don't
+    tell us whether they really clash, and nudging could make it worse.
+    """
+    for _ in range(8):                      # a nudge can expose a new pair; settle by iterating
+        moved = False
+        for i in range(len(elements)):
+            for j in range(i + 1, len(elements)):
+                a, b = elements[i], elements[j]
+                if "rotation" in a or "rotation" in b:
+                    continue
+                af, bf = a.get("faces", {}), b.get("faces", {})
+                for ax_i, ax in enumerate(_AXES):
+                    others = [k for k in range(3) if k != ax_i]
+                    if _overlap(a["from"][others[0]], a["to"][others[0]],
+                                b["from"][others[0]], b["to"][others[0]]) <= 1e-9:
+                        continue
+                    if _overlap(a["from"][others[1]], a["to"][others[1]],
+                                b["from"][others[1]], b["to"][others[1]]) <= 1e-9:
+                        continue
+                    for end in (0, 1):
+                        key = "from" if end == 0 else "to"
+                        if abs(a[key][ax_i] - b[key][ax_i]) > 1e-9:
+                            continue
+                        side = next((s for s, (sax, se) in _SIDES.items()
+                                     if sax == ax and se == end), None)
+                        if side is None or side not in af or side not in bf:
+                            continue
+                        # shrink the later element inward so its face clears the other's
+                        b[key][ax_i] += _NUDGE if end == 0 else -_NUDGE
+                        moved = True
+        if not moved:
+            break
+    return elements
+
+
 def model(name, textures, elements, parent="block/block"):
     textures = dict(textures)
     textures.setdefault("particle", next(iter(textures.values())))
     write_json(os.path.join(ASSETS, "models", "block", name + ".json"),
-               {"parent": parent, "textures": textures, "elements": elements})
+               {"parent": parent, "textures": textures, "elements": deconflict(elements)})
 
 
 def blockstate_facing(name, model_for=None, props=None):
@@ -568,9 +629,12 @@ def gen_searchlight():
         model("searchlight_signal_" + aspect, {"pole": t("black_paint"), "back": t("signal_backplate"),
                                                "lamp": t(lamp), "particle": t("black_paint")}, [
             el((7, 0, 7), (9, 6, 9), {"all": "pole"}),
-            # round-ish backplate (two crossed slabs)
+            # Round-ish backplate, two crossed slabs. They MUST NOT share a z plane: both used
+            # to run 6->7 and overlapped, so their north and south faces were coplanar and the
+            # renderer could not decide which was in front - that is the flicker. The second
+            # slab is inset a hair on both sides so no two faces are ever at the same depth.
             el((3, 7, 6), (13, 15, 7), {"all": "pole", "north": ("back", (0, 0, 16, 16))}),
-            el((4, 6, 6), (12, 16, 7), {"all": "pole", "north": ("back", (2, 0, 14, 16))}),
+            el((4, 6, 6.02), (12, 16, 6.98), {"all": "pole", "north": ("back", (2, 0, 14, 16))}),
             # lamp housing behind the plate
             el((5, 8, 7), (11, 14, 11), {"all": "pole"}),
             # lens
