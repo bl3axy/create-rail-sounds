@@ -7,9 +7,9 @@ cargo sensors, and the yard gear you need to do proper shunting.
 Built for **Minecraft 26.2 (Fabric)** against **Create Fly 6.0.9**. Some of the shunting features
 want **Steam 'n' Rails** installed as well; everything else works without it.
 
-**You don't need the mod on your client to hear the sounds** — that's what the resource pack is
-for. Install the mod on your client too and you get the sounds without any pack, plus the
-keybinds, the long seamless horn hold, and the proper fade when you let go of the horn.
+**The mod goes on the server and on every client** — it adds blocks, so Minecraft won't let a
+client join without it. Everything travels in the jar: sounds, models, textures. No resource pack
+to install.
 
 ---
 
@@ -17,15 +17,15 @@ keybinds, the long seamless horn hold, and the proper fade when you let go of th
 
 - `create-rail-sounds-26.2-2.6.0.jar` — the mod, **with all the sounds built in**. Drop it in
   `mods/`. Anyone who has the mod on their client hears everything with no resource pack at all.
-- `railsounds-resourcepack.zip` — the same sounds, for clients that *don't* have the mod. Put it
-  in `resourcepacks/` on the server and set `resource-pack=` in `server.properties`, or hand it
-  to people directly. It also carries the Create train-sound overrides, which can only live in a
-  pack.
+- `railsounds-resourcepack.zip` — **you almost certainly don't need this.** The jar already
+  contains everything in it, byte for byte, and because this mod adds blocks Minecraft refuses
+  to let a client join without it. So everyone on your server has the sounds already. The pack
+  is kept only for the odd setup that wants the audio without the mod.
 - This README.
 
-**Which do you need?** If everyone on your server has the mod installed, just the jar. If people
-join without it — which is the normal case, since the mod is server-side — serve the pack too.
-Both carry identical audio; the pack is built from the jar's own files so they can't drift.
+**If you had an older copy of the pack installed, remove it** — a resource pack overrides the
+mod's own files, so a stale one will shadow updated textures and make a fix look like it never
+applied.
 
 ---
 
@@ -47,6 +47,11 @@ pretending to be a train.
 | **Loco bell** | the slow clang on the engine, four strikes on a 2.75s loop, on the **B** key |
 | **Crossing bell** | rings while a train is heading toward a crossing inside its radius, or any car is sitting on it. Stops about 2s after the last car clears |
 | **Horn / whistle** | `/railsounds diesel` and `/railsounds steam` set which one a train uses |
+
+**In the cab**, the engine, notch, startup and bell are sent centred on you rather than on the
+locomotive. A world-positioned sound is panned against the *camera*, so looking around used to
+swing the engine from ear to ear and third person (F5) threw it off entirely. Everyone outside
+still hears it coming from the engine.
 
 ### How the engine note works
 
@@ -156,11 +161,30 @@ In Create's own schedule editor, per train:
 
 ## Signals, crossings and switch control
 
-### Searchlight Signal + Signal Mast
+### Searchlight Signal + Signal Mast + Signal Bridge
 
-A proper 3-aspect signal: **green** clear, **yellow** approach (the next block is occupied),
-**red** stop. It reads the track ahead itself — no wiring needed — and you can still drive it with
-redstone if you'd rather. Stack a Signal Mast under it for height.
+A proper 3-aspect signal:
+
+- **red** — stop. The block ahead is occupied, *or* the head is getting redstone. Redstone is
+  checked first, so you can hold a signal at stop by hand with a lever, with no Create signal
+  involved at all.
+- **yellow** — approach. Either the next signal along is red, or there's a **Speed Limit Sign
+  within 10 blocks** — a restriction ahead is caution, not clear.
+- **green** — clear.
+- **dark** — it isn't reading a signal.
+
+**It doesn't have to touch the track.** Take the **Switch Linker**, right-click a Create Train
+Signal, then right-click the head: that head now reads that signal from anywhere in the
+dimension. Sneak-right-click a head to clear its link. Links are saved in the world folder, so
+they survive a restart.
+
+**Right-click a head** and it tells you exactly why it's showing what it's showing — held by
+redstone, speed sign in range, next signal red — and whether it's linked or reading something it
+touches.
+
+Stack a **Signal Mast** under a head for height. For several tracks side by side, put a row of
+**Signal Bridges** across them on masts and hang a head under each track, linking every head to
+its own track's signal.
 
 ### Crossing Signal + Crossing Gate + Crossbuck
 
@@ -181,7 +205,8 @@ Switch control was the fiddliest part of running a layout, so:
   Interlocking Panel can run it.
 - **Switch Linker** (item) — right-click a switch, then right-click a Switch Machine or
   Interlocking Panel, and they're linked. That's how you get a switch on the far side of the yard
-  onto a lever in your tower.
+  onto a lever in your tower. It links **signals** too: right-click a Create Train Signal, then a
+  Searchlight Signal head.
 - **Interlocking Panel** — the signal tower. Levers on the panel throw linked switches as a group,
   so one pull sets a whole route instead of you running around throwing six switches.
 - **Route Sensor** — fires redstone when a train takes a particular leg of a junction, so your
@@ -205,10 +230,16 @@ train from a hopper or a belt without docking it at a station.
 ### The rest of the trackside gear
 
 **Defect Detector** (redstone when a train passes, like a real hotbox detector), **Speed Limit
-Sign** (sets a speed zone trains obey), **Yard Limit Sign**, **Car Retarder**, **Derail**, **Buffer
-Stop**, **Wheel Stop**, **Battery Box**, **Relay Case**, **Telegraph Pole**, **Yard Light**,
-**Railroad Phone Box**, **Mile Post**, **Whistle Post**, **Rail Rack**, **Tie Pile**, **Wheelset**,
-**Spike Keg**.
+Sign** (sets a speed zone trains obey), **Signal Bridge**, **Yard Limit Sign**, **Car Retarder**,
+**Derail**, **Buffer Stop**, **Wheel Stop**, **Battery Box**, **Relay Case**, **Telegraph Pole**,
+**Yard Light**, **Railroad Phone Box**, **Mile Post**, **Whistle Post**, **Rail Rack**, **Tie
+Pile**, **Wheelset**, **Spike Keg**.
+
+Every redstone-driven block reacts the moment power changes rather than on its next poll, so a
+lever does something immediately.
+
+One caveat on **Speed Limit Signs**: the limits are held in memory, so after a server restart
+trains run at full speed until they pass a sign again.
 
 The last lot are mostly scenery, and they're there because a railroad that's just track looks
 wrong. None of them have block entities, which is deliberate — see Compatibility.
@@ -289,11 +320,11 @@ About 70 options. The ones worth knowing about:
 everything and an idling engine is nearly nothing:
 
 ```
-1.00  horn / whistle        0.65  rail clack
-0.90  crossing bell         0.60  brake squeal
-0.85  coupler clunk         0.55  loco bell
-0.70  engine running/start  0.50  air release
-                            0.25  engine idle
+1.00  horn / whistle        0.55  loco bell
+0.90  crossing bell         0.50  engine running/start
+0.85  coupler clunk         0.50  air release
+0.65  rail clack            0.15  engine idle
+0.60  brake squeal
 ```
 
 Change any of them freely — that's a starting point, not a rule.
@@ -322,7 +353,7 @@ hand-tuned.
 
 This is built to sit quietly alongside other mods.
 
-- **No block entities on any of the 30 blocks.** State lives in blockstate properties and
+- **No block entities on any of the 31 blocks.** State lives in blockstate properties and
   scheduled ticks instead. That means no tick overhead you'd notice, nothing to corrupt, and
   nothing for another mod to trip over.
 - **Every block reschedules its tick before doing any work**, so an exception can't permanently
@@ -355,7 +386,7 @@ CI does this on every push:
    clip is exactly as long as the config claims.
 4. Check every mixin class is registered in a config — an unregistered one compiles, ships and
    silently does nothing.
-5. Boot a real server, place all 30 blocks in-game over RCON, tick them, power the redstone ones,
+5. Boot a real server, place all 31 blocks in-game over RCON, tick them, power the redstone ones,
    run every console command, break them all.
 6. **Restart the server** and verify the blocks that were left standing survived, that crossings
    and switch links persisted, and that scheduled ticks are still running after the reload.
