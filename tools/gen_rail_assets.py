@@ -1039,7 +1039,21 @@ def gen_decor():
         el((13.5, 14, 7.5), (14.5, 15.5, 8.5), {"all": "glass"}),
     ])
 
+    # Signal bridge: an overhead truss that spans the tracks. Place them in a row to make a
+    # span as wide as you need, stand it on Signal Masts, and hang Searchlight Signals under
+    # it - a head over a far track reads its signal through a Switch Linker link.
+    model("signal_bridge", {"steel": t("dark_steel"), "deck": t("galvanized")}, [
+        el((0, 13, 5), (16, 15, 11), {"all": "deck"}),            # walkway / top chord
+        el((0, 8, 6), (16, 9.5, 10), {"all": "steel"}),           # bottom chord
+        el((1, 9.5, 7), (3, 13, 9), {"all": "steel"}),            # web posts
+        el((7, 9.5, 7), (9, 13, 9), {"all": "steel"}),
+        el((13, 9.5, 7), (15, 13, 9), {"all": "steel"}),
+        el((0, 15, 5.5), (16, 16, 6), {"all": "steel"}),          # handrails
+        el((0, 15, 10), (16, 16, 10.5), {"all": "steel"}),
+    ])
+
     decor = {
+        "signal_bridge": ("Signal Bridge", "pickaxe", ["III", "B B"], {"I": "create:iron_sheet", "B": "minecraft:iron_bars"}, 3),
         "mile_post": ("Mile Post", "pickaxe", ["C", "C"], {"C": "minecraft:white_concrete"}, 2),
         "whistle_post": ("Whistle Post", "pickaxe", ["W", "I"], {"W": "minecraft:white_concrete", "I": "create:iron_sheet"}, 2),
         "yard_limit_sign": ("Yard Limit Sign", "pickaxe", ["WWW", "I I"], {"W": "minecraft:white_concrete", "I": "create:iron_sheet"}, 2),

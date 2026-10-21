@@ -102,6 +102,7 @@ public class RailSounds implements ModInitializer {
             guarded("engine state load", () -> Engines.load(server));
             guarded("bell state load", () -> Bells.load(server));
             guarded("tower links load", () -> com.railsounds.rail.TowerLinks.load(server));
+            guarded("signal links load", () -> com.railsounds.rail.SignalLinks.load(server));
             guarded("speed zones reset", com.railsounds.rail.SpeedZones::reset);
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
@@ -118,6 +119,7 @@ public class RailSounds implements ModInitializer {
             guarded("engine state unload", Engines::unload);
             guarded("bell state unload", Bells::unload);
             guarded("tower links unload", com.railsounds.rail.TowerLinks::unload);
+            guarded("signal links unload", com.railsounds.rail.SignalLinks::unload);
             guarded("speed zones reset", com.railsounds.rail.SpeedZones::reset);
             guarded("block caches clear", () -> {
                 com.railsounds.rail.SearchlightSignalBlock.clearCache();

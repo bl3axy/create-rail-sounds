@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "III",
+    "B B"
+  ],
+  "key": {
+    "I": "create:iron_sheet",
+    "B": "minecraft:iron_bars"
+  },
+  "result": {
+    "id": "railsounds:signal_bridge",
+    "count": 3
+  }
+}

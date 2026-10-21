@@ -44,5 +44,6 @@
   "key.railsounds.engine": "Start / shut down engine",
   "railsounds.display_source.cargo_sensor": "Cargo Sensor reading",
   "railsounds.display_source.car_counter": "Car Counter reading",
-  "key.railsounds.bell": "Loco bell on / off"
+  "key.railsounds.bell": "Loco bell on / off",
+  "block.railsounds.signal_bridge": "Signal Bridge"
 }

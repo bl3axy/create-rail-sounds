@@ -74,11 +74,30 @@ public class SearchlightSignalBlock extends FacingRailBlock {
 
     public static void clearCache() {
         CHAINS.clear();
+        SIGNS.clear();
     }
 
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
         if (!old.is(this)) level.scheduleTick(pos, this, 1);
+    }
+
+    /** a head that's gone shouldn't leave its link behind on file */
+    @Override
+    public void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean moved) {
+        if (!level.getBlockState(pos).is(this)) {
+            SignalLinks.remove(level, pos);
+            SIGNS.remove(SignalLinks.key(level, pos));
+        }
+        super.affectNeighborsAfterRemoval(state, level, pos, moved);
+    }
+
+    /** redstone changing next to a head should be seen now, not up to RATE ticks later */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block,
+                                   net.minecraft.world.level.redstone.Orientation orientation, boolean moved) {
+        super.neighborChanged(state, level, pos, block, orientation, moved);
+        if (level instanceof ServerLevel sl) sl.scheduleTick(pos, this, 1);
     }
 
     @Override
@@ -94,11 +113,25 @@ public class SearchlightSignalBlock extends FacingRailBlock {
         if (level.getGameTime() % 1200 == 0) {
             long now = level.getGameTime();
             CHAINS.values().removeIf(c -> c.until < now - CHAIN_REFRESH);
+            SIGNS.values().removeIf(c -> c.until < now - SIGN_REFRESH);
         }
     }
 
-    /** the Create signal this head reads: touching it, or touching any Signal Mast block it sits on (up to 8 tall) */
+    /**
+     * The Create signal this head reads. An explicit link wins: the Switch Linker can point a
+     * head at any signal in the dimension, so a head on a bridge over four tracks, or across a
+     * yard, reads the right one. Otherwise it falls back to a signal it is touching, or one
+     * touching any Signal Mast it sits on (up to 8 tall).
+     */
     private static SignalBlockEntity findSignal(Level level, BlockPos pos) {
+        BlockPos linked = SignalLinks.get(level, pos);
+        if (linked != null) {
+            // don't force-load: a head whose signal is in an unloaded chunk just goes dark
+            if (level.isLoaded(linked) && level.getBlockEntity(linked) instanceof SignalBlockEntity sbe) {
+                return sbe;
+            }
+            return null;
+        }
         Direction[] order = {Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.UP};
         BlockPos at = pos;
         for (int i = 0; i <= 8; i++) {
@@ -112,7 +145,53 @@ public class SearchlightSignalBlock extends FacingRailBlock {
         return null;
     }
 
+    /** a Speed Limit Sign this close means the head shows yellow rather than green */
+    private static final int SPEED_SIGN_RANGE = 10;
+    /** signs sit at track level; no need to sweep ten blocks of air above and below */
+    private static final int SPEED_SIGN_HEIGHT = 4;
+    /** how long a look for nearby signs is trusted. They don't move often */
+    private static final int SIGN_REFRESH = 100;
+
+    private record SignCheck(boolean found, long until) {}
+    private static final Map<String, SignCheck> SIGNS = new HashMap<>();
+
+    /**
+     * Is there a Speed Limit Sign within range?
+     *
+     * This is a block scan, and compute() runs every few ticks on every head on the railroad,
+     * so the answer is cached for SIGN_REFRESH ticks. Unchecked it was reading 9,261 blocks per
+     * head five times a second, which is the sort of thing that quietly eats a server.
+     */
+    static boolean speedSignNear(Level level, BlockPos pos) {
+        if (RailBlocks.SPEED_SIGN == null) return false;
+        String key = SignalLinks.key(level, pos);
+        long now = level.getGameTime();
+        SignCheck c = SIGNS.get(key);
+        if (c != null && c.until > now) return c.found;
+
+        boolean found = false;
+        int r = SPEED_SIGN_RANGE, h = SPEED_SIGN_HEIGHT;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        outer:
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                for (int dy = -h; dy <= h; dy++) {
+                    m.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
+                    if (!level.isLoaded(m)) continue;
+                    if (level.getBlockState(m).is(RailBlocks.SPEED_SIGN)) {
+                        found = true;
+                        break outer;
+                    }
+                }
+            }
+        }
+        SIGNS.put(key, new SignCheck(found, now + SIGN_REFRESH));
+        return found;
+    }
+
     static Aspect compute(ServerLevel level, BlockPos pos) {
+        // redstone is a hand-thrown stop: it beats whatever the track says
+        if (level.hasNeighborSignal(pos)) return Aspect.RED;
         SignalBlockEntity sbe = findSignal(level, pos);
         if (sbe == null) return Aspect.DARK;
         SignalBlockEntity.SignalState own = sbe.getState();
@@ -139,6 +218,8 @@ public class SearchlightSignalBlock extends FacingRailBlock {
             }
         }
         if (nextRed || own == SignalBlockEntity.SignalState.YELLOW) return Aspect.YELLOW;
+        // a speed restriction ahead is an approach indication too - caution, not clear
+        if (speedSignNear(level, pos)) return Aspect.YELLOW;
         return Aspect.GREEN;
     }
 
@@ -166,11 +247,18 @@ public class SearchlightSignalBlock extends FacingRailBlock {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         level.scheduleTick(pos, this, 1);
         Aspect a = state.getValue(ASPECT);
+        BlockPos linked = SignalLinks.get(level, pos);
+        String where = linked == null ? "reading a signal it touches" : "linked to " + linked.toShortString();
+        boolean powered = level instanceof ServerLevel sl2 && sl2.hasNeighborSignal(pos);
         String text = switch (a) {
-            case DARK -> "Signal dark - put it touching a Create Train Signal that's on the track";
-            case RED -> "STOP - block ahead is occupied";
-            case YELLOW -> "APPROACH - next signal is red, be ready to stop";
-            case GREEN -> "CLEAR";
+            case DARK -> linked == null
+                ? "Signal dark - link it with a Switch Linker, or put it touching a Create Train Signal"
+                : "Signal dark - the signal it is linked to at " + linked.toShortString() + " is gone or unloaded";
+            case RED -> powered ? "STOP - held by redstone" : "STOP - block ahead is occupied (" + where + ")";
+            case YELLOW -> speedSignNear(level, pos)
+                ? "APPROACH - speed limit sign within " + SPEED_SIGN_RANGE + " blocks (" + where + ")"
+                : "APPROACH - next signal is red, be ready to stop (" + where + ")";
+            case GREEN -> "CLEAR (" + where + ")";
         };
         ChatFormatting color = switch (a) {
             case DARK -> ChatFormatting.GRAY;

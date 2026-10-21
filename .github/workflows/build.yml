@@ -30,6 +30,9 @@ jobs:
           # loader and the real migrate() run against them.
           mkdir -p run/config run/world
           printf '%s' '{"clackVolume":0.8,"brakeVolume":0.9,"couplerVolume":1.0,"idleVolume":0.35,"engineSounds":false,"uncoupleMaxSpeed":0.15,"cutCoastFactor":0.25,"startClipTicks":100,"locoBellClipTicks":40}' > run/config/railsounds.json
+          # keep the original: the migration check replays the real migrate() over it instead
+          # of comparing against numbers typed into the checker, which kept going stale
+          cp run/config/railsounds.json planted-config.json
           printf '%s' '{"minecraft:overworld|5,-59,5":{"0":{"switchId":"11111111-2222-3333-4444-555555555555","x":7,"y":-59,"z":5,"label":"Coal"}}}' > run/world/railsounds_towers.json
           echo "--- planted old-format config ---"
           cat run/config/railsounds.json
@@ -45,7 +48,7 @@ jobs:
 
           echo "--- config after the server loaded and migrated the old one ---"
           cat run/config/railsounds.json
-          python3 tools/check_config_migration.py run/config/railsounds.json || exit 1
+          python3 tools/check_config_migration.py run/config/railsounds.json planted-config.json || exit 1
           echo "--- state files written by phase A ---"
           ls -la run/config/railsounds-crossings.json run/world/railsounds_*.json 2>&1 || true
           echo "--- crossings file contents ---"
@@ -56,6 +59,9 @@ jobs:
           # restart with its route-sensor filter intact.
           mkdir -p run/world
           echo '{"minecraft:overworld|5,-59,5":{"0":{"switchId":"11111111-2222-3333-4444-555555555555","x":7,"y":-59,"z":5,"filter":"Coal"}}}' > run/world/railsounds_towers.json
+          # a searchlight head pointed at a signal it does not touch; prove the link file loads
+          # and is still there after a restart
+          echo '{"minecraft:overworld|9,-59,9":[21,-59,34]}' > run/world/railsounds_signals.json
           # phase B: boot the SAME world again and check the leftovers came back and still tick
           (timeout 600 ./gradlew runServer --args="nogui" > server-run2.txt 2>&1 || true) &
           GRADLE_PID2=$!
@@ -84,7 +90,9 @@ jobs:
                       "RSTEST_TICKING retarder" "RSTEST_UNPOWERED retarder" \
                       "RSTEST_FACING north" "RSTEST_FACING east" \
                       "RSTEST_FACING south" "RSTEST_FACING west" \
-                      "RSTEST_COMPARATOR ok" "RSTEST_DEBUG ok"; do
+                      "RSTEST_COMPARATOR ok" "RSTEST_DEBUG ok" \
+                      "RSTEST_SIGNAL dark_when_unlinked" "RSTEST_SIGNAL red_on_redstone" \
+                      "RSTEST_SIGNAL dark_again"; do
             if ! grep -q "$MARK" server-log.txt; then
               echo "restart check failed: $MARK never reported"
               exit 1
@@ -98,6 +106,9 @@ jobs:
           cat run/world/railsounds_towers.json 2>/dev/null || echo "(no towers file!)"
           grep -q "11111111-2222-3333-4444-555555555555" run/world/railsounds_towers.json || { echo "the link file did not survive the restart"; exit 1; }
           grep -q "Coal" run/world/railsounds_towers.json || { echo "the link file lost its route-sensor filter on reload"; exit 1; }
+          echo "--- signal links after restart ---"
+          cat run/world/railsounds_signals.json 2>/dev/null || echo "(no signal links file!)"
+          grep -q "9,-59,9" run/world/railsounds_signals.json || { echo "the signal link file did not survive the restart"; exit 1; }
           # the sensor display sources must bind on EVERY boot - init order between our mod and
           # Create's display-source setup is not stable, and binding from one side silently
           # failed on the second boot before this was made order-independent.

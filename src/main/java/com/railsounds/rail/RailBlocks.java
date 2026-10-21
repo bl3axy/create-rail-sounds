@@ -65,6 +65,9 @@ public final class RailBlocks {
 
         // ---- trackside decor ----
         SIGNAL_MAST = decor("signal_mast", metal(MapColor.COLOR_BLACK), box(7, 0, 7, 9, 16, 9));
+        // overhead gantry: put a row of these across the tracks on Signal Masts and hang
+        // Searchlight Signals underneath, each linked to its own track's signal
+        decor("signal_bridge", metal(MapColor.COLOR_GRAY), box(0, 8, 5, 16, 16, 11));
         decor("mile_post", stone(MapColor.SNOW), box(6, 0, 6, 10, 15, 10));
         decor("whistle_post", metal(MapColor.SNOW), box(7, 0, 7, 9, 9, 9), box(4, 7, 7, 12, 15, 8));
         decor("yard_limit_sign", metal(MapColor.SNOW), box(2, 0, 7.5, 3, 8, 8.5), box(13, 0, 7.5, 14, 8, 8.5),

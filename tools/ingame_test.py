@@ -241,6 +241,24 @@ def phase_a():
                  f"run say RSTEST_GATE released_angle_{a}")
     rcon.cmd(f"setblock {gx} {Y} {gz} minecraft:air replace")
 
+    # --- the searchlight signal's new behaviour ---
+    # Redstone is checked before anything to do with the track, so it can be exercised with no
+    # Create signal present: unpowered and unlinked the head is dark, powered it must go red.
+    sx, sz = ORIGIN_X + 18, ORIGIN_Z + 8
+    rcon.cmd(f"setblock {sx} {Y} {sz} railsounds:searchlight_signal replace")
+    time.sleep(2)
+    rcon.cmd(f"execute if block {sx} {Y} {sz} railsounds:searchlight_signal[aspect=dark] "
+             f"run say RSTEST_SIGNAL dark_when_unlinked")
+    rcon.cmd(f"setblock {sx + 1} {Y} {sz} minecraft:redstone_block replace")
+    time.sleep(3)
+    rcon.cmd(f"execute if block {sx} {Y} {sz} railsounds:searchlight_signal[aspect=red] "
+             f"run say RSTEST_SIGNAL red_on_redstone")
+    rcon.cmd(f"setblock {sx + 1} {Y} {sz} minecraft:air replace")
+    time.sleep(3)
+    rcon.cmd(f"execute if block {sx} {Y} {sz} railsounds:searchlight_signal[aspect=dark] "
+             f"run say RSTEST_SIGNAL dark_again")
+    rcon.cmd(f"setblock {sx} {Y} {sz} minecraft:air replace")
+
     # --- a comparator reading a Cargo Sensor ---
     # No train, so the answer is 0, but it exercises the comparator path rather than leaving
     # it to be discovered in a world.

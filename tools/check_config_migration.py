@@ -1,68 +1,132 @@
 #!/usr/bin/env python3
 """
-Checks a config that the real server has just loaded and migrated.
+Checks the config the real server just loaded and migrated.
 
-CI plants an old-format config before the first boot; this runs after. It proves three things
-at once: migrations actually applied, hand-tuned values were left alone, and fields missing
-from the old file came back as their defaults rather than zeros (which is what would happen if
-Gson ever stopped using the no-arg constructor - the mod would go silent and nothing would say so).
+CI plants an old-format config before the first boot; this runs after it. It proves migrations
+applied, hand-tuned values were left alone, and fields missing from the old file came back as
+their defaults rather than zeros (which is what would happen if Gson ever stopped using the
+no-arg constructor - the mod would go quiet and nothing would say so).
 
-Usage: python3 tools/check_config_migration.py run/config/railsounds.json
+NOTHING HERE IS A TYPED-IN EXPECTED VALUE. This check hardcoded configVersion == 4 once and
+broke a good build the day a v5 step was added; then it hardcoded idleVolume == 0.25 and broke
+another when that default changed. So instead it lifts the real migrate() and the real field
+defaults out of RailConfig.java, runs them over the SAME planted config the server was given,
+and compares the server's answer against that. The expectations move with the source.
+
+Usage: check_config_migration.py <migrated config> <the planted original>
 """
 import json
+import os
 import re
+import subprocess
 import sys
+import tempfile
 
-path = sys.argv[1] if len(sys.argv) > 1 else "run/config/railsounds.json"
-c = json.load(open(path))
+migrated_path = sys.argv[1] if len(sys.argv) > 1 else "run/config/railsounds.json"
+planted_path = sys.argv[2] if len(sys.argv) > 2 else "planted-config.json"
+
+SRC = "src/main/java/com/railsounds/RailConfig.java"
+src = open(SRC).read()
+actual = json.load(open(migrated_path))
+planted = json.load(open(planted_path))
+
+body = re.search(r"static void migrate\(Values v\) \{(.*?)\n    \}", src, re.S)
+vals = re.search(r"public static class Values \{(.*?)\n    \}", src, re.S)
+helper = re.search(r"(private static boolean eq\(float a, float b\) \{.*?\n    \})", src, re.S)
+if not (body and vals and helper):
+    sys.exit("could not read RailConfig.java")
+
+fields = re.findall(r"public (boolean|int|double|float|String) (\w+) = ([^;]+);", vals.group(1))
+types = {n: t for t, n, _ in fields}
+
+
+def literal(name, value):
+    t = types[name]
+    if t == "boolean":
+        return "true" if value else "false"
+    if t == "float":
+        return repr(float(value)) + "f"
+    if t == "double":
+        return repr(float(value))
+    if t == "int":
+        return str(int(value))
+    return json.dumps(value)
+
+
+sets = "\n".join("        v.%s = %s;" % (k, literal(k, v))
+                 for k, v in planted.items() if k in types)
+decls = "\n".join("        %s %s = %s;" % (t, n, d) for t, n, d in fields)
+dumps = "".join('        System.out.println("%s\\t" + v.%s);\n' % (n, n) for t, n, d in fields)
+
+java = """
+public class ExpectCheck {
+    static class Values {
+%s
+    }
+    %s
+    static void migrate(Values v) {%s
+    }
+    public static void main(String[] a) {
+        Values v = new Values();
+%s
+        migrate(v);
+%s    }
+}
+""" % (decls, helper.group(1), body.group(1), sets, dumps)
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "ExpectCheck.java")
+    open(path, "w").write(java)
+    r = subprocess.run(["java", path], capture_output=True, text=True)
+    if r.returncode != 0:
+        print(r.stderr[:2000])
+        sys.exit("could not run the real migrate()")
+
+expected = {}
+for line in r.stdout.splitlines():
+    if "\t" not in line or line.startswith("Picked up"):
+        continue
+    k, v = line.split("\t", 1)
+    expected[k] = v.strip()
+
 bad = []
 
-# The newest version comes from the source, never a number typed in here - this check was
-# hardcoded to 4 and went stale the moment a v5 step was added, failing a build that was fine.
-SRC = "src/main/java/com/railsounds/RailConfig.java"
-steps = [int(n) for n in re.findall(r"v\.configVersion = (\d+);", open(SRC).read())]
-if not steps:
-    print("  FAIL could not read the migration chain out of " + SRC)
-    sys.exit(1)
-NEWEST = max(steps)
+
+def same(name, want, got):
+    if types.get(name) == "boolean":
+        return str(got).lower() == want.lower()
+    if types.get(name) == "String":
+        return str(got) == want
+    try:
+        return abs(float(got) - float(want)) < 1e-6
+    except (TypeError, ValueError):
+        return str(got) == want
 
 
-def want(key, expected):
-    if key not in c:
-        bad.append("%s missing entirely" % key)
-        return
-    got = c[key]
-    if isinstance(expected, bool):
-        if got != expected:
-            bad.append("%s is %r, expected %r" % (key, got, expected))
-    elif abs(float(got) - float(expected)) > 1e-6:
-        bad.append("%s is %s, expected %s" % (key, got, expected))
+for name, want in sorted(expected.items()):
+    if name not in actual:
+        bad.append("%s is missing from the config the server wrote" % name)
+    elif not same(name, want, actual[name]):
+        bad.append("%s is %r but the real migrate() gives %s" % (name, actual[name], want))
 
-
-# migrations must have applied to values still sitting on their old defaults
-want("configVersion", NEWEST)
-want("engineSounds", True)      # v3
-want("clackVolume", 0.65)       # v4
-want("couplerVolume", 0.85)     # v4
-want("idleVolume", 0.25)        # v4
-want("uncoupleMaxSpeed", 0.75)  # v2
-want("cutCoastFactor", 0.06)    # v2
-want("startClipTicks", 150)     # v5
-want("locoBellClipTicks", 55)   # v6
-
-# a value the player changed by hand must NOT be touched
-want("brakeVolume", 0.9)
+# the planted file deliberately holds a hand-tuned value no migration should touch
+if "brakeVolume" in planted and not same("brakeVolume", str(planted["brakeVolume"]), actual.get("brakeVolume")):
+    bad.append("a hand-tuned brakeVolume of %s was overwritten with %r"
+               % (planted["brakeVolume"], actual.get("brakeVolume")))
 
 # fields absent from the old file must come back as real defaults, not zeros
 for key in ("idleHearingRange", "engineHearingRange", "runClipTicks",
             "locoBellVolume", "hornHearingRange", "idleClipTicks"):
-    if key not in c:
+    if key in planted:
+        continue
+    if key not in actual:
         bad.append("new field %s missing" % key)
-    elif not c[key]:
-        bad.append("new field %s came back as %r - defaults did not apply" % (key, c[key]))
+    elif not actual[key]:
+        bad.append("new field %s came back as %r - defaults did not apply" % (key, actual[key]))
 
 for b in bad:
     print("  FAIL " + b)
 if not bad:
-    print("  ok   old config migrated, hand-tuned values kept, new fields defaulted")
+    print("  ok   all %d options match what the real migrate() produces from the planted file; "
+          "hand-tuned values kept, absent fields defaulted" % len(expected))
 sys.exit(1 if bad else 0)

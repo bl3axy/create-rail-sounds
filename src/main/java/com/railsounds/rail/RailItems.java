@@ -37,6 +37,10 @@ public final class RailItems {
     private record Remembered(String dim, UUID switchId, BlockPos pos) {}
     private static final Map<UUID, Remembered> REMEMBERED = new HashMap<>();
 
+    /** player -> the Create Train Signal they last clicked, waiting for a head to point at it */
+    private record RememberedSignal(String dim, BlockPos pos) {}
+    private static final Map<UUID, RememberedSignal> SIGNAL_MEMORY = new HashMap<>();
+
     public static void register() {
         ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath(RailSounds.MOD_ID, "switch_linker"));
@@ -44,11 +48,13 @@ public final class RailItems {
     }
 
     public static void clearCache() {
+        SIGNAL_MEMORY.clear();
         REMEMBERED.clear();
     }
 
     /** a player who logs off mid-link leaves nothing behind */
     public static void forget(java.util.UUID player) {
+        SIGNAL_MEMORY.remove(player);
         REMEMBERED.remove(player);
         InterlockingPanelBlock.forget(player);
     }
@@ -65,10 +71,51 @@ public final class RailItems {
         boolean isSwitch = SwitchCompat.isSwitchBlock(level, pos);
         boolean isPanel = state.getBlock() instanceof InterlockingPanelBlock;
         boolean isSensor = state.getBlock() instanceof RouteSensorBlock;
-        if (!isSwitch && !isPanel && !isSensor) return InteractionResult.PASS;
+        boolean isHead = state.getBlock() instanceof SearchlightSignalBlock;
+        // a Create Train Signal is whatever has one of Create's signal block entities on it
+        boolean isCreateSignal = !isHead
+            && level.getBlockEntity(pos) instanceof com.zurrtum.create.content.trains.signal.SignalBlockEntity;
+        if (!isSwitch && !isPanel && !isSensor && !isHead && !isCreateSignal) return InteractionResult.PASS;
         if (level.isClientSide()) return InteractionResult.SUCCESS;
 
         String dim = level.dimension().identifier().toString();
+
+        // ---- pointing a searchlight head at a signal it doesn't touch ----
+        if (isCreateSignal) {
+            SIGNAL_MEMORY.put(player.getUUID(), new RememberedSignal(dim, pos.immutable()));
+            player.sendOverlayMessage(Component.literal("Train Signal at " + pos.toShortString()
+                + " remembered - now click a Searchlight Signal").withStyle(ChatFormatting.AQUA));
+            return InteractionResult.SUCCESS;
+        }
+        if (isHead) {
+            if (player.isShiftKeyDown()) {
+                SignalLinks.remove(level, pos);
+                player.sendOverlayMessage(Component.literal("Link cleared - this head reads whatever it touches")
+                    .withStyle(ChatFormatting.GRAY));
+                return InteractionResult.SUCCESS;
+            }
+            RememberedSignal rs = SIGNAL_MEMORY.get(player.getUUID());
+            if (rs == null) {
+                player.sendOverlayMessage(Component.literal("Click a Create Train Signal with the linker first "
+                    + "(sneak-click a head to clear its link)").withStyle(ChatFormatting.RED));
+                return InteractionResult.SUCCESS;
+            }
+            if (!rs.dim.equals(dim)) {
+                player.sendOverlayMessage(Component.literal("That signal is in another dimension").withStyle(ChatFormatting.RED));
+                return InteractionResult.SUCCESS;
+            }
+            if (!(level.getBlockEntity(rs.pos) instanceof com.zurrtum.create.content.trains.signal.SignalBlockEntity)) {
+                SIGNAL_MEMORY.remove(player.getUUID());
+                player.sendOverlayMessage(Component.literal("The remembered signal is gone - click it again")
+                    .withStyle(ChatFormatting.RED));
+                return InteractionResult.SUCCESS;
+            }
+            SignalLinks.put(level, pos, rs.pos);
+            level.scheduleTick(pos, state.getBlock(), 1);
+            player.sendOverlayMessage(Component.literal("Head now reads the signal at " + rs.pos.toShortString())
+                .withStyle(ChatFormatting.GREEN));
+            return InteractionResult.SUCCESS;
+        }
         if (isSwitch) {
             TrackEdgePoint sw = SwitchCompat.switchAt(level, pos);
             if (sw == null) {
