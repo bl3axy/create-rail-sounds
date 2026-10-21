@@ -102,11 +102,50 @@ for name in sorted(os.listdir(MODELS)):
                             "(%s -> %s) and the model will not load"
                             % (name, i, ax, lo, hi))
 
+# Every block needs a name, an item model, a loot table and a recipe. Miss one and the block
+# still registers and still places - it just has no name in the menu, or drops nothing when you
+# break it, or can't be crafted. Nothing warns you, and it is easy to miss when adding a block.
+ASSETS = os.path.dirname(os.path.dirname(MODELS.rstrip("/")))   # .../assets/railsounds
+DATA = ASSETS.replace("/assets/", "/data/")
+BLOCKSTATES = os.path.join(ASSETS, "blockstates")
+if not os.path.isdir(BLOCKSTATES):
+    fail.append("could not find the blockstates folder next to the models (%s) - the "
+                "registration checks below would have silently done nothing" % BLOCKSTATES)
+else:
+    lang_path = os.path.join(ASSETS, "lang", "en_us.json")
+    lang = json.load(open(lang_path)) if os.path.exists(lang_path) else {}
+    blocks = sorted(f[:-5] for f in os.listdir(BLOCKSTATES) if f.endswith(".json"))
+    tagged = set()
+    tagroot = DATA.replace("data/railsounds", "data/minecraft/tags")
+    for root, _, names in os.walk(tagroot):
+        for n in names:
+            if n.endswith(".json"):
+                try:
+                    for v in json.load(open(os.path.join(root, n))).get("values", []):
+                        tagged.add(str(v).split(":")[-1])
+                except (ValueError, OSError):
+                    pass
+    for b in blocks:
+        for label, path in (("name in en_us.json", None),
+                            ("item model", os.path.join(ASSETS, "items", b + ".json")),
+                            ("loot table", os.path.join(DATA, "loot_table", "blocks", b + ".json")),
+                            ("recipe", os.path.join(DATA, "recipe", b + ".json"))):
+            if path is None:
+                if "block.railsounds." + b not in lang:
+                    fail.append("block %s has no name in en_us.json" % b)
+            elif not os.path.exists(path):
+                fail.append("block %s has no %s" % (b, label))
+        if b not in tagged:
+            fail.append("block %s is in no mining tag - it will be slow to break and drop nothing"
+                        % b)
+
 for w in warn:
     print("  warn " + w + " (one is rotated - check it in game)")
 for f in fail:
     print("  FAIL " + f)
 if not fail:
-    print("  ok   %d models checked, no coplanar faces%s"
-          % (checked, " (%d rotated pairs to eyeball)" % len(warn) if warn else ""))
+    print("  ok   %d models, no coplanar faces; %d blocks each with a name, item model, "
+          "loot table, recipe and mining tag%s"
+          % (checked, len(blocks) if "blocks" in dir() else 0,
+             " (%d rotated pairs to eyeball)" % len(warn) if warn else ""))
 sys.exit(1 if fail else 0)
